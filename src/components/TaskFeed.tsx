@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { MapPin, List, Filter, RefreshCw, Search, Grid3X3 } from 'lucide-react'
+import { MapPin, List, Filter, RefreshCw, Search, Grid3X3, Zap, Clock, Star, TrendingUp, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import TaskCard from './TaskCard'
@@ -9,6 +9,7 @@ import type { Database } from '../lib/supabase'
 
 type Task = Database['public']['Tables']['tasks']['Row'] & {
   author_profile?: Database['public']['Tables']['profiles']['Row']
+  urgent?: boolean
 }
 
 interface TaskFeedProps {
@@ -19,6 +20,60 @@ interface TaskFeedProps {
 let tasksCache: Task[] = []
 let lastFetchTime = 0
 const CACHE_DURATION = 3 * 60 * 1000 // 3 minutes
+
+const categories = [
+  { name: 'Livraison', icon: '🚚', color: 'bg-blue-100 text-blue-700' },
+  { name: 'Transport', icon: '📦', color: 'bg-green-100 text-green-700' },
+  { name: 'Animaux', icon: '🐕', color: 'bg-purple-100 text-purple-700' },
+  { name: 'Ménage', icon: '🧹', color: 'bg-yellow-100 text-yellow-700' },
+  { name: 'Jardinage', icon: '🌱', color: 'bg-emerald-100 text-emerald-700' }
+]
+
+const QuickStats = () => (
+  <motion.div 
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="grid grid-cols-3 gap-4 p-4"
+  >
+    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white">
+      <div className="text-2xl font-bold">127</div>
+      <div className="text-blue-100 text-sm">Tâches actives</div>
+    </div>
+    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white">
+      <div className="text-2xl font-bold">89%</div>
+      <div className="text-green-100 text-sm">Taux succès</div>
+    </div>
+    <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 text-white">
+      <div className="text-2xl font-bold">€2.4K</div>
+      <div className="text-purple-100 text-sm">Ce mois</div>
+    </div>
+  </motion.div>
+)
+
+const CategorySelector = ({ onSelect, selectedCategory }: { onSelect: (category: string) => void, selectedCategory: string }) => (
+  <div className="px-4 pb-4">
+    <div className="flex items-center justify-between mb-3">
+      <h2 className="text-lg font-bold text-gray-900">Catégories populaires</h2>
+      <TrendingUp className="w-5 h-5 text-green-500" />
+    </div>
+    <div className="flex gap-3 overflow-x-auto pb-2">
+      {categories.map((category) => (
+        <motion.button
+          key={category.name}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => onSelect(category.name)}
+          className={`${category.color} px-4 py-3 rounded-2xl text-sm font-medium whitespace-nowrap flex items-center gap-2 min-w-fit ${
+            selectedCategory === category.name ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+          }`}
+        >
+          <span className="text-lg">{category.icon}</span>
+          {category.name}
+        </motion.button>
+      ))}
+    </div>
+  </div>
+)
 
 export default function TaskFeed({ onTaskPress }: TaskFeedProps) {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -221,6 +276,25 @@ export default function TaskFeed({ onTaskPress }: TaskFeedProps) {
     setSearchQuery(query)
   }
 
+  const handleCategorySelect = (category: string) => {
+    if (filters.category === category) {
+      setFilters(prev => ({ ...prev, category: '' }))
+    } else {
+      setFilters(prev => ({ ...prev, category }))
+    }
+  }
+
+  const clearFilters = () => {
+    setSearchQuery('')
+    setFilters({
+      category: '',
+      maxBudget: null,
+      minBudget: null,
+      radius: 5,
+      status: 'open'
+    })
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
@@ -235,65 +309,92 @@ export default function TaskFeed({ onTaskPress }: TaskFeedProps) {
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="flex flex-col h-full"
-    >
-      {/* Header moderne */}
-      <div className="bg-white border-b border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <motion.h1 
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="text-2xl font-bold text-gray-900"
-          >
-            Tâches Disponibles
-          </motion.h1>
-          
-          <div className="flex items-center space-x-2">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="p-3 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50"
-              title="Actualiser les tâches"
-            >
-              <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-            </motion.button>
+    <div className="flex flex-col h-screen bg-gray-50">
+      {/* Header avec gradient moderne */}
+      <div className="bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white">
+        <div className="p-6 pb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <motion.h1 
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                className="text-2xl font-bold"
+              >
+                Bonjour ! 👋
+              </motion.h1>
+              <p className="text-blue-100 text-sm">Trouvez la tâche parfaite près de chez vous</p>
+            </div>
             
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
-              className="p-3 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-700 transition-colors"
-            >
-              {viewMode === 'list' ? <MapPin className="w-5 h-5" /> : <List className="w-5 h-5" />}
-            </motion.button>
+            <div className="flex items-center space-x-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="p-3 rounded-2xl bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors"
+              >
+                <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
+                className="p-3 rounded-2xl bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors"
+              >
+                {viewMode === 'list' ? <MapPin className="w-5 h-5" /> : <List className="w-5 h-5" />}
+              </motion.button>
+            </div>
           </div>
-        </div>
 
-        {/* Barre de recherche améliorée */}
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Rechercher des tâches..."
-            className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all"
-          />
+          {/* Barre de recherche moderne */}
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="relative"
+          >
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Rechercher des tâches..."
+              className="w-full pl-12 pr-4 py-4 border-0 rounded-2xl focus:ring-2 focus:ring-white/50 bg-white/10 backdrop-blur-sm text-white placeholder-blue-100 transition-all"
+            />
+          </motion.div>
         </div>
       </div>
 
-      {/* Filtres */}
-      <TaskFilters
-        onFiltersChange={handleFiltersChange}
-        onSearchChange={handleSearchChange}
-        searchQuery={searchQuery}
-        filters={filters}
-      />
+      {/* Statistiques rapides */}
+      <QuickStats />
+
+      {/* Sélecteur de catégories */}
+      <CategorySelector onSelect={handleCategorySelect} selectedCategory={filters.category} />
+
+      {/* Badge de filtre actif */}
+      {(filters.category || searchQuery) && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="px-4 pb-2"
+        >
+          <div className="flex items-center justify-between bg-blue-50 rounded-xl p-3">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-blue-600" />
+              <span className="text-blue-700 font-medium text-sm">
+                Filtres actifs: {filters.category && `${filters.category}`} {searchQuery && `"${searchQuery}"`}
+              </span>
+            </div>
+            <button
+              onClick={clearFilters}
+              className="text-blue-600 text-sm font-medium hover:text-blue-800 transition-colors"
+            >
+              Effacer
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Contenu avec animations */}
       <AnimatePresence mode="wait">
@@ -321,45 +422,35 @@ export default function TaskFeed({ onTaskPress }: TaskFeedProps) {
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center justify-center h-64 text-gray-500"
+                className="flex flex-col items-center justify-center h-full text-center p-8"
               >
-                <MapPin className="w-16 h-16 mb-4 text-gray-300" />
-                <p className="text-lg font-medium mb-2">
-                  {searchQuery || Object.values(filters).some(f => f !== '' && f !== null && f !== 5)
-                    ? 'Aucune tâche ne correspond à vos critères'
-                    : 'Aucune tâche disponible dans votre région'}
+                <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6">
+                  <Search className="w-12 h-12 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Aucune tâche trouvée
+                </h3>
+                <p className="text-gray-500 mb-6 max-w-sm">
+                  Aucune tâche ne correspond à vos critères de recherche. Essayez d'ajuster vos filtres.
                 </p>
-                <p className="text-sm text-gray-400 text-center">
-                  {searchQuery || Object.values(filters).some(f => f !== '' && f !== null && f !== 5)
-                    ? 'Essayez de modifier vos filtres de recherche'
-                    : 'Revenez plus tard ou élargissez votre zone de recherche'}
-                </p>
-                
-                {(searchQuery || Object.values(filters).some(f => f !== '' && f !== null && f !== 5)) && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      setSearchQuery('')
-                      setFilters({
-                        category: '',
-                        maxBudget: null,
-                        minBudget: null,
-                        radius: 5,
-                        status: 'open'
-                      })
-                    }}
-                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-colors"
-                  >
-                    Effacer les filtres
-                  </motion.button>
-                )}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={clearFilters}
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-3 rounded-2xl font-medium shadow-lg"
+                >
+                  Voir toutes les tâches
+                </motion.button>
               </motion.div>
             ) : (
-              <motion.div 
-                layout
-                className="p-4 space-y-4"
-              >
+              <div className="p-4 space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {filteredTasks.length} tâche{filteredTasks.length > 1 ? 's' : ''} disponible{filteredTasks.length > 1 ? 's' : ''}
+                  </h2>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </div>
+                
                 <AnimatePresence>
                   {filteredTasks.map((task, index) => (
                     <motion.div
@@ -376,11 +467,11 @@ export default function TaskFeed({ onTaskPress }: TaskFeedProps) {
                     </motion.div>
                   ))}
                 </AnimatePresence>
-              </motion.div>
+              </div>
             )}
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   )
 }
