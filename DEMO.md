@@ -252,5 +252,7 @@ L'application MicroTask dispose maintenant d'une **expérience d'onboarding comp
 ✅ **Architecture scalable** pour les futures fonctionnalités  
 ✅ **Profil utilisateur** avec statistiques réelles et détaillées  
 ✅ **Données en temps réel** récupérées depuis la base de données  
+✅ **Géocodification inverse** pour des adresses lisibles au lieu de coordonnées GPS  
+✅ **Interface utilisateur épurée** sans données techniques PostGIS  
 
-L'utilisateur découvre progressivement l'application, comprend sa valeur ajoutée, et peut suivre son activité réelle sur la plateforme ! 🚀
+L'utilisateur découvre progressivement l'application, comprend sa valeur ajoutée, peut suivre son activité réelle sur la plateforme, et visualise des adresses compréhensibles sans être perturbé par les coordonnées techniques ! 🚀🗺️

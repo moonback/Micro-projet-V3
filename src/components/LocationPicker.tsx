@@ -1,11 +1,38 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Check, X, Search } from 'lucide-react'
+import { Check, X, Search, MapPin } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 interface LocationPickerProps {
   onLocationSelect: (location: { lat: number; lng: number }, address: string) => void
   onCancel: () => void
+}
+
+// Fonction pour récupérer l'adresse à partir des coordonnées GPS
+const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=fr`
+    )
+    
+    if (!response.ok) {
+      throw new Error('Erreur lors de la récupération de l\'adresse')
+    }
+    
+    const data = await response.json()
+    
+    if (data.display_name) {
+      // Extraire les parties les plus pertinentes de l'adresse
+      const addressParts = data.display_name.split(', ')
+      const relevantParts = addressParts.slice(0, 3) // Prendre les 3 premières parties
+      return relevantParts.join(', ')
+    }
+    
+    return 'Adresse non trouvée'
+  } catch (error) {
+    console.error('Erreur de géocodification:', error)
+    return 'Erreur de géocodification'
+  }
 }
 
 export default function LocationPicker({ onLocationSelect, onCancel }: LocationPickerProps) {
@@ -15,6 +42,7 @@ export default function LocationPicker({ onLocationSelect, onCancel }: LocationP
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [address, setAddress] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false)
 
   useEffect(() => {
     if (!mapContainerRef.current) return
@@ -27,9 +55,10 @@ export default function LocationPicker({ onLocationSelect, onCancel }: LocationP
     }).addTo(mapRef.current)
 
     // Add click handler
-    mapRef.current.on('click', (e: L.LeafletMouseEvent) => {
+    mapRef.current.on('click', async (e: L.LeafletMouseEvent) => {
       const { lat, lng } = e.latlng
       setSelectedLocation({ lat, lng })
+      setIsLoadingAddress(true)
       
       // Remove existing marker
       if (markerRef.current) {
@@ -39,8 +68,15 @@ export default function LocationPicker({ onLocationSelect, onCancel }: LocationP
       // Add new marker
       markerRef.current = L.marker([lat, lng]).addTo(mapRef.current!)
       
-      // Reverse geocode to get address (simplified)
-      setAddress(`${lat.toFixed(4)}, ${lng.toFixed(4)}`)
+      // Reverse geocode to get real address
+      try {
+        const realAddress = await reverseGeocode(lat, lng)
+        setAddress(realAddress)
+      } catch (error) {
+        setAddress('Erreur lors de la récupération de l\'adresse')
+      } finally {
+        setIsLoadingAddress(false)
+      }
     })
 
     // Force a resize to ensure the map renders properly
@@ -97,14 +133,28 @@ export default function LocationPicker({ onLocationSelect, onCancel }: LocationP
         
         {selectedLocation && (
           <div className="absolute bottom-4 left-4 right-4 bg-white rounded-lg border border-gray-200 p-4 shadow-lg z-10">
-            <p className="text-sm text-gray-600 mb-2">Emplacement sélectionné :</p>
-            <p className="font-medium mb-3">{address}</p>
+            <div className="flex items-start space-x-3 mb-3">
+              <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-gray-600 mb-1">Emplacement sélectionné :</p>
+                {isLoadingAddress ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-sm text-gray-500">Récupération de l'adresse...</span>
+                  </div>
+                ) : (
+                  <p className="font-medium text-gray-900">{address}</p>
+                )}
+              </div>
+            </div>
+            
             <button
               onClick={handleConfirm}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors min-h-[44px] flex items-center justify-center"
+              disabled={isLoadingAddress}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-2 px-4 rounded-lg transition-colors min-h-[44px] flex items-center justify-center"
             >
               <Check className="w-4 h-4 mr-2" />
-              Confirmer l'Emplacement
+              {isLoadingAddress ? 'Chargement...' : 'Confirmer l\'Emplacement'}
             </button>
           </div>
         )}
