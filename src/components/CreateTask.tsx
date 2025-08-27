@@ -159,7 +159,7 @@ export default function CreateTask() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 relative">
       {/* Header avec gradient moderne */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
@@ -215,7 +215,7 @@ export default function CreateTask() {
       </motion.div>
 
       {/* Contenu du formulaire */}
-      <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+      <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 pb-24">
         <AnimatePresence mode="wait">
           {currentStep === 1 && (
             <motion.div
@@ -458,7 +458,7 @@ export default function CreateTask() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.8 }}
-          className="flex items-center justify-between pt-8 border-t border-gray-200"
+          className="flex items-center justify-between gap-3 pt-8 pb-6 border-t border-gray-200 bg-gray-50 -mx-6 px-6"
         >
           <motion.button
             type="button"
@@ -466,14 +466,14 @@ export default function CreateTask() {
             disabled={currentStep === 1}
             whileHover={{ scale: currentStep > 1 ? 1.05 : 1 }}
             whileTap={{ scale: currentStep > 1 ? 0.95 : 1 }}
-            className={`flex items-center space-x-2 px-6 py-3 rounded-2xl font-medium transition-all ${
+            className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl font-medium transition-all min-h-[48px] ${
               currentStep > 1
                 ? 'bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 shadow-md hover:shadow-lg'
                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             }`}
           >
             <ArrowLeft className="w-5 h-5" />
-            <span>Précédent</span>
+            <span className="text-sm">Précédent</span>
           </motion.button>
 
           {currentStep < 3 ? (
@@ -483,13 +483,13 @@ export default function CreateTask() {
               disabled={!canGoToNext()}
               whileHover={{ scale: canGoToNext() ? 1.05 : 1 }}
               whileTap={{ scale: canGoToNext() ? 0.95 : 1 }}
-              className={`flex items-center space-x-2 px-6 py-3 rounded-2xl font-medium transition-all ${
+              className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl font-medium transition-all min-h-[48px] ${
                 canGoToNext()
                   ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl'
                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
               }`}
             >
-              <span>Suivant</span>
+              <span className="text-sm">Suivant</span>
               <ArrowRight className="w-5 h-5" />
             </motion.button>
           ) : (
@@ -498,7 +498,7 @@ export default function CreateTask() {
               disabled={loading || !canGoToNext()}
               whileHover={{ scale: loading || !canGoToNext() ? 1 : 1.05 }}
               whileTap={{ scale: loading || !canGoToNext() ? 1 : 0.95 }}
-              className={`flex items-center space-x-2 px-8 py-3 rounded-2xl font-semibold transition-all ${
+              className={`flex items-center justify-center space-x-2 px-6 py-3 rounded-2xl font-semibold transition-all min-h-[48px] ${
                 loading || !canGoToNext()
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl'
@@ -507,12 +507,12 @@ export default function CreateTask() {
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Création...</span>
+                  <span className="text-sm">Création...</span>
                 </>
               ) : (
                 <>
                   <Check className="w-5 h-5" />
-                  <span>Créer la Tâche</span>
+                  <span className="text-sm">Créer la Tâche</span>
                 </>
               )}
             </motion.button>
