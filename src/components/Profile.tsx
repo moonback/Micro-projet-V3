@@ -254,7 +254,7 @@ export default function Profile({ onSignOut }: ProfileProps) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 relative">
       {/* Header avec gradient moderne */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
@@ -291,7 +291,7 @@ export default function Profile({ onSignOut }: ProfileProps) {
       </motion.div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-6 pb-24 space-y-6">
         {/* Informations de Contact */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
