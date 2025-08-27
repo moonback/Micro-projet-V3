@@ -17,13 +17,20 @@
 - **Call-to-Action** : Boutons pour commencer
 - **Footer** : Informations légales et branding
 
+### 📊 **Profil Utilisateur avec Statistiques Réelles**
+- **Statistiques du Compte** : Note moyenne et nombre d'évaluations
+- **Activité sur la Plateforme** : Tâches créées, aidées, terminées, messages
+- **Activité Financière** : Total gagné et dépensé (si applicable)
+- **Données en Temps Réel** : Récupération depuis la base de données
+- **Interface Dynamique** : Affichage conditionnel des sections
+
 ## 🎯 **Expérience Utilisateur Améliorée**
 
 ### **Flux de Navigation**
 1. **Splash Screen** (4s) → Présentation de l'app
 2. **Page d'Accueil** → Découverte des fonctionnalités
 3. **Authentification** → Connexion/Inscription
-4. **Application** → Interface principale
+4. **Application** → Interface principale avec profil détaillé
 
 ### **Design Responsive**
 - **Mobile-First** : Optimisé pour les petits écrans
@@ -57,13 +64,32 @@ const features = [
 - Call-to-Action final
 ```
 
+### **Profile.tsx (Mis à Jour)**
+```typescript
+// Interface UserStats pour les vraies données
+interface UserStats {
+  tasksCreated: number      // Tâches créées par l'utilisateur
+  tasksCompleted: number    // Tâches terminées
+  tasksHelped: number       // Tâches où l'utilisateur est l'aide
+  totalEarned: number       // Total gagné en aidant
+  totalSpent: number        // Total dépensé en créant
+  messagesSent: number      // Messages envoyés
+}
+
+// Récupération des données réelles
+const loadUserStats = async () => {
+  // Requêtes Supabase pour récupérer les vraies statistiques
+  // Calculs basés sur les données de la base
+}
+```
+
 ## 🎨 **Éléments Visuels**
 
 ### **Palette de Couleurs**
 - **Primaire** : Bleu (#2563eb) pour les actions principales
 - **Secondaire** : Indigo (#4f46e5) pour les accents
 - **Neutre** : Gris pour le texte et les bordures
-- **Accents** : Vert, Orange, Rouge pour les statuts
+- **Accents** : Vert, Orange, Rouge, Violet, Indigo pour les statistiques
 
 ### **Typographie**
 - **Titres** : Font-bold avec tailles responsives
@@ -105,6 +131,9 @@ type View = 'splash' | 'home' | 'auth' | 'feed' | ...
 // Logique de navigation
 const [currentView, setCurrentView] = useState<View>('splash')
 const [hasSeenSplash, setHasSeenSplash] = useState(false)
+
+// Statistiques utilisateur
+const [userStats, setUserStats] = useState<UserStats>({...})
 ```
 
 ### **Navigation Conditionnelle**
@@ -124,6 +153,42 @@ const [hasSeenSplash, setHasSeenSplash] = useState(false)
 - **Scroll Animations** : Apparition progressive
 - **Loading States** : Indicateurs visuels
 
+## 📊 **Nouvelles Statistiques Réelles**
+
+### **Données Récupérées**
+- **Tâches créées** : Nombre total de tâches publiées
+- **Tâches aidées** : Nombre de tâches où l'utilisateur est l'aide
+- **Tâches terminées** : Tâches avec statut 'completed'
+- **Messages envoyés** : Total des messages dans les chats
+- **Total gagné** : Somme des budgets des tâches aidées et terminées
+- **Total dépensé** : Somme des budgets des tâches créées et terminées
+
+### **Requêtes Supabase**
+```typescript
+// Tâches créées
+const { data: createdTasks } = await supabase
+  .from('tasks')
+  .select('id, status, budget')
+  .eq('author', user.id)
+
+// Tâches aidées
+const { data: helpedTasks } = await supabase
+  .from('tasks')
+  .select('id, status, budget')
+  .eq('helper', user.id)
+
+// Messages envoyés
+const { data: messages } = await supabase
+  .from('messages')
+  .select('id')
+  .eq('sender', user.id)
+```
+
+### **Calculs Intelligents**
+- **Filtrage par statut** : Seules les tâches 'completed' comptent pour les finances
+- **Agrégation des budgets** : Somme automatique des montants
+- **Affichage conditionnel** : Section finances uniquement si applicable
+
 ## 🚀 **Démarrage Rapide**
 
 ### **1. Lancer l'Application**
@@ -141,7 +206,12 @@ npm run dev
 - Cliquer sur "Commencer Maintenant"
 - Tester la navigation
 
-### **4. Vérifier la Responsivité**
+### **4. Vérifier le Profil**
+- Se connecter avec un compte
+- Aller dans l'onglet Profil
+- Vérifier les statistiques réelles
+
+### **5. Vérifier la Responsivité**
 - Redimensionner la fenêtre
 - Tester sur mobile (DevTools)
 - Vérifier les breakpoints
@@ -153,18 +223,22 @@ npm run dev
 - [ ] **Témoignages utilisateurs** avec photos
 - [ ] **Blog/Actualités** de la plateforme
 - [ ] **FAQ interactive** avec recherche
+- [ ] **Graphiques** pour les statistiques (Chart.js)
+- [ ] **Historique détaillé** des transactions
 
 ### **Techniques**
 - [ ] **Lazy loading** des images
 - [ ] **Service Worker** pour le cache
 - [ ] **PWA** avec installation mobile
 - [ ] **Analytics** et tracking des interactions
+- [ ] **Cache des statistiques** pour améliorer les performances
 
 ### **Design**
 - [ ] **Mode sombre** automatique
 - [ ] **Thèmes personnalisables** par utilisateur
 - [ ] **Animations CSS** plus avancées
 - [ ] **Micro-interactions** et feedback haptique
+- [ ] **Dashboard interactif** avec filtres
 
 ## 🎉 **Conclusion**
 
@@ -176,5 +250,7 @@ L'application MicroTask dispose maintenant d'une **expérience d'onboarding comp
 ✅ **Design responsive** pour tous les appareils  
 ✅ **Animations modernes** et transitions fluides  
 ✅ **Architecture scalable** pour les futures fonctionnalités  
+✅ **Profil utilisateur** avec statistiques réelles et détaillées  
+✅ **Données en temps réel** récupérées depuis la base de données  
 
-L'utilisateur découvre progressivement l'application et comprend immédiatement sa valeur ajoutée ! 🚀
+L'utilisateur découvre progressivement l'application, comprend sa valeur ajoutée, et peut suivre son activité réelle sur la plateforme ! 🚀
