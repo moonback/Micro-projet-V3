@@ -71,10 +71,7 @@ export default function AuthForm() {
                   <li>• Cliquez sur le lien de confirmation</li>
                   <li>• Revenez sur l'application pour vous connecter</li>
                 </ul>
-                <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
-                  <p className="font-medium text-xs">⚠️ Note importante :</p>
-                  <p className="text-xs">Si le lien contient "localhost", remplacez-le par l'URL de production de votre site.</p>
-                </div>
+                
               </div>
             </div>
           </div>
