@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Clock, CheckCircle, XCircle, AlertTriangle, Star, Euro, MapPin, Calendar, Tag, Zap, TrendingUp, ChevronRight, ListTodo } from 'lucide-react'
+import { Plus, Clock, CheckCircle, XCircle, AlertTriangle, Star, Euro, MapPin, Calendar, Tag, Zap, TrendingUp, ChevronRight, ListTodo, Filter, Search, MoreHorizontal } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { TaskWithProfiles } from '../types/task'
@@ -18,6 +18,8 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
   const [tasks, setTasks] = useState<TaskWithProfiles[]>([])
   const [activeTab, setActiveTab] = useState<'created' | 'accepted'>('created')
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState<string>('all')
 
   useEffect(() => {
     if (user) {
@@ -76,9 +78,24 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
     }
   }
 
+  const filteredTasks = tasks.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         task.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = selectedStatus === 'all' || task.status === selectedStatus
+    return matchesSearch && matchesStatus
+  })
+
+  const statusOptions = [
+    { value: 'all', label: 'Toutes', icon: ListTodo, color: 'from-gray-500 to-gray-600' },
+    { value: 'open', label: 'Ouvertes', icon: Clock, color: 'from-blue-500 to-blue-600' },
+    { value: 'accepted', label: 'Acceptées', icon: CheckCircle, color: 'from-green-500 to-green-600' },
+    { value: 'in-progress', label: 'En Cours', icon: TrendingUp, color: 'from-orange-500 to-orange-600' },
+    { value: 'completed', label: 'Terminées', icon: Star, color: 'from-purple-500 to-purple-600' }
+  ]
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 bg-gray-50">
+      <div className="flex items-center justify-center h-64 bg-gradient-to-br from-gray-50 to-gray-100">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -87,9 +104,9 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
           <motion.div 
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-4"
+            className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-6 shadow-lg"
           />
-          <p className="text-gray-500 font-medium">Chargement de vos tâches...</p>
+          <p className="text-gray-600 font-medium text-lg">Chargement de vos tâches...</p>
         </motion.div>
       </div>
     )
@@ -98,34 +115,81 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
   const stats = getStatusStats()
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
-             <Header
-         title="Mes Tâches"
-         subtitle="Gérez vos tâches créées et acceptées"
-         showSearch={false}
-         showFilters={false}
-         showViewToggle={false}
-         showRefresh={false}
-         rightButtons={[
-           {
-             icon: Plus,
-             onClick: onCreateTask,
-             tooltip: 'Créer une nouvelle tâche'
-           }
-         ]}
-         showStats={true}
-         stats={stats}
-       />
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/30">
+      <Header
+        title="Mes Tâches"
+        subtitle="Gérez vos tâches créées et acceptées"
+        showSearch={false}
+        showFilters={false}
+        showViewToggle={false}
+        showRefresh={false}
+        rightButtons={[
+          {
+            icon: Plus,
+            onClick: onCreateTask,
+            tooltip: 'Créer une nouvelle tâche'
+          }
+        ]}
+        showStats={true}
+        stats={stats}
+        className="bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white shadow-lg"
+      />
 
-      {/* Onglets modernes */}
+      {/* Barre de recherche et filtres modernes */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.8 }}
-        className="p-4"
+        transition={{ delay: 0.2, duration: 0.8 }}
+        className="p-4 space-y-4"
       >
-        <div className="bg-white rounded-3xl p-2 shadow-lg border border-gray-100">
-          <div className="flex rounded-2xl bg-gray-100 p-1">
+        {/* Barre de recherche élégante */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Rechercher dans vos tâches..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm hover:shadow-md"
+          />
+        </div>
+
+        {/* Filtres de statut avec design moderne */}
+        <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
+          {statusOptions.map((option) => {
+            const Icon = option.icon
+            const isActive = selectedStatus === option.value
+            return (
+              <motion.button
+                key={option.value}
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedStatus(option.value)}
+                className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-medium transition-all whitespace-nowrap ${
+                  isActive
+                    ? `bg-gradient-to-r ${option.color} text-white shadow-lg`
+                    : 'bg-white/80 backdrop-blur-sm text-gray-600 hover:text-gray-900 hover:bg-white shadow-sm hover:shadow-md'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="text-sm">{option.label}</span>
+              </motion.button>
+            )
+          })}
+        </div>
+      </motion.div>
+
+      {/* Onglets modernes avec design amélioré */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.8 }}
+        className="px-4 pb-4"
+      >
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-2 shadow-lg border border-white/20">
+          <div className="flex rounded-2xl bg-gray-100/50 p-1">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -133,7 +197,7 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
               className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'created'
                   ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/80'
               }`}
             >
               <div className="flex items-center justify-center space-x-2">
@@ -148,7 +212,7 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
               className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'accepted'
                   ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/80'
               }`}
             >
               <div className="flex items-center justify-center space-x-2">
@@ -160,10 +224,10 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
         </div>
       </motion.div>
 
-      {/* Contenu des tâches */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
+      {/* Contenu des tâches avec design amélioré */}
+      <div className="flex-1 overflow-y-auto px-4 pb-6">
         <AnimatePresence mode="wait">
-          {tasks.length === 0 ? (
+          {filteredTasks.length === 0 ? (
             <motion.div 
               key="empty"
               initial={{ opacity: 0, y: 20 }}
@@ -171,25 +235,43 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
               exit={{ opacity: 0, y: -20 }}
               className="flex flex-col items-center justify-center h-64 text-center"
             >
-              <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6">
-                <ListTodo className="w-12 h-12 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                className="w-28 h-28 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6 shadow-lg"
+              >
+                <ListTodo className="w-14 h-14 text-gray-400" />
+              </motion.div>
+              <motion.h3 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-2xl font-bold text-gray-900 mb-3"
+              >
                 {activeTab === 'created' 
                   ? 'Aucune tâche créée' 
                   : 'Aucune tâche acceptée'}
-              </h3>
-              <p className="text-gray-500 mb-6 max-w-sm">
+              </motion.h3>
+              <motion.p 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="text-gray-500 mb-8 max-w-sm text-lg leading-relaxed"
+              >
                 {activeTab === 'created' 
                   ? 'Vous n\'avez pas encore créé de tâches. Commencez par en créer une !' 
                   : 'Vous n\'avez pas encore accepté de tâches. Parcourez les tâches disponibles !'}
-              </p>
+              </motion.p>
               {activeTab === 'created' && (
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={onCreateTask}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-3 rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all"
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-10 py-4 rounded-2xl font-semibold shadow-xl hover:shadow-2xl transition-all text-lg"
                 >
                   Créer ma première tâche
                 </motion.button>
@@ -204,7 +286,7 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
               className="space-y-6"
             >
               {['open', 'accepted', 'in-progress', 'completed'].map((status, statusIndex) => {
-                const statusTasks = tasks.filter(task => task.status === status)
+                const statusTasks = filteredTasks.filter(task => task.status === status)
                 if (statusTasks.length === 0) return null
 
                 const getStatusLabel = (status: string) => {
@@ -237,32 +319,58 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
                   }
                 }
 
+                const getStatusGradient = (status: string) => {
+                  switch (status) {
+                    case 'open': return 'from-blue-50 to-blue-100/50'
+                    case 'accepted': return 'from-green-50 to-green-100/50'
+                    case 'in-progress': return 'from-orange-50 to-orange-100/50'
+                    case 'completed': return 'from-purple-50 to-purple-100/50'
+                    default: return 'from-gray-50 to-gray-100/50'
+                  }
+                }
+
                 const StatusIcon = getStatusIcon(status)
 
                 return (
                   <motion.div 
                     key={status}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + statusIndex * 0.1, duration: 0.6 }}
-                    className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: 0.1 + statusIndex * 0.1, duration: 0.6, type: "spring" }}
+                    className={`bg-gradient-to-br ${getStatusGradient(status)} rounded-3xl p-6 shadow-xl border border-white/50 backdrop-blur-sm`}
                   >
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className={`w-10 h-10 bg-gradient-to-br ${getStatusColor(status)} rounded-full flex items-center justify-center`}>
-                        <StatusIcon className="w-5 h-5 text-white" />
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-4">
+                        <motion.div 
+                          whileHover={{ scale: 1.1, rotate: 5 }}
+                          className={`w-12 h-12 bg-gradient-to-br ${getStatusColor(status)} rounded-2xl flex items-center justify-center shadow-lg`}
+                        >
+                          <StatusIcon className="w-6 h-6 text-white" />
+                        </motion.div>
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">
+                            {getStatusLabel(status)}
+                          </h3>
+                          <p className="text-gray-600 text-sm">
+                            {statusTasks.length} tâche{statusTasks.length > 1 ? 's' : ''}
+                          </p>
+                        </div>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {getStatusLabel(status)} ({statusTasks.length})
-                      </h3>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-gray-900">{statusTasks.length}</div>
+                        <div className="text-xs text-gray-500 uppercase tracking-wide">Total</div>
+                      </div>
                     </div>
-                    <div className="space-y-3">
+                    
+                    <div className="space-y-4">
                       <AnimatePresence>
                         {statusTasks.map((task, taskIndex) => (
                           <motion.div
                             key={task.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: taskIndex * 0.05, duration: 0.6 }}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: taskIndex * 0.05, duration: 0.6, type: "spring" }}
+                            whileHover={{ x: 5 }}
                           >
                             <TaskCard
                               task={task}
@@ -280,6 +388,23 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
           )}
         </AnimatePresence>
       </div>
+
+      {/* Bouton flottant pour créer une tâche */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.8, type: "spring" }}
+        className="fixed bottom-6 right-6 z-50"
+      >
+        <motion.button
+          whileHover={{ scale: 1.1, rotate: 90 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={onCreateTask}
+          className="w-16 h-16 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full shadow-2xl hover:shadow-blue-500/50 transition-all flex items-center justify-center"
+        >
+          <Plus className="w-8 h-8" />
+        </motion.button>
+      </motion.div>
     </div>
   )
 }
