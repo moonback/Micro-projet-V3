@@ -14,6 +14,7 @@ type Task = Database['public']['Tables']['tasks']['Row'] & {
 
 interface TaskFeedProps {
   onTaskPress: (task: Task) => void
+  onTaskAccepted?: (taskId: string) => void
 }
 
 // Cache global pour les tâches
@@ -75,7 +76,7 @@ const CategorySelector = ({ onSelect, selectedCategory }: { onSelect: (category:
   </div>
 )
 
-export default function TaskFeed({ onTaskPress }: TaskFeedProps) {
+export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
@@ -463,6 +464,7 @@ export default function TaskFeed({ onTaskPress }: TaskFeedProps) {
                       <TaskCard
                         task={task}
                         onPress={onTaskPress}
+                        onTaskAccepted={onTaskAccepted}
                       />
                     </motion.div>
                   ))}

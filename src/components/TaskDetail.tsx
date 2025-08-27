@@ -344,8 +344,8 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
             </button>
           )}
 
-          {/* Chat button */}
-          {(isAuthor || isHelper) && (
+          {/* Chat button - accessible à tous les utilisateurs connectés */}
+          {user && (
             <button
               onClick={() => onChatOpen(task.id)}
               className="w-full bg-gray-100 text-gray-900 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"

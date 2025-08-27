@@ -1,6 +1,8 @@
 import React from 'react'
 import { Clock, MapPin, Euro, User, CheckCircle, Truck, Wrench, ShoppingCart, Home, PawPrint, Leaf, Monitor, BookOpen, Package } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../hooks/useAuth'
 import type { Database } from '../lib/supabase'
 
 type Task = Database['public']['Tables']['tasks']['Row'] & {
@@ -10,9 +12,12 @@ type Task = Database['public']['Tables']['tasks']['Row'] & {
 interface TaskCardProps {
   task: Task
   onPress: (task: Task) => void
+  onTaskAccepted?: (taskId: string) => void
 }
 
-export default function TaskCard({ task, onPress }: TaskCardProps) {
+export default function TaskCard({ task, onPress, onTaskAccepted }: TaskCardProps) {
+  const { user } = useAuth()
+
   const formatDistance = (location: any) => {
     // In a real app, calculate distance based on user's location
     return 'à 1,2 km'
@@ -63,7 +68,38 @@ export default function TaskCard({ task, onPress }: TaskCardProps) {
     }
   }
 
+  const handleAcceptTask = async (e: React.MouseEvent) => {
+    e.stopPropagation() // Empêcher l'ouverture des détails
+    if (!user) return
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ 
+          status: 'accepted',
+          helper: user.id 
+        })
+        .eq('id', task.id)
+
+      if (error) throw error
+
+      // Notifier le composant parent
+      if (onTaskAccepted) {
+        onTaskAccepted(task.id)
+      }
+
+      // Optionnel : recharger la page ou mettre à jour l'état
+      window.location.reload()
+    } catch (error) {
+      console.error('Error accepting task:', error)
+      alert('Erreur lors de l\'acceptation de la tâche')
+    }
+  }
+
   const CategoryIcon = getCategoryIcon(task.category)
+  const isAuthor = user?.id === task.author
+  const isHelper = user?.id === task.helper
+  const canAccept = !isAuthor && !isHelper && task.status === 'open'
 
   return (
     <motion.div
@@ -122,23 +158,38 @@ export default function TaskCard({ task, onPress }: TaskCardProps) {
         </div>
       </div>
 
-      {/* Catégorie */}
+      {/* Catégorie et Actions */}
       {task.category && (
         <div className="flex items-center justify-between">
           <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium">
             {task.category}
           </span>
           
-          {/* Bouton CTA */}
-          {task.status === 'open' && (
+          {/* Bouton Accepter - visible pour tous sauf l'auteur et l'aide actuel */}
+          {canAccept && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={handleAcceptTask}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-colors flex items-center space-x-2"
             >
               <CheckCircle className="w-4 h-4" />
               <span>Accepter</span>
             </motion.button>
+          )}
+
+          {/* Indicateur si l'utilisateur est l'aide */}
+          {isHelper && task.status === 'accepted' && (
+            <span className="inline-block bg-green-100 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium">
+              Vous êtes l'aide
+            </span>
+          )}
+
+          {/* Indicateur si l'utilisateur est l'auteur */}
+          {isAuthor && (
+            <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium">
+              Votre tâche
+            </span>
           )}
         </div>
       )}

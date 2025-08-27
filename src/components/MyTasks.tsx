@@ -13,9 +13,10 @@ type Task = Database['public']['Tables']['tasks']['Row'] & {
 interface MyTasksProps {
   onTaskPress: (task: Task) => void
   onCreateTask: () => void
+  onTaskAccepted?: (taskId: string) => void
 }
 
-export default function MyTasks({ onTaskPress, onCreateTask }: MyTasksProps) {
+export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: MyTasksProps) {
   const { user } = useAuth()
   const [tasks, setTasks] = useState<Task[]>([])
   const [activeTab, setActiveTab] = useState<'created' | 'accepted'>('created')
@@ -314,6 +315,7 @@ export default function MyTasks({ onTaskPress, onCreateTask }: MyTasksProps) {
                             <TaskCard
                               task={task}
                               onPress={onTaskPress}
+                              onTaskAccepted={onTaskAccepted}
                             />
                           </motion.div>
                         ))}

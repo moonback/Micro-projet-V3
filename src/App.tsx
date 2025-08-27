@@ -105,6 +105,12 @@ function App() {
     setChatTaskId(null)
   }
 
+  const handleTaskAccepted = (taskId: string) => {
+    // Optionnel : recharger les tâches ou mettre à jour l'état
+    console.log('Task accepted:', taskId)
+    // Ici vous pourriez mettre à jour l'état local ou recharger les tâches
+  }
+
   const renderCurrentView = () => {
     switch (currentView) {
       case 'splash':
@@ -117,7 +123,7 @@ function App() {
         return <AuthForm />
       
       case 'feed':
-        return <TaskFeed onTaskPress={handleTaskPress} />
+        return <TaskFeed onTaskPress={handleTaskPress} onTaskAccepted={handleTaskAccepted} />
       
       case 'create':
         return <CreateTask />
@@ -127,6 +133,7 @@ function App() {
           <MyTasks
             onTaskPress={handleTaskPress}
             onCreateTask={() => setCurrentView('create')}
+            onTaskAccepted={handleTaskAccepted}
           />
         )
       
@@ -144,7 +151,7 @@ function App() {
             onChatOpen={handleChatOpen}
           />
         ) : (
-          <TaskFeed onTaskPress={handleTaskPress} />
+          <TaskFeed onTaskPress={handleTaskPress} onTaskAccepted={handleTaskAccepted} />
         )
       
       case 'chat':
@@ -154,11 +161,11 @@ function App() {
             onBack={handleBackToTaskDetail}
           />
         ) : (
-          <TaskFeed onTaskPress={handleTaskPress} />
+          <TaskFeed onTaskPress={handleTaskPress} onTaskAccepted={handleTaskAccepted} />
         )
       
       default:
-        return <TaskFeed onTaskPress={handleTaskPress} />
+        return <TaskFeed onTaskPress={handleTaskPress} onTaskAccepted={handleTaskAccepted} />
     }
   }
 
