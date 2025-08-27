@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, Mail, Phone, MapPin, Star, Calendar, LogOut, Edit, Save, X } from 'lucide-react'
+import { User, Mail, Phone, Star, Calendar, LogOut, Edit, Save, X, ListTodo, CheckCircle, MessageCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { Database } from '../lib/supabase'
@@ -8,11 +8,28 @@ interface ProfileProps {
   onSignOut: () => void
 }
 
+interface UserStats {
+  tasksCreated: number
+  tasksCompleted: number
+  tasksHelped: number
+  totalEarned: number
+  totalSpent: number
+  messagesSent: number
+}
+
 export default function Profile({ onSignOut }: ProfileProps) {
   const { user, signOut } = useAuth()
   const [profile, setProfile] = useState<Database['public']['Tables']['profiles']['Row'] | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
+  const [userStats, setUserStats] = useState<UserStats>({
+    tasksCreated: 0,
+    tasksCompleted: 0,
+    tasksHelped: 0,
+    totalEarned: 0,
+    totalSpent: 0,
+    messagesSent: 0
+  })
   const [editForm, setEditForm] = useState({
     name: '',
     phone: ''
@@ -21,6 +38,7 @@ export default function Profile({ onSignOut }: ProfileProps) {
   useEffect(() => {
     if (user) {
       loadProfile()
+      loadUserStats()
     }
   }, [user])
 
@@ -42,6 +60,50 @@ export default function Profile({ onSignOut }: ProfileProps) {
       console.error('Error loading profile:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadUserStats = async () => {
+    if (!user) return
+
+    try {
+      // Récupérer les tâches créées par l'utilisateur
+      const { data: createdTasks, error: createdError } = await supabase
+        .from('tasks')
+        .select('id, status, budget')
+        .eq('author', user.id)
+
+      if (createdError) throw createdError
+
+      // Récupérer les tâches où l'utilisateur est l'aide
+      const { data: helpedTasks, error: helpedError } = await supabase
+        .from('tasks')
+        .select('id, status, budget')
+        .eq('helper', user.id)
+
+      if (helpedError) throw helpedError
+
+      // Récupérer le nombre de messages envoyés
+      const { data: messages, error: messagesError } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('sender', user.id)
+
+      if (messagesError) throw messagesError
+
+      // Calculer les statistiques
+      const stats: UserStats = {
+        tasksCreated: createdTasks?.length || 0,
+        tasksCompleted: createdTasks?.filter(t => t.status === 'completed').length || 0,
+        tasksHelped: helpedTasks?.length || 0,
+        totalEarned: helpedTasks?.filter(t => t.status === 'completed').reduce((sum, t) => sum + (t.budget || 0), 0) || 0,
+        totalSpent: createdTasks?.filter(t => t.status === 'completed').reduce((sum, t) => sum + (t.budget || 0), 0) || 0,
+        messagesSent: messages?.length || 0
+      }
+
+      setUserStats(stats)
+    } catch (error) {
+      console.error('Error loading user stats:', error)
     }
   }
 
@@ -233,6 +295,70 @@ export default function Profile({ onSignOut }: ProfileProps) {
             </div>
           </div>
         </div>
+
+        {/* Activité de l'Utilisateur */}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <ListTodo className="w-5 h-5 mr-2 text-blue-600" />
+            Activité sur la Plateforme
+          </h2>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-purple-50 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-purple-600 mb-1">
+                {userStats.tasksCreated}
+              </div>
+              <div className="text-sm text-purple-600">Tâches créées</div>
+            </div>
+            
+            <div className="bg-orange-50 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-orange-600 mb-1">
+                {userStats.tasksHelped}
+              </div>
+              <div className="text-sm text-orange-600">Tâches aidées</div>
+            </div>
+            
+            <div className="bg-green-50 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-green-600 mb-1">
+                {userStats.tasksCompleted}
+              </div>
+              <div className="text-sm text-green-600">Tâches terminées</div>
+            </div>
+            
+            <div className="bg-indigo-50 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-indigo-600 mb-1">
+                {userStats.messagesSent}
+              </div>
+              <div className="text-sm text-indigo-600">Messages envoyés</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Finances */}
+        {(userStats.totalEarned > 0 || userStats.totalSpent > 0) && (
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <CheckCircle className="w-5 h-5 mr-2 text-blue-600" />
+              Activité Financière
+            </h2>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-green-50 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-green-600 mb-1">
+                  €{userStats.totalEarned.toFixed(2)}
+                </div>
+                <div className="text-sm text-green-600">Total gagné</div>
+              </div>
+              
+              <div className="bg-red-50 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-red-600 mb-1">
+                  €{userStats.totalSpent.toFixed(2)}
+                </div>
+                <div className="text-sm text-red-600">Total dépensé</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Informations du Compte */}
         <div>
