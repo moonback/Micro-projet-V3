@@ -22,6 +22,46 @@ export default function CreateTask() {
     'Garde d\'Animaux', 'Jardinage', 'Aide Informatique', 'Cours Particuliers', 'Autre'
   ]
 
+  // Fonction utilitaire pour s'assurer que le profil existe
+  const ensureUserProfile = async () => {
+    if (!user) return false
+
+    try {
+      // Vérifier si le profil existe
+      const { data: existingProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError && profileError.code === 'PGRST116') {
+        // Profil n'existe pas, le créer
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Utilisateur',
+            rating: 0,
+            rating_count: 0,
+            is_verified: false
+          })
+
+        if (createProfileError) {
+          console.error('Error creating profile:', createProfileError)
+          return false
+        }
+      } else if (profileError) {
+        console.error('Error checking profile:', profileError)
+        return false
+      }
+
+      return true
+    } catch (error) {
+      console.error('Error ensuring user profile:', error)
+      return false
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !location) return
@@ -29,6 +69,13 @@ export default function CreateTask() {
     setLoading(true)
 
     try {
+      // S'assurer que le profil utilisateur existe
+      const profileExists = await ensureUserProfile()
+      if (!profileExists) {
+        throw new Error('Impossible de créer ou vérifier le profil utilisateur')
+      }
+
+      // Maintenant créer la tâche
       const { error } = await supabase
         .from('tasks')
         .insert({
@@ -43,6 +90,8 @@ export default function CreateTask() {
           },
           address,
           author: user.id,
+          status: 'open',
+          currency: 'EUR'
         })
 
       if (error) throw error

@@ -6,7 +6,7 @@ import TaskCard from './TaskCard'
 import type { Database } from '../lib/supabase'
 
 type Task = Database['public']['Tables']['tasks']['Row'] & {
-  profiles?: Database['public']['Tables']['profiles']['Row']
+  author_profile?: Database['public']['Tables']['profiles']['Row']
 }
 
 interface MyTasksProps {
@@ -35,7 +35,7 @@ export default function MyTasks({ onTaskPress, onCreateTask }: MyTasksProps) {
         .from('tasks')
         .select(`
           *,
-          profiles (
+          author_profile:profiles!tasks_author_fkey (
             id,
             name,
             avatar_url,

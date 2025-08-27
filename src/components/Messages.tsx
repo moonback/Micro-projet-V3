@@ -65,7 +65,7 @@ export default function Messages({ onChatOpen }: MessagesProps) {
             .limit(1)
             .single()
 
-          const otherParticipant = task.author === user.id ? task.helper_profile : task.profiles
+          const otherParticipant = task.author === user.id ? task.helper_profile : task.author_profile
 
           return {
             task,

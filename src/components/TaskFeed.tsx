@@ -6,7 +6,7 @@ import TaskMap from './TaskMap'
 import type { Database } from '../lib/supabase'
 
 type Task = Database['public']['Tables']['tasks']['Row'] & {
-  profiles?: Database['public']['Tables']['profiles']['Row']
+  author_profile?: Database['public']['Tables']['profiles']['Row']
 }
 
 interface TaskFeedProps {
@@ -29,7 +29,7 @@ export default function TaskFeed({ onTaskPress }: TaskFeedProps) {
         .from('tasks')
         .select(`
           *,
-          profiles (
+          author_profile:profiles!tasks_author_fkey (
             id,
             name,
             avatar_url,

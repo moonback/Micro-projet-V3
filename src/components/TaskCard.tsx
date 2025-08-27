@@ -3,7 +3,7 @@ import { Clock, MapPin, Euro, User } from 'lucide-react'
 import type { Database } from '../lib/supabase'
 
 type Task = Database['public']['Tables']['tasks']['Row'] & {
-  profiles?: Database['public']['Tables']['profiles']['Row']
+  author_profile?: Database['public']['Tables']['profiles']['Row']
 }
 
 interface TaskCardProps {
@@ -69,7 +69,7 @@ export default function TaskCard({ task, onPress }: TaskCardProps) {
       <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
         <div className="flex items-center">
           <User className="w-4 h-4 mr-1" />
-          <span>{task.profiles?.name || 'Anonyme'}</span>
+          <span>{task.author_profile?.name || 'Anonyme'}</span>
         </div>
         <div className="flex items-center">
           <Clock className="w-4 h-4 mr-1" />

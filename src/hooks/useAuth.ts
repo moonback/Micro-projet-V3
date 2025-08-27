@@ -72,11 +72,18 @@ export function useAuth() {
     })
 
     if (data.user && !error) {
-      // Create profile
-      await supabase.from('profiles').insert({
+      // Create profile with all required fields
+      const { error: profileError } = await supabase.from('profiles').insert({
         id: data.user.id,
         name,
+        rating: 0,
+        rating_count: 0,
+        is_verified: false
       })
+
+      if (profileError) {
+        console.error('Error creating profile:', profileError)
+      }
     }
 
     return { data, error }
