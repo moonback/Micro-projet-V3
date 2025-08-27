@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Filter } from 'lucide-react'
+import { Plus, Filter, ListTodo, CheckCircle, Clock, Star, TrendingUp, Zap } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import TaskCard from './TaskCard'
@@ -65,109 +66,265 @@ export default function MyTasks({ onTaskPress, onCreateTask }: MyTasksProps) {
     return tasks.filter(task => task.status === status).length
   }
 
+  const getStatusStats = () => {
+    const createdTasks = tasks.filter(t => t.author === user?.id)
+    const acceptedTasks = tasks.filter(t => t.helper === user?.id)
+    
+    return {
+      created: createdTasks.length,
+      accepted: acceptedTasks.length,
+      open: createdTasks.filter(t => t.status === 'open').length,
+      completed: createdTasks.filter(t => t.status === 'completed').length + acceptedTasks.filter(t => t.status === 'completed').length
+    }
+  }
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center h-64 bg-gray-50">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-4"
+          />
+          <p className="text-gray-500 font-medium">Chargement de vos tâches...</p>
+        </motion.div>
       </div>
     )
   }
 
+  const stats = getStatusStats()
+
   return (
-    <div className="flex flex-col h-full bg-white">
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-gray-900">Mes Tâches</h1>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={onCreateTask}
-              className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+    <div className="flex flex-col h-full bg-gray-50">
+      {/* Header avec gradient moderne */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-6 bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white relative overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="relative">
+          <div className="flex items-center justify-between mb-6">
+            <motion.h1 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.8 }}
+              className="text-2xl font-bold"
             >
-              <Plus className="w-5 h-5" />
-            </button>
-            <button className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
-              <Filter className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="flex rounded-lg bg-gray-100 p-1">
-          <button
-            onClick={() => setActiveTab('created')}
-            className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'created'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Créées ({tasks.filter(t => t.author === user?.id).length})
-          </button>
-          <button
-            onClick={() => setActiveTab('accepted')}
-            className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'accepted'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Acceptées ({tasks.filter(t => t.helper === user?.id).length})
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
-        {tasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-            <Plus className="w-12 h-12 mb-2" />
-            <p>
-              {activeTab === 'created' 
-                ? 'Vous n\'avez pas encore créé de tâches' 
-                : 'Vous n\'avez pas encore accepté de tâches'}
-            </p>
-            {activeTab === 'created' && (
-              <button
+              Mes Tâches
+            </motion.h1>
+            <div className="flex items-center space-x-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={onCreateTask}
-                className="mt-2 text-blue-600 hover:text-blue-700 font-medium"
+                className="p-3 rounded-2xl bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all"
               >
-                Créez votre première tâche
-              </button>
-            )}
+                <Plus className="w-5 h-5" />
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-3 rounded-2xl bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all"
+              >
+                <Filter className="w-5 h-5" />
+              </motion.button>
+            </div>
           </div>
-        ) : (
-          <div className="p-4 space-y-4">
-            {['open', 'accepted', 'in-progress', 'completed'].map(status => {
-              const statusTasks = tasks.filter(task => task.status === status)
-              if (statusTasks.length === 0) return null
 
-              const getStatusLabel = (status: string) => {
-                switch (status) {
-                  case 'open': return 'Ouvertes'
-                  case 'accepted': return 'Acceptées'
-                  case 'in-progress': return 'En Cours'
-                  case 'completed': return 'Terminées'
-                  default: return status
+          {/* Statistiques rapides */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="grid grid-cols-4 gap-3"
+          >
+            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 text-center">
+              <div className="text-lg font-bold">{stats.created}</div>
+              <div className="text-xs text-blue-100">Créées</div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 text-center">
+              <div className="text-lg font-bold">{stats.accepted}</div>
+              <div className="text-xs text-blue-100">Acceptées</div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 text-center">
+              <div className="text-lg font-bold">{stats.open}</div>
+              <div className="text-xs text-blue-100">Ouvertes</div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 text-center">
+              <div className="text-lg font-bold">{stats.completed}</div>
+              <div className="text-xs text-blue-100">Terminées</div>
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Onglets modernes */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.8 }}
+        className="p-4"
+      >
+        <div className="bg-white rounded-3xl p-2 shadow-lg border border-gray-100">
+          <div className="flex rounded-2xl bg-gray-100 p-1">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveTab('created')}
+              className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'created'
+                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <ListTodo className="w-4 h-4" />
+                <span>Créées ({stats.created})</span>
+              </div>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveTab('accepted')}
+              className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'accepted'
+                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <CheckCircle className="w-4 h-4" />
+                <span>Acceptées ({stats.accepted})</span>
+              </div>
+            </motion.button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Contenu des tâches */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
+        <AnimatePresence mode="wait">
+          {tasks.length === 0 ? (
+            <motion.div 
+              key="empty"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="flex flex-col items-center justify-center h-64 text-center"
+            >
+              <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6">
+                <ListTodo className="w-12 h-12 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {activeTab === 'created' 
+                  ? 'Aucune tâche créée' 
+                  : 'Aucune tâche acceptée'}
+              </h3>
+              <p className="text-gray-500 mb-6 max-w-sm">
+                {activeTab === 'created' 
+                  ? 'Vous n\'avez pas encore créé de tâches. Commencez par en créer une !' 
+                  : 'Vous n\'avez pas encore accepté de tâches. Parcourez les tâches disponibles !'}
+              </p>
+              {activeTab === 'created' && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onCreateTask}
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-3 rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all"
+                >
+                  Créer ma première tâche
+                </motion.button>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="tasks"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              {['open', 'accepted', 'in-progress', 'completed'].map((status, statusIndex) => {
+                const statusTasks = tasks.filter(task => task.status === status)
+                if (statusTasks.length === 0) return null
+
+                const getStatusLabel = (status: string) => {
+                  switch (status) {
+                    case 'open': return 'Ouvertes'
+                    case 'accepted': return 'Acceptées'
+                    case 'in-progress': return 'En Cours'
+                    case 'completed': return 'Terminées'
+                    default: return status
+                  }
                 }
-              }
 
-              return (
-                <div key={status}>
-                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-                    {getStatusLabel(status)} ({statusTasks.length})
-                  </h3>
-                  <div className="space-y-3">
-                    {statusTasks.map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onPress={onTaskPress}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
+                const getStatusIcon = (status: string) => {
+                  switch (status) {
+                    case 'open': return Clock
+                    case 'accepted': return CheckCircle
+                    case 'in-progress': return TrendingUp
+                    case 'completed': return Star
+                    default: return ListTodo
+                  }
+                }
+
+                const getStatusColor = (status: string) => {
+                  switch (status) {
+                    case 'open': return 'from-blue-500 to-blue-600'
+                    case 'accepted': return 'from-green-500 to-green-600'
+                    case 'in-progress': return 'from-orange-500 to-orange-600'
+                    case 'completed': return 'from-purple-500 to-purple-600'
+                    default: return 'from-gray-500 to-gray-600'
+                  }
+                }
+
+                const StatusIcon = getStatusIcon(status)
+
+                return (
+                  <motion.div 
+                    key={status}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + statusIndex * 0.1, duration: 0.6 }}
+                    className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
+                  >
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className={`w-10 h-10 bg-gradient-to-br ${getStatusColor(status)} rounded-full flex items-center justify-center`}>
+                        <StatusIcon className="w-5 h-5 text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {getStatusLabel(status)} ({statusTasks.length})
+                      </h3>
+                    </div>
+                    <div className="space-y-3">
+                      <AnimatePresence>
+                        {statusTasks.map((task, taskIndex) => (
+                          <motion.div
+                            key={task.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: taskIndex * 0.05, duration: 0.6 }}
+                          >
+                            <TaskCard
+                              task={task}
+                              onPress={onTaskPress}
+                            />
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )
