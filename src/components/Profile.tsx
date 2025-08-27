@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { User, Edit3, Save, X, Star, Euro, MapPin, Calendar, LogOut, Shield, Zap, Heart, TrendingUp, CheckCircle, Clock, AlertTriangle } from 'lucide-react'
+import { User, Edit3, Save, X, Star, Euro, MapPin, Calendar, LogOut, Shield, Zap, Heart, TrendingUp, CheckCircle, Clock, AlertTriangle, MessageCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { Database } from '../lib/supabase'
 import Header from './Header'
+import ContactInfo from './ContactInfo'
 
 interface ProfileProps {
   onSignOut: () => void
@@ -104,62 +105,46 @@ export default function Profile({ onSignOut }: ProfileProps) {
     if (!user) return
 
     try {
-      // Récupérer les tâches créées par l'utilisateur
-      const { data: createdTasks, error: createdError } = await supabase
+      // Statistiques des tâches
+      const { data: tasksData } = await supabase
         .from('tasks')
-        .select('id, status, budget')
-        .eq('author', user.id)
+        .select('id, status, budget, author, helper')
+        .or(`author.eq.${user.id},helper.eq.${user.id}`)
 
-      if (createdError) throw createdError
-
-      // Récupérer les tâches où l'utilisateur est l'aide
-      const { data: helpedTasks, error: helpedError } = await supabase
-        .from('tasks')
-        .select('id, status, budget')
-        .eq('helper', user.id)
-
-      if (helpedError) throw helpedError
-
-      // Récupérer le nombre de messages envoyés
-      const { data: messages, error: messagesError } = await supabase
+      // Statistiques des messages
+      const { data: messagesData } = await supabase
         .from('messages')
-        .select('id')
+        .select('id, sender')
         .eq('sender', user.id)
 
-      if (messagesError) throw messagesError
+      if (tasksData) {
+        const tasksCreated = tasksData.filter(t => t.author === user.id).length
+        const tasksCompleted = tasksData.filter(t => t.status === 'completed').length
+        const tasksHelped = tasksData.filter(t => t.helper === user.id).length
+        const totalEarned = tasksData
+          .filter(t => t.helper === user.id && t.status === 'completed')
+          .reduce((sum, t) => sum + (t.budget || 0), 0)
+        const totalSpent = tasksData
+          .filter(t => t.author === user.id && t.status === 'completed')
+          .reduce((sum, t) => sum + (t.budget || 0), 0)
 
-      // Calculer les statistiques
-      const stats: UserStats = {
-        tasksCreated: createdTasks?.length || 0,
-        tasksCompleted: createdTasks?.filter(t => t.status === 'completed').length || 0,
-        tasksHelped: helpedTasks?.length || 0,
-        totalEarned: helpedTasks?.filter(t => t.status === 'completed').reduce((sum, t) => sum + (t.budget || 0), 0) || 0,
-        totalSpent: createdTasks?.filter(t => t.status === 'completed').reduce((sum, t) => sum + (t.budget || 0), 0) || 0,
-        messagesSent: messages?.length || 0
+        setUserStats({
+          tasksCreated,
+          tasksCompleted,
+          tasksHelped,
+          totalEarned,
+          totalSpent,
+          messagesSent: messagesData?.length || 0
+        })
       }
-
-      setUserStats(stats)
     } catch (error) {
       console.error('Error loading user stats:', error)
     }
   }
 
-  const handleEdit = () => {
-    setEditing(true)
-  }
-
-  const handleCancel = () => {
-    setEditing(false)
-    setEditForm({
-      name: profile?.name || '',
-      phone: profile?.phone || ''
-    })
-  }
-
   const handleSave = async () => {
     if (!user) return
 
-    setLoading(true)
     try {
       const { error } = await supabase
         .from('profiles')
@@ -171,367 +156,151 @@ export default function Profile({ onSignOut }: ProfileProps) {
 
       if (error) throw error
 
-      await loadProfile()
+      setProfile(prev => prev ? { ...prev, ...editForm } : null)
       setEditing(false)
     } catch (error) {
       console.error('Error updating profile:', error)
-      alert('Erreur lors de la mise à jour du profil')
-    } finally {
-      setLoading(false)
     }
   }
 
-  const handleSignOutClick = async () => {
-    try {
-      await supabase.auth.signOut()
-      onSignOut()
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
-  }
-
-  // Afficher le chargement si l'authentification ou le profil est en cours de chargement
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center h-full bg-gray-50">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <motion.div 
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-4"
-          />
-          <p className="text-gray-500 font-medium">Chargement du profil...</p>
-        </motion.div>
+      <div className="flex items-center justify-center h-64">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full"
+        />
       </div>
     )
   }
 
-  // Afficher une erreur si pas d'utilisateur
-  if (!user) {
+  if (!user || !profile) {
     return (
-      <div className="flex items-center justify-center h-full bg-gray-50">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
-            <User className="w-12 h-12 text-gray-400" />
-          </div>
-          <p className="text-gray-500 text-lg font-medium">Utilisateur non connecté</p>
-        </motion.div>
-      </div>
-    )
-  }
-
-  // Afficher une erreur si pas de profil
-  if (!profile) {
-    return (
-      <div className="flex items-center justify-center h-full bg-gray-50">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
-            <User className="w-12 h-12 text-gray-400" />
-          </div>
-          <p className="text-gray-500 text-lg font-medium mb-4">Erreur lors du chargement du profil</p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={loadProfile}
-            className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-2xl font-medium shadow-lg"
-          >
-            Réessayer
-          </motion.button>
-        </motion.div>
+      <div className="text-center p-8">
+        <p className="text-gray-500">Erreur de chargement du profil</p>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 relative">
-      {/* Header avec gradient moderne */}
-             <Header
-         title={profile.name || 'Mon Profil'}
-         subtitle="Gérez vos informations personnelles"
-         showSearch={false}
-         showFilters={false}
-         showViewToggle={false}
-         showRefresh={false}
-         rightButtons={[
-           {
-             icon: LogOut,
-             onClick: handleSignOutClick,
-             tooltip: 'Se déconnecter',
-             className: 'text-red-600 hover:text-red-800 hover:bg-red-50'
-           }
-         ]}
-       />
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/30">
+      <Header
+        title="Profil"
+        subtitle="Gérez vos informations personnelles"
+        showSearch={false}
+        showFilters={false}
+        showViewToggle={false}
+        showRefresh={false}
+        className="bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white shadow-lg"
+      />
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6 pb-24 space-y-6">
-        {/* Informations de Contact */}
-        <motion.div 
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {/* Composant ContactInfo principal */}
+        <ContactInfo />
+
+        {/* Actions rapides */}
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.8 }}
-          className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6"
         >
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <User className="w-5 h-5 mr-2 text-blue-600" />
-            Informations de Contact
-          </h2>
+          <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+            <Shield className="w-6 h-6 mr-2 text-indigo-600" />
+            Actions Rapides
+          </h3>
           
-          <AnimatePresence mode="wait">
-            {editing ? (
-              <motion.div 
-                key="editing"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="space-y-4"
-              >
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom Complet
-                  </label>
-                  <input
-                    type="text"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Téléphone
-                  </label>
-                  <input
-                    type="tel"
-                    value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                </div>
-                
-                <div className="flex space-x-3">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleSave}
-                    disabled={loading}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 px-4 rounded-2xl font-medium hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center shadow-md"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    {loading ? 'Sauvegarde...' : 'Sauvegarder'}
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleCancel}
-                    className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-2xl font-medium hover:bg-gray-400 transition-all flex items-center justify-center"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Annuler
-                  </motion.button>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div 
-                key="display"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="space-y-3"
-              >
-                <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border border-blue-100">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{profile.name || 'Non spécifié'}</p>
-                    <p className="text-sm text-gray-600">Nom complet</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-100">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{profile.phone || 'Non spécifié'}</p>
-                    <p className="text-sm text-gray-600">Numéro de téléphone</p>
-                  </div>
-                </div>
-                
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleEdit}
-                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 px-4 rounded-2xl font-medium hover:shadow-lg transition-all flex items-center justify-center shadow-md"
-                >
-                  <Edit3 className="w-4 h-4 mr-2" />
-                  Modifier le Profil
-                </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setEditing(!editing)}
+              className="p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all flex items-center justify-center space-x-2"
+            >
+              <Edit3 className="w-5 h-5" />
+              <span>Modifier le profil</span>
+            </motion.button>
 
-        {/* Statistiques du Compte */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-          className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
-        >
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <Star className="w-5 h-5 mr-2 text-blue-600" />
-            Statistiques du Compte
-          </h2>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white text-center shadow-lg">
-              <div className="text-2xl font-bold mb-1">
-                {profile.rating || 0}
-              </div>
-              <div className="text-blue-100 text-sm">Note moyenne</div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white text-center shadow-lg">
-              <div className="text-2xl font-bold mb-1">
-                {profile.rating_count || 0}
-              </div>
-              <div className="text-green-100 text-sm">Évaluations</div>
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onSignOut}
+              className="p-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all flex items-center justify-center space-x-2"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Se déconnecter</span>
+            </motion.button>
           </div>
         </motion.div>
 
-        {/* Activité de l'Utilisateur */}
-        <motion.div 
+        {/* Statistiques détaillées */}
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.8 }}
-          className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6"
         >
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <Clock className="w-5 h-5 mr-2 text-blue-600" />
-            Activité sur la Plateforme
-          </h2>
+          <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+            <TrendingUp className="w-6 h-6 mr-2 text-green-600" />
+            Statistiques Détaillées
+          </h3>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 text-white text-center shadow-lg">
-              <div className="text-2xl font-bold mb-1">
-                {userStats.tasksCreated}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                <Zap className="w-6 h-6 text-white" />
               </div>
-              <div className="text-purple-100 text-sm">Tâches créées</div>
+              <p className="text-2xl font-bold text-blue-900">{userStats.tasksCreated}</p>
+              <p className="text-sm text-blue-700">Créées</p>
             </div>
-            
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-4 text-white text-center shadow-lg">
-              <div className="text-2xl font-bold mb-1">
-                {userStats.tasksHelped}
+
+            <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                <CheckCircle className="w-6 h-6 text-white" />
               </div>
-              <div className="text-orange-100 text-sm">Tâches aidées</div>
+              <p className="text-2xl font-bold text-green-900">{userStats.tasksCompleted}</p>
+              <p className="text-sm text-green-700">Terminées</p>
             </div>
-            
-            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white text-center shadow-lg">
-              <div className="text-2xl font-bold mb-1">
-                {userStats.tasksCompleted}
+
+            <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+              <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                <Heart className="w-6 h-6 text-white" />
               </div>
-              <div className="text-green-100 text-sm">Tâches terminées</div>
+              <p className="text-2xl font-bold text-purple-900">{userStats.tasksHelped}</p>
+              <p className="text-sm text-purple-700">Aidées</p>
             </div>
-            
-            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-4 text-white text-center shadow-lg">
-              <div className="text-2xl font-bold mb-1">
-                {userStats.messagesSent}
+
+            <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+              <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                <MessageCircle className="w-6 h-6 text-white" />
               </div>
-              <div className="text-indigo-100 text-sm">Messages envoyés</div>
+              <p className="text-2xl font-bold text-orange-900">{userStats.messagesSent}</p>
+              <p className="text-sm text-orange-700">Messages</p>
+            </div>
+          </div>
+
+          {/* Finances */}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl border border-emerald-200">
+              <div className="flex items-center space-x-2 mb-2">
+                <Euro className="w-5 h-5 text-emerald-600" />
+                <span className="font-semibold text-emerald-800">Gains totaux</span>
+              </div>
+              <p className="text-2xl font-bold text-emerald-900">{userStats.totalEarned}€</p>
+              <p className="text-xs text-emerald-600">Tâches aidées</p>
+            </div>
+
+            <div className="p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-xl border border-red-200">
+              <div className="flex items-center space-x-2 mb-2">
+                <Euro className="w-5 h-5 text-red-600" />
+                <span className="font-semibold text-red-800">Dépenses totales</span>
+              </div>
+              <p className="text-2xl font-bold text-red-900">{userStats.totalSpent}€</p>
+              <p className="text-xs text-red-600">Tâches créées</p>
             </div>
           </div>
         </motion.div>
-
-        {/* Finances */}
-        {(userStats.totalEarned > 0 || userStats.totalSpent > 0) && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.8 }}
-            className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
-          >
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2 text-blue-600" />
-              Activité Financière
-            </h2>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white text-center shadow-lg">
-                <div className="text-2xl font-bold mb-1">
-                  €{userStats.totalEarned.toFixed(2)}
-                </div>
-                <div className="text-green-100 text-sm">Total gagné</div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-4 text-white text-center shadow-lg">
-                <div className="text-2xl font-bold mb-1">
-                  €{userStats.totalSpent.toFixed(2)}
-                </div>
-                <div className="text-red-100 text-sm">Total dépensé</div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Informations du Compte */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.0, duration: 0.8 }}
-          className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
-        >
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <Calendar className="w-5 h-5 mr-2 text-blue-600" />
-            Informations du Compte
-          </h2>
-          
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl border border-gray-100">
-              <span className="text-gray-600">Membre depuis</span>
-              <span className="font-medium text-gray-900">
-                {new Date(profile.created_at).toLocaleDateString('fr-FR')}
-              </span>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl border border-gray-100">
-              <span className="text-gray-600">Statut</span>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                profile.is_verified ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' : 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white'
-              }`}>
-                {profile.is_verified ? 'Vérifié' : 'En attente'}
-              </span>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Bouton de Déconnexion */}
-        <motion.button
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.2, duration: 0.8 }}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleSignOutClick}
-          className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 px-4 rounded-2xl font-medium hover:shadow-lg transition-all flex items-center justify-center shadow-md"
-        >
-          <LogOut className="w-5 h-5 mr-2" />
-          Se Déconnecter
-        </motion.button>
       </div>
     </div>
   )
