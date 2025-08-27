@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { ArrowLeft, MapPin, Calendar, Euro, User, CheckCircle, MessageCircle, Clock, Star } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { useTaskActions } from '../hooks/useTaskActions'
 import { useAuth } from '../hooks/useAuth'
 import type { Database } from '../lib/supabase'
 
@@ -19,15 +19,15 @@ const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
     
     if (data.display_name) {
       // Extraire les parties les plus pertinentes de l'adresse
-      const addressParts = data.display_name.split(', ')
-      const relevantParts = addressParts.slice(0, 3) // Prendre les 3 premières parties
-      return relevantParts.join(', ')
+      const parts = data.display_name.split(', ')
+      const relevantParts = parts.slice(0, 4).join(', ')
+      return relevantParts
     }
     
-    return 'Adresse non trouvée'
+    return 'Adresse non disponible'
   } catch (error) {
-    console.error('Erreur de géocodification:', error)
-    return 'Erreur de géocodification'
+    console.error('Erreur de géocodification inverse:', error)
+    return 'Adresse non disponible'
   }
 }
 
@@ -44,15 +44,24 @@ interface TaskDetailProps {
 
 export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps) {
   const { user } = useAuth()
-  const [actionLoading, setActionLoading] = useState(false)
+  const { 
+    acceptTask, 
+    startTask, 
+    completeTask, 
+    cancelTask,
+    canAcceptTask,
+    canStartTask,
+    canCompleteTask,
+    canCancelTask,
+    loading,
+    error
+  } = useTaskActions()
+  
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null)
   const [isLoadingAddress, setIsLoadingAddress] = useState(false)
 
   const isAuthor = user?.id === task.author
   const isHelper = user?.id === task.helper
-  const canAccept = !isAuthor && !isHelper && task.status === 'open'
-  const canComplete = (isAuthor || isHelper) && task.status === 'in-progress'
-  const canCancel = (isAuthor || isHelper) && ['open', 'accepted', 'in-progress'].includes(task.status)
 
   // Récupérer l'adresse à partir des coordonnées si elle n'est pas stockée
   useEffect(() => {
@@ -78,8 +87,6 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
         } finally {
           setIsLoadingAddress(false)
         }
-      } else {
-        setResolvedAddress('Aucune localisation')
       }
     }
 
@@ -89,99 +96,48 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
   const handleAcceptTask = async () => {
     if (!user) return
 
-    setActionLoading(true)
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ 
-          status: 'accepted',
-          helper: user.id 
-        })
-        .eq('id', task.id)
-
-      if (error) throw error
-
+    const success = await acceptTask(task.id)
+    if (success) {
       // Recharger la page ou mettre à jour l'état
       window.location.reload()
-    } catch (error) {
-      console.error('Error accepting task:', error)
-      alert('Erreur lors de l\'acceptation de la tâche')
-    } finally {
-      setActionLoading(false)
     }
   }
 
   const handleStartTask = async () => {
     if (!user) return
 
-    setActionLoading(true)
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: 'in-progress' })
-        .eq('id', task.id)
-
-      if (error) throw error
-
+    const success = await startTask(task.id)
+    if (success) {
       window.location.reload()
-    } catch (error) {
-      console.error('Error starting task:', error)
-      alert('Erreur lors du démarrage de la tâche')
-    } finally {
-      setActionLoading(false)
     }
   }
 
   const handleCompleteTask = async () => {
     if (!user) return
 
-    setActionLoading(true)
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: 'completed' })
-        .eq('id', task.id)
-
-      if (error) throw error
-
+    const success = await completeTask(task.id)
+    if (success) {
       window.location.reload()
-    } catch (error) {
-      console.error('Error completing task:', error)
-      alert('Erreur lors de la finalisation de la tâche')
-    } finally {
-      setActionLoading(false)
     }
   }
 
   const handleCancelTask = async () => {
     if (!user) return
 
-    setActionLoading(true)
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: 'cancelled' })
-        .eq('id', task.id)
-
-      if (error) throw error
-
+    const success = await cancelTask(task.id)
+    if (success) {
       window.location.reload()
-    } catch (error) {
-      console.error('Error cancelling task:', error)
-      alert('Erreur lors de l\'annulation de la tâche')
-    } finally {
-      setActionLoading(false)
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'bg-blue-100 text-blue-800'
-      case 'accepted': return 'bg-yellow-100 text-yellow-800'
-      case 'in-progress': return 'bg-orange-100 text-orange-800'
-      case 'completed': return 'bg-green-100 text-green-800'
-      case 'cancelled': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'open': return 'bg-green-100 text-green-800 border-green-200'
+      case 'accepted': return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'in-progress': return 'bg-orange-100 text-orange-800 border-orange-200'
+      case 'completed': return 'bg-purple-100 text-purple-800 border-purple-200'
+      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200'
+      default: return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
 
@@ -189,7 +145,7 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
     switch (status) {
       case 'open': return 'Ouverte'
       case 'accepted': return 'Acceptée'
-      case 'in-progress': return 'En cours'
+      case 'in-progress': return 'En Cours'
       case 'completed': return 'Terminée'
       case 'cancelled': return 'Annulée'
       default: return status
@@ -197,9 +153,9 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 bg-white">
+      <div className="bg-white border-b border-gray-200 p-4">
         <div className="flex items-center space-x-3">
           <button
             onClick={onBack}
@@ -207,6 +163,7 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
+          
           <div className="flex-1">
             <h1 className="text-lg font-semibold text-gray-900">Détails de la Tâche</h1>
             <div className="flex items-center space-x-2 mt-1">
@@ -219,7 +176,7 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="p-4 space-y-6">
         {/* Title and Description */}
         <div>
           <h2 className="text-xl font-bold text-gray-900 mb-3">{task.title}</h2>
@@ -227,7 +184,7 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
         </div>
 
         {/* Task Info Grid */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex items-center space-x-2 mb-2">
               <Euro className="w-5 h-5 text-green-600" />
@@ -248,99 +205,88 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
         </div>
 
         {/* Location */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-            <MapPin className="w-5 h-5 mr-2 text-red-600" />
-            Localisation
-          </h3>
-          <div className="bg-gray-50 rounded-lg p-4">
-            {isLoadingAddress ? (
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span className="text-gray-600">Récupération de l'adresse...</span>
-              </div>
-            ) : (
-              <div className="flex items-start space-x-3">
-                <MapPin className="w-5 h-5 text-red-600 mt-0.5" />
-                <div>
-                  <p className="font-medium text-gray-900">{resolvedAddress || 'Adresse non disponible'}</p>
-                </div>
-              </div>
-            )}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <div className="flex items-center space-x-2 mb-2">
+            <MapPin className="w-5 h-5 text-red-600" />
+            <span className="text-sm font-medium text-gray-600">Localisation</span>
           </div>
+          <p className="text-gray-900">
+            {isLoadingAddress ? (
+              <span className="text-gray-500">Chargement de l'adresse...</span>
+            ) : (
+              resolvedAddress || 'Adresse non disponible'
+            )}
+          </p>
         </div>
 
         {/* Participants */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Participants</h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Auteur</p>
+                <p className="text-sm text-gray-600">{task.author_profile?.name || 'Anonyme'}</p>
+              </div>
+            </div>
+          </div>
+
+          {task.helper_profile && (
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">Auteur</p>
-                  <p className="text-sm text-gray-600">{task.author_profile?.name || 'Anonyme'}</p>
+                  <p className="font-medium text-gray-900">Aide</p>
+                  <p className="text-sm text-gray-600">{task.helper_profile.name}</p>
                 </div>
               </div>
             </div>
-
-            {task.helper_profile && (
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Aide</p>
-                    <p className="text-sm text-gray-600">{task.helper_profile.name}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Actions */}
         <div className="space-y-3">
-          {canAccept && (
+          {canAcceptTask(task) && (
             <button
               onClick={handleAcceptTask}
-              disabled={actionLoading}
+              disabled={loading}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
             >
-              {actionLoading ? 'Acceptation...' : 'Accepter cette tâche'}
+              {loading ? 'Acceptation...' : 'Accepter cette tâche'}
             </button>
           )}
 
-          {isHelper && task.status === 'accepted' && (
+          {canStartTask(task) && (
             <button
               onClick={handleStartTask}
-              disabled={actionLoading}
+              disabled={loading}
               className="w-full bg-orange-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-700 disabled:bg-orange-300 transition-colors"
             >
-              {actionLoading ? 'Démarrage...' : 'Démarrer la tâche'}
+              {loading ? 'Démarrage...' : 'Démarrer la tâche'}
             </button>
           )}
 
-          {canComplete && (
+          {canCompleteTask(task) && (
             <button
               onClick={handleCompleteTask}
-              disabled={actionLoading}
+              disabled={loading}
               className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 disabled:bg-green-300 transition-colors"
             >
-              {actionLoading ? 'Finalisation...' : 'Marquer comme terminée'}
+              {loading ? 'Finalisation...' : 'Marquer comme terminée'}
             </button>
           )}
 
-          {canCancel && (
+          {canCancelTask(task) && (
             <button
               onClick={handleCancelTask}
-              disabled={actionLoading}
+              disabled={loading}
               className="w-full bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 disabled:bg-red-300 transition-colors"
             >
-              {actionLoading ? 'Annulation...' : 'Annuler la tâche'}
+              {loading ? 'Annulation...' : 'Annuler la tâche'}
             </button>
           )}
 
@@ -355,6 +301,13 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
             </button>
           )}
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
       </div>
     </div>
   )

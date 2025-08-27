@@ -8,6 +8,7 @@ import BottomNavigation from './components/BottomNavigation'
 import TaskFeed from './components/TaskFeed'
 import CreateTask from './components/CreateTask'
 import MyTasks from './components/MyTasks'
+import AcceptedTasks from './components/AcceptedTasks'
 import Messages from './components/Messages'
 import Profile from './components/Profile'
 import TaskDetail from './components/TaskDetail'
@@ -19,7 +20,7 @@ type Task = Database['public']['Tables']['tasks']['Row'] & {
   author_profile?: Database['public']['Tables']['profiles']['Row']
 }
 
-type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
+type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'accepted-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
 
 function App() {
   const { user, loading } = useAuth()
@@ -136,6 +137,9 @@ function App() {
             onTaskAccepted={handleTaskAccepted}
           />
         )
+      
+      case 'accepted-tasks':
+        return <AcceptedTasks />
       
       case 'messages':
         return <Messages onChatOpen={handleChatOpen} />
