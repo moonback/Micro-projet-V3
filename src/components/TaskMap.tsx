@@ -28,11 +28,18 @@ export default function TaskMap({ tasks, onTaskPress }: TaskMapProps) {
     if (!mapContainerRef.current) return
 
     // Initialize map
-    mapRef.current = L.map(mapContainerRef.current).setView([52.3676, 4.9041], 13) // Amsterdam
+    mapRef.current = L.map(mapContainerRef.current).setView([48.8566, 2.3522], 13) // Paris
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(mapRef.current)
+
+    // Force a resize to ensure the map renders properly
+    setTimeout(() => {
+      if (mapRef.current) {
+        mapRef.current.invalidateSize()
+      }
+    }, 100)
 
     return () => {
       if (mapRef.current) {
@@ -93,5 +100,10 @@ export default function TaskMap({ tasks, onTaskPress }: TaskMapProps) {
     }
   }, [tasks, onTaskPress])
 
-  return <div ref={mapContainerRef} className="w-full h-full min-h-[400px]" />
+  return (
+    <div 
+      ref={mapContainerRef} 
+      className="map-container"
+    />
+  )
 }

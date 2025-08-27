@@ -20,7 +20,7 @@ export default function LocationPicker({ onLocationSelect, onCancel }: LocationP
     if (!mapContainerRef.current) return
 
     // Initialize map
-    mapRef.current = L.map(mapContainerRef.current).setView([52.3676, 4.9041], 13) // Amsterdam
+    mapRef.current = L.map(mapContainerRef.current).setView([48.8566, 2.3522], 13) // Paris
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
@@ -42,6 +42,13 @@ export default function LocationPicker({ onLocationSelect, onCancel }: LocationP
       // Reverse geocode to get address (simplified)
       setAddress(`${lat.toFixed(4)}, ${lng.toFixed(4)}`)
     })
+
+    // Force a resize to ensure the map renders properly
+    setTimeout(() => {
+      if (mapRef.current) {
+        mapRef.current.invalidateSize()
+      }
+    }, 100)
 
     return () => {
       if (mapRef.current) {
@@ -83,10 +90,13 @@ export default function LocationPicker({ onLocationSelect, onCancel }: LocationP
       </div>
 
       <div className="flex-1 relative">
-        <div ref={mapContainerRef} className="w-full h-full" />
+        <div 
+          ref={mapContainerRef} 
+          className="map-container"
+        />
         
         {selectedLocation && (
-          <div className="absolute bottom-4 left-4 right-4 bg-white rounded-lg border border-gray-200 p-4 shadow-lg">
+          <div className="absolute bottom-4 left-4 right-4 bg-white rounded-lg border border-gray-200 p-4 shadow-lg z-10">
             <p className="text-sm text-gray-600 mb-2">Emplacement sélectionné :</p>
             <p className="font-medium mb-3">{address}</p>
             <button
@@ -101,7 +111,7 @@ export default function LocationPicker({ onLocationSelect, onCancel }: LocationP
       </div>
 
       {!selectedLocation && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
           <div className="bg-white rounded-lg shadow-lg p-3 border border-gray-200">
             <p className="text-sm text-gray-600">Appuyez sur la carte pour sélectionner un emplacement</p>
           </div>
