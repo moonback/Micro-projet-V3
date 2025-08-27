@@ -167,14 +167,17 @@ function App() {
 
   if (loading && !hasSeenSplash) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Chargement de MicroTask...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-md mx-auto bg-white shadow-lg min-h-screen flex flex-col">
         <main className="flex-1 overflow-hidden">
           {renderCurrentView()}
@@ -184,16 +187,14 @@ function App() {
         )}
       </div>
 
-      {/* Notifications */}
+      {/* Nouveau système de notifications */}
+      <NotificationToast />
+
+      {/* Ancien système de notifications pour compatibilité */}
       {notifications.map((notification) => (
-        <NotificationToast
-          key={notification.id}
-          type={notification.type}
-          message={notification.message}
-          isVisible={true}
-          onClose={() => removeNotification(notification.id)}
-          duration={notification.duration}
-        />
+        <div key={notification.id} className="hidden">
+          {/* Les anciennes notifications sont maintenant gérées par react-hot-toast */}
+        </div>
       ))}
     </div>
   )

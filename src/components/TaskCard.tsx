@@ -1,5 +1,6 @@
 import React from 'react'
-import { Clock, MapPin, Euro, User } from 'lucide-react'
+import { Clock, MapPin, Euro, User, CheckCircle, Truck, Wrench, ShoppingCart, Home, PawPrint, Leaf, Monitor, BookOpen, Package } from 'lucide-react'
+import { motion } from 'framer-motion'
 import type { Database } from '../lib/supabase'
 
 type Task = Database['public']['Tables']['tasks']['Row'] & {
@@ -29,11 +30,11 @@ export default function TaskCard({ task, onPress }: TaskCardProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'bg-green-100 text-green-800'
-      case 'accepted': return 'bg-blue-100 text-blue-800'
-      case 'in-progress': return 'bg-orange-100 text-orange-800'
-      case 'completed': return 'bg-purple-100 text-purple-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'open': return 'bg-green-100 text-green-800 border-green-200'
+      case 'accepted': return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'in-progress': return 'bg-orange-100 text-orange-800 border-orange-200'
+      case 'completed': return 'bg-purple-100 text-purple-800 border-purple-200'
+      default: return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
 
@@ -47,54 +48,100 @@ export default function TaskCard({ task, onPress }: TaskCardProps) {
     }
   }
 
+  const getCategoryIcon = (category: string) => {
+    switch (category?.toLowerCase()) {
+      case 'livraison': return Truck
+      case 'nettoyage': return Wrench
+      case 'courses': return ShoppingCart
+      case 'déménagement': return Package
+      case 'montage': return Wrench
+      case 'garde d\'animaux': return PawPrint
+      case 'jardinage': return Leaf
+      case 'aide informatique': return Monitor
+      case 'cours particuliers': return BookOpen
+      default: return Package
+    }
+  }
+
+  const CategoryIcon = getCategoryIcon(task.category)
+
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      whileHover={{ y: -2 }}
       onClick={() => onPress(task)}
-      className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer group"
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 text-lg mb-1 line-clamp-2">
-            {task.title}
-          </h3>
-          <p className="text-gray-600 text-sm line-clamp-2 mb-2">
-            {task.description}
-          </p>
+      {/* Header avec statut et catégorie */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+            <CategoryIcon className="w-6 h-6 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900 text-lg mb-1 line-clamp-2 leading-tight">
+              {task.title}
+            </h3>
+            <p className="text-gray-600 text-sm line-clamp-2 leading-relaxed">
+              {task.description}
+            </p>
+          </div>
         </div>
-        <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
+        
+        <div className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getStatusColor(task.status)}`}>
           {getStatusLabel(task.status)}
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-        <div className="flex items-center">
-          <User className="w-4 h-4 mr-1" />
-          <span>{task.author_profile?.name || 'Anonyme'}</span>
+      {/* Informations de la tâche */}
+      <div className="space-y-3 mb-4">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center text-gray-600">
+            <User className="w-4 h-4 mr-2" />
+            <span className="font-medium">{task.author_profile?.name || 'Anonyme'}</span>
+          </div>
+          <div className="flex items-center text-gray-500">
+            <Clock className="w-4 h-4 mr-2" />
+            <span>{formatTimeAgo(task.created_at)}</span>
+          </div>
         </div>
-        <div className="flex items-center">
-          <Clock className="w-4 h-4 mr-1" />
-          <span>{formatTimeAgo(task.created_at)}</span>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center text-gray-600">
+            <MapPin className="w-4 h-4 mr-2" />
+            <span className="text-sm">{task.address || formatDistance(task.location)}</span>
+          </div>
+          
+          <div className="flex items-center bg-green-50 px-3 py-2 rounded-xl">
+            <Euro className="w-5 h-5 text-green-600 mr-1" />
+            <span className="font-bold text-lg text-green-700">€{task.budget}</span>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center text-sm text-gray-600">
-          <MapPin className="w-4 h-4 mr-1" />
-          <span>{task.address || formatDistance(task.location)}</span>
-        </div>
-        <div className="flex items-center font-semibold text-lg text-green-600">
-          <Euro className="w-5 h-5 mr-1" />
-          <span>{task.budget}</span>
-        </div>
-      </div>
-
+      {/* Catégorie */}
       {task.category && (
-        <div className="mt-3">
-          <span className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
+        <div className="flex items-center justify-between">
+          <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium">
             {task.category}
           </span>
+          
+          {/* Bouton CTA */}
+          {task.status === 'open' && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-colors flex items-center space-x-2"
+            >
+              <CheckCircle className="w-4 h-4" />
+              <span>Accepter</span>
+            </motion.button>
+          )}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
