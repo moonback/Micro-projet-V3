@@ -3,23 +3,19 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Clock, CheckCircle, XCircle, AlertTriangle, Star, Euro, MapPin, Calendar, Tag, Zap, TrendingUp, ChevronRight, ListTodo } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import type { Database } from '../lib/supabase'
+import type { TaskWithProfiles } from '../types/task'
 import Header from './Header'
 import TaskCard from './TaskCard'
 
-type Task = Database['public']['Tables']['tasks']['Row'] & {
-  author_profile?: Database['public']['Tables']['profiles']['Row']
-}
-
 interface MyTasksProps {
-  onTaskPress: (task: Task) => void
+  onTaskPress: (task: TaskWithProfiles) => void
   onCreateTask: () => void
   onTaskAccepted?: (taskId: string) => void
 }
 
 export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: MyTasksProps) {
   const { user } = useAuth()
-  const [tasks, setTasks] = useState<Task[]>([])
+  const [tasks, setTasks] = useState<TaskWithProfiles[]>([])
   const [activeTab, setActiveTab] = useState<'created' | 'accepted'>('created')
   const [loading, setLoading] = useState(true)
 

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, MapPin, Euro, Calendar, Clock, Star, MessageCircle, CheckCircle, Play, XCircle, AlertTriangle, User, Tag, Zap, TrendingUp, Shield, Heart, Crown, Globe, Building, Camera } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import type { Database } from '../lib/supabase'
+import type { TaskWithProfiles } from '../types/task'
 import Header from './Header'
 
 // Fonction pour récupérer l'adresse à partir des coordonnées GPS
@@ -33,13 +33,8 @@ const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
   }
 }
 
-type Task = Database['public']['Tables']['tasks']['Row'] & {
-  author_profile?: Database['public']['Tables']['profiles']['Row']
-  helper_profile?: Database['public']['Tables']['profiles']['Row']
-}
-
 interface TaskDetailProps {
-  task: Task
+  task: TaskWithProfiles
   onBack: () => void
   onChatOpen: (taskId: string) => void
 }
