@@ -24,15 +24,7 @@ export default function CreateTask() {
   const [country, setCountry] = useState('France')
   const [isUrgent, setIsUrgent] = useState(false)
   const [isFeatured, setIsFeatured] = useState(false)
-  const [availableHours, setAvailableHours] = useState({
-    monday: ['09:00-12:00', '14:00-18:00'],
-    tuesday: ['09:00-12:00', '14:00-18:00'],
-    wednesday: ['09:00-12:00', '14:00-18:00'],
-    thursday: ['09:00-12:00', '14:00-18:00'],
-    friday: ['09:00-12:00', '14:00-18:00'],
-    saturday: ['09:00-12:00'],
-    sunday: []
-  })
+
   const [showLocationPicker, setShowLocationPicker] = useState(false)
   const [loading, setLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -167,7 +159,6 @@ export default function CreateTask() {
         currency: 'EUR',
         is_urgent: isUrgent,
         is_featured: isFeatured,
-        available_hours: availableHours,
         payment_status: 'pending'
       }
 

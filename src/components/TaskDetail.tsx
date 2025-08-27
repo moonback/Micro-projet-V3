@@ -413,27 +413,7 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
           </div>
         )}
 
-        {/* Horaires de disponibilité */}
-        {task.available_hours && (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-              <Clock className="w-5 h-5 mr-2 text-green-600" />
-              Horaires de Disponibilité
-            </h3>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="grid grid-cols-1 gap-2">
-                {Object.entries(task.available_hours).map(([day, hours]) => (
-                  <div key={day} className="flex justify-between items-center">
-                    <span className="font-medium text-gray-700 capitalize">{day}</span>
-                    <span className="text-sm text-gray-600">
-                      {Array.isArray(hours) && hours.length > 0 ? hours.join(', ') : 'Non disponible'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        
 
         {/* Participants */}
         <div>

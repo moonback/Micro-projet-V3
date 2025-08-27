@@ -5,15 +5,7 @@ export interface TaskLocation {
   coordinates: [number, number] // [longitude, latitude]
 }
 
-export interface AvailableHours {
-  monday: string[]
-  tuesday: string[]
-  wednesday: string[]
-  thursday: string[]
-  friday: string[]
-  saturday: string[]
-  sunday: string[]
-}
+
 
 export interface TaskPhotos {
   id: string
@@ -87,7 +79,6 @@ export interface Task {
   // Métadonnées et analytics
   photos?: string[]
   attachments?: TaskAttachments[]
-  available_hours?: AvailableHours
   view_count: number
   application_count: number
   metadata?: TaskMetadata
@@ -143,7 +134,6 @@ export interface CreateTaskData {
   country: string
   is_urgent: boolean
   is_featured: boolean
-  available_hours?: AvailableHours
 }
 
 // Types pour les mises à jour de tâches
