@@ -13,6 +13,7 @@ import Profile from './components/Profile'
 import TaskDetail from './components/TaskDetail'
 import ChatView from './components/ChatView'
 import NotificationToast from './components/NotificationToast'
+import { ConnectionStatus } from './components/ConnectionStatus'
 import type { TaskWithProfiles } from './types/task'
 
 type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
@@ -189,6 +190,9 @@ function App() {
           <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
         )}
       </div>
+
+      {/* Statut de connexion */}
+      <ConnectionStatus />
 
       {/* Nouveau système de notifications */}
       <NotificationToast />
