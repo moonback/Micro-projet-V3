@@ -108,6 +108,7 @@ supabase db reset
 # 4. 20250827090800_remove_available_hours.sql
 # 5. 20250827090900_enhance_messaging_system.sql
 # 6. 20250827091000_fix_profile_policies.sql
+# 7. 20250827091100_add_profile_bio.sql
 ```
 
 ### 3. Variables d'Environnement
