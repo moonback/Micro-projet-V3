@@ -49,9 +49,12 @@ export function useAuth() {
         
         if (mountedRef.current) {
           if (session?.user) {
+            console.log('Initial session found:', session.user.id)
             setUser(session.user)
+            setLoading(true)
             await loadProfile(session.user.id)
           } else {
+            console.log('No initial session found')
             setLoading(false)
           }
         }
@@ -71,24 +74,37 @@ export function useAuth() {
         console.log('Auth state changed:', event, session?.user?.id)
         
         if (event === 'SIGNED_IN' && session?.user) {
+          console.log('User signed in, loading profile...')
           setUser(session.user)
           setLoading(true)
+          setProfileLoading(true)
           await loadProfile(session.user.id)
         } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out')
           setUser(null)
           setProfile(null)
           setLoading(false)
           setProfileLoading(false)
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          // Ne pas recharger le profil pour un refresh de token
+          console.log('Token refreshed')
           setUser(session.user)
+          // Vérifier si le profil est déjà chargé
+          if (!profile) {
+            console.log('Profile not loaded after token refresh, loading...')
+            setProfileLoading(true)
+            await loadProfile(session.user.id)
+          }
         } else if (event === 'USER_UPDATED' && session?.user) {
+          console.log('User updated')
           setUser(session.user)
         } else if (session?.user && !profile) {
+          console.log('Session exists but no profile, loading...')
           setUser(session.user)
           setLoading(true)
+          setProfileLoading(true)
           await loadProfile(session.user.id)
         } else if (!session?.user) {
+          console.log('No session')
           setUser(null)
           setProfile(null)
           setLoading(false)
@@ -103,7 +119,7 @@ export function useAuth() {
       mountedRef.current = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [profile]) // Ajouter profile comme dépendance
 
   const loadProfile = async (userId: string) => {
     if (!mountedRef.current) return
@@ -177,6 +193,7 @@ export function useAuth() {
         const attempts = profileLoadAttempts.current.get(userId) || 0
         if (attempts < 3) {
           profileLoadAttempts.current.set(userId, attempts + 1)
+          console.log(`Retrying profile load in ${1000 * (attempts + 1)}ms (attempt ${attempts + 1}/3)`)
           setTimeout(() => {
             if (mountedRef.current) {
               loadProfile(userId)
@@ -187,7 +204,7 @@ export function useAuth() {
         
         throw error
       } else {
-        console.log('Profile loaded:', data)
+        console.log('Profile loaded successfully:', data)
         
         // Mettre en cache et persister
         profileCache.set(userId, data)
