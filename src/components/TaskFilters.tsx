@@ -3,8 +3,6 @@ import { Filter, X, Search, MapPin, Euro, Clock, Tag, AlertTriangle, Star } from
 import { motion, AnimatePresence } from 'framer-motion'
 
 export interface TaskFilters {
-  minBudget: null
-  maxBudget: null
   search: string
   category: string
   priority: string

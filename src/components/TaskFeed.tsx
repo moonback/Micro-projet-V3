@@ -5,20 +5,15 @@ import { supabase } from '../lib/supabase'
 import TaskCard from './TaskCard'
 import TaskMap from './TaskMap'
 import TaskFilters, { TaskFilters as TaskFiltersType } from './TaskFilters'
-import type { Database } from '../lib/supabase'
-
-type Task = Database['public']['Tables']['tasks']['Row'] & {
-  author_profile?: Database['public']['Tables']['profiles']['Row']
-  urgent?: boolean
-}
+import type { TaskWithProfiles } from '../types/task'
 
 interface TaskFeedProps {
-  onTaskPress: (task: Task) => void
+  onTaskPress: (task: TaskWithProfiles) => void
   onTaskAccepted?: (taskId: string) => void
 }
 
 // Cache global pour les tâches
-let tasksCache: Task[] = []
+let tasksCache: TaskWithProfiles[] = []
 let lastFetchTime = 0
 const CACHE_DURATION = 3 * 60 * 1000 // 3 minutes
 
@@ -77,18 +72,24 @@ const CategorySelector = ({ onSelect, selectedCategory }: { onSelect: (category:
 )
 
 export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps) {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>([])
+  const [tasks, setTasks] = useState<TaskWithProfiles[]>([])
+  const [filteredTasks, setFilteredTasks] = useState<TaskWithProfiles[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState<TaskFiltersType>({
+    search: '',
     category: '',
-    maxBudget: null,
-    minBudget: null,
-    radius: 5,
-    status: 'open'
+    priority: '',
+    budgetMin: '',
+    budgetMax: '',
+    location: '',
+    tags: [],
+    isUrgent: false,
+    isFeatured: false,
+    status: 'open',
+    sortBy: 'created_at'
   })
   const mountedRef = useRef(true)
 
@@ -187,26 +188,26 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
           } else {
             // Mettre à jour le cache localement si possible
             if (payload.eventType === 'INSERT') {
-              const newTask = payload.new as Task
-              tasksCache = [newTask, ...tasksCache]
-              if (mountedRef.current) {
-                setTasks(tasksCache)
-              }
-            } else if (payload.eventType === 'DELETE') {
-              const deletedTask = payload.old as Task
-              tasksCache = tasksCache.filter(task => task.id !== deletedTask.id)
-              if (mountedRef.current) {
-                setTasks(tasksCache)
-              }
-            } else if (payload.eventType === 'UPDATE') {
-              const updatedTask = payload.new as Task
-              const index = tasksCache.findIndex(task => task.id === updatedTask.id)
-              if (index !== -1) {
-                tasksCache[index] = updatedTask
-                if (mountedRef.current) {
-                  setTasks([...tasksCache])
-                }
-              }
+                      const newTask = payload.new as TaskWithProfiles
+        tasksCache = [newTask, ...tasksCache]
+        if (mountedRef.current) {
+          setTasks(tasksCache)
+        }
+      } else if (payload.eventType === 'DELETE') {
+        const deletedTask = payload.old as TaskWithProfiles
+        tasksCache = tasksCache.filter(task => task.id !== deletedTask.id)
+        if (mountedRef.current) {
+          setTasks(tasksCache)
+        }
+      } else if (payload.eventType === 'UPDATE') {
+        const updatedTask = payload.new as TaskWithProfiles
+        const index = tasksCache.findIndex(task => task.id === updatedTask.id)
+        if (index !== -1) {
+          tasksCache[index] = updatedTask
+          if (mountedRef.current) {
+            setTasks([...tasksCache])
+          }
+        }
             }
           }
         }
@@ -253,17 +254,80 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
       filtered = filtered.filter(task => task.category === filters.category)
     }
 
-    // Budget filters
-    if (filters.minBudget !== null) {
-      filtered = filtered.filter(task => task.budget >= filters.minBudget!)
+    // Priority filter
+    if (filters.priority) {
+      filtered = filtered.filter(task => task.priority === filters.priority)
     }
-    if (filters.maxBudget !== null) {
-      filtered = filtered.filter(task => task.budget <= filters.maxBudget!)
+
+    // Budget filters
+    if (filters.budgetMin) {
+      const minBudget = parseFloat(filters.budgetMin)
+      if (!isNaN(minBudget)) {
+        filtered = filtered.filter(task => task.budget >= minBudget)
+      }
+    }
+    if (filters.budgetMax) {
+      const maxBudget = parseFloat(filters.budgetMax)
+      if (!isNaN(maxBudget)) {
+        filtered = filtered.filter(task => task.budget <= maxBudget)
+      }
+    }
+
+    // Location filter
+    if (filters.location) {
+      filtered = filtered.filter(task => 
+        task.city?.toLowerCase().includes(filters.location.toLowerCase()) ||
+        task.postal_code?.includes(filters.location) ||
+        task.country?.toLowerCase().includes(filters.location.toLowerCase())
+      )
+    }
+
+    // Tags filter
+    if (filters.tags.length > 0) {
+      filtered = filtered.filter(task => 
+        task.tags && filters.tags.some(tag => task.tags!.includes(tag))
+      )
+    }
+
+    // Urgent filter
+    if (filters.isUrgent) {
+      filtered = filtered.filter(task => task.is_urgent === true)
+    }
+
+    // Featured filter
+    if (filters.isFeatured) {
+      filtered = filtered.filter(task => task.is_featured === true)
     }
 
     // Status filter
     if (filters.status) {
       filtered = filtered.filter(task => task.status === filters.status)
+    }
+
+    // Sort tasks
+    if (filters.sortBy) {
+      switch (filters.sortBy) {
+        case 'budget':
+          filtered.sort((a, b) => a.budget - b.budget)
+          break
+        case 'budget_desc':
+          filtered.sort((a, b) => b.budget - a.budget)
+          break
+        case 'deadline':
+          filtered.sort((a, b) => {
+            if (!a.deadline || !b.deadline) return 0
+            return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+          })
+          break
+        case 'priority':
+          const priorityOrder: Record<string, number> = { urgent: 4, high: 3, medium: 2, low: 1 }
+          filtered.sort((a, b) => (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0))
+          break
+        case 'created_at':
+        default:
+          filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          break
+      }
     }
 
     setFilteredTasks(filtered)
@@ -288,11 +352,17 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
   const clearFilters = () => {
     setSearchQuery('')
     setFilters({
+      search: '',
       category: '',
-      maxBudget: null,
-      minBudget: null,
-      radius: 5,
-      status: 'open'
+      priority: '',
+      budgetMin: '',
+      budgetMax: '',
+      location: '',
+      tags: [],
+      isUrgent: false,
+      isFeatured: false,
+      status: 'open',
+      sortBy: 'created_at'
     })
   }
 
@@ -373,8 +443,15 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
       {/* Sélecteur de catégories */}
       <CategorySelector onSelect={handleCategorySelect} selectedCategory={filters.category} />
 
+      {/* Composant de filtres avancés */}
+      <TaskFilters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onReset={clearFilters}
+      />
+
       {/* Badge de filtre actif */}
-      {(filters.category || searchQuery) && (
+      {(filters.category || searchQuery || filters.priority || filters.budgetMin || filters.budgetMax || filters.location || filters.tags.length > 0 || filters.isUrgent || filters.isFeatured || filters.status || filters.sortBy !== 'created_at') && (
         <motion.div 
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -384,7 +461,7 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-blue-600" />
               <span className="text-blue-700 font-medium text-sm">
-                Filtres actifs: {filters.category && `${filters.category}`} {searchQuery && `"${searchQuery}"`}
+                Filtres actifs: {filters.category && `${filters.category}`} {searchQuery && `"${searchQuery}"`} {filters.priority && `${filters.priority}`} {filters.budgetMin && `≥${filters.budgetMin}€`} {filters.budgetMax && `≤${filters.budgetMax}€`} {filters.location && `${filters.location}`} {filters.tags.length > 0 && `${filters.tags.length} tag(s)`} {filters.isUrgent && 'Urgent'} {filters.isFeatured && 'Mis en avant'} {filters.status && `${filters.status}`} {filters.sortBy !== 'created_at' && `${filters.sortBy}`}
               </span>
             </div>
             <button

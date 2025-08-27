@@ -3,15 +3,11 @@ import { Clock, MapPin, Euro, User, CheckCircle, Truck, Wrench, ShoppingCart, Ho
 import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import type { Database } from '../lib/supabase'
-
-type Task = Database['public']['Tables']['tasks']['Row'] & {
-  author_profile?: Database['public']['Tables']['profiles']['Row']
-}
+import type { TaskWithProfiles } from '../types/task'
 
 interface TaskCardProps {
-  task: Task
-  onPress: (task: Task) => void
+  task: TaskWithProfiles
+  onPress: (task: TaskWithProfiles) => void
   onTaskAccepted?: (taskId: string) => void
 }
 
