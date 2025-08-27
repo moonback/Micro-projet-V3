@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from './useAuth'
+import { showNotification } from '../components/NotificationToast'
 import type { Database } from '../lib/supabase'
 
 type Task = Database['public']['Tables']['tasks']['Row'] & {
@@ -10,121 +10,212 @@ type Task = Database['public']['Tables']['tasks']['Row'] & {
 
 type TaskAcceptance = Database['public']['Tables']['task_acceptances']['Row']
 
+type PendingRequest = Database['public']['Tables']['pending_task_requests']['Row'] & {
+  task: Task
+  helper_profile?: Database['public']['Tables']['profiles']['Row']
+}
+
 export function useTaskActions() {
-  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Accepter une tâche
-  const acceptTask = async (taskId: string, notes?: string): Promise<boolean> => {
-    if (!user) {
-      setError('Vous devez être connecté pour accepter une tâche')
-      return false
-    }
-
+  // NOUVELLE FONCTIONNALITÉ: Demander l'approbation d'une tâche
+  const requestTaskApproval = async (taskId: string, notes?: string): Promise<boolean> => {
     setLoading(true)
     setError(null)
-
+    
     try {
-      // Utiliser la fonction PostgreSQL pour accepter la tâche
-      const { data, error: functionError } = await supabase.rpc('accept_task', {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utilisateur non connecté')
+
+      const { data, error } = await supabase.rpc('request_task_approval', {
         p_task_id: taskId,
         p_helper_id: user.id,
         p_notes: notes || null
       })
 
-      if (functionError) {
-        throw functionError
-      }
+      if (error) throw error
 
+      showNotification('success', 'Demande envoyée ! En attente d\'approbation du créateur.')
       return true
     } catch (err: any) {
-      console.error('Erreur lors de l\'acceptation de la tâche:', err)
-      setError(err.message || 'Erreur lors de l\'acceptation de la tâche')
+      const errorMessage = err.message || 'Erreur lors de l\'envoi de la demande'
+      setError(errorMessage)
+      showNotification('error', errorMessage)
       return false
     } finally {
       setLoading(false)
     }
   }
 
-  // Démarrer une tâche
+  // NOUVELLE FONCTIONNALITÉ: Approuver une demande
+  const approveTaskRequest = async (taskId: string): Promise<boolean> => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utilisateur non connecté')
+
+      const { data, error } = await supabase.rpc('approve_task_request', {
+        p_task_id: taskId,
+        p_author_id: user.id
+      })
+
+      if (error) throw error
+
+      showNotification('success', 'Demande approuvée ! La tâche est maintenant acceptée.')
+      return true
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erreur lors de l\'approbation'
+      setError(errorMessage)
+      showNotification('error', errorMessage)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // NOUVELLE FONCTIONNALITÉ: Rejeter une demande
+  const rejectTaskRequest = async (taskId: string): Promise<boolean> => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utilisateur non connecté')
+
+      const { data, error } = await supabase.rpc('reject_task_request', {
+        p_task_id: taskId,
+        p_author_id: user.id
+      })
+
+      if (error) throw error
+
+      showNotification('success', 'Demande rejetée. La tâche est de nouveau disponible.')
+      return true
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erreur lors du rejet'
+      setError(errorMessage)
+      showNotification('error', errorMessage)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // NOUVELLE FONCTIONNALITÉ: Prolonger une demande
+  const extendTaskRequest = async (taskId: string, extensionMinutes: number = 5): Promise<boolean> => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utilisateur non connecté')
+
+      const { data, error } = await supabase.rpc('extend_task_request', {
+        p_task_id: taskId,
+        p_author_id: user.id,
+        p_extension_minutes: extensionMinutes
+      })
+
+      if (error) throw error
+
+      showNotification('success', `Demande prolongée de ${extensionMinutes} minutes.`)
+      return true
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erreur lors de la prolongation'
+      setError(errorMessage)
+      showNotification('error', errorMessage)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fonction existante modifiée pour utiliser le nouveau système
+  const acceptTask = async (taskId: string, notes?: string): Promise<boolean> => {
+    // Maintenant, on envoie une demande d'approbation au lieu d'accepter directement
+    return requestTaskApproval(taskId, notes)
+  }
+
   const startTask = async (taskId: string): Promise<boolean> => {
-    if (!user) {
-      setError('Vous devez être connecté pour démarrer une tâche')
-      return false
-    }
-
     setLoading(true)
     setError(null)
-
+    
     try {
-      const { data, error: functionError } = await supabase.rpc('start_task', {
+      const { data, error } = await supabase.rpc('start_task', {
         p_task_id: taskId
       })
 
-      if (functionError) {
-        throw functionError
-      }
+      if (error) throw error
 
+      showNotification('success', 'Tâche démarrée avec succès !')
       return true
     } catch (err: any) {
-      console.error('Erreur lors du démarrage de la tâche:', err)
-      setError(err.message || 'Erreur lors du démarrage de la tâche')
+      const errorMessage = err.message || 'Erreur lors du démarrage de la tâche'
+      setError(errorMessage)
+      showNotification('error', errorMessage)
       return false
     } finally {
       setLoading(false)
     }
   }
 
-  // Terminer une tâche
   const completeTask = async (taskId: string): Promise<boolean> => {
-    if (!user) {
-      setError('Vous devez être connecté pour terminer une tâche')
-      return false
-    }
-
     setLoading(true)
     setError(null)
-
+    
     try {
-      const { data, error: functionError } = await supabase.rpc('complete_task', {
+      const { data, error } = await supabase.rpc('complete_task', {
         p_task_id: taskId
       })
 
-      if (functionError) {
-        throw functionError
-      }
+      if (error) throw error
 
+      showNotification('success', 'Tâche terminée avec succès !')
       return true
     } catch (err: any) {
-      console.error('Erreur lors de la finalisation de la tâche:', err)
-      setError(err.message || 'Erreur lors de la finalisation de la tâche')
+      const errorMessage = err.message || 'Erreur lors de la finalisation de la tâche'
+      setError(errorMessage)
+      showNotification('error', errorMessage)
       return false
     } finally {
       setLoading(false)
     }
   }
 
-  // Annuler une tâche
   const cancelTask = async (taskId: string): Promise<boolean> => {
-    if (!user) {
-      setError('Vous devez être connecté pour annuler une tâche')
-      return false
-    }
-
     setLoading(true)
     setError(null)
-
+    
     try {
-      // Mettre à jour le statut de la tâche
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utilisateur non connecté')
+
+      // Vérifier si c'est une tâche en attente d'approbation
+      const { data: pendingRequest } = await supabase
+        .from('pending_task_requests')
+        .select('*')
+        .eq('task_id', taskId)
+        .eq('status', 'pending')
+        .single()
+
+      if (pendingRequest) {
+        // Si c'est une demande en attente, la rejeter
+        return rejectTaskRequest(taskId)
+      }
+
+      // Sinon, annuler normalement
       const { error } = await supabase
         .from('tasks')
         .update({ 
-          status: 'cancelled',
-          helper: null
+          status: 'cancelled', 
+          helper: null,
+          updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
-        .or(`author.eq.${user.id},helper.eq.${user.id}`)
+        .eq('author', user.id)
 
       if (error) throw error
 
@@ -135,78 +226,146 @@ export function useTaskActions() {
         .eq('task_id', taskId)
         .eq('helper_id', user.id)
 
+      showNotification('success', 'Tâche annulée avec succès !')
       return true
     } catch (err: any) {
-      console.error('Erreur lors de l\'annulation de la tâche:', err)
-      setError(err.message || 'Erreur lors de l\'annulation de la tâche')
+      const errorMessage = err.message || 'Erreur lors de l\'annulation de la tâche'
+      setError(errorMessage)
+      showNotification('error', errorMessage)
       return false
     } finally {
       setLoading(false)
     }
   }
 
-  // Vérifier si l'utilisateur peut accepter une tâche
+  // NOUVELLES FONCTIONS: Vérifier les permissions avec le nouveau système
+  const canRequestTask = (task: Task): boolean => {
+    if (!task) return false
+    if (task.status !== 'open') return false
+    if (task.author === (supabase.auth.getUser() as any)?.data?.user?.id) return false
+    return true
+  }
+
+  const canApproveRequest = (task: Task): boolean => {
+    if (!task) return false
+    if (task.status !== 'pending-approval') return false
+    if (task.author !== (supabase.auth.getUser() as any)?.data?.user?.id) return false
+    return true
+  }
+
+  const canRejectRequest = (task: Task): boolean => {
+    return canApproveRequest(task) // Même logique
+  }
+
+  const canExtendRequest = (task: Task): boolean => {
+    return canApproveRequest(task) // Même logique
+  }
+
   const canAcceptTask = (task: Task): boolean => {
-    if (!user) return false
-    if (task.author === user.id) return false // L'auteur ne peut pas accepter sa propre tâche
-    if (task.status !== 'open') return false // Seules les tâches ouvertes peuvent être acceptées
-    if (task.helper) return false // La tâche a déjà un aide
-    return true
+    // Maintenant, on ne peut plus accepter directement - il faut demander l'approbation
+    return canRequestTask(task)
   }
 
-  // Vérifier si l'utilisateur peut démarrer une tâche
   const canStartTask = (task: Task): boolean => {
-    if (!user) return false
+    if (!task) return false
     if (task.status !== 'accepted') return false
-    if (task.helper !== user.id) return false // Seul l'aide peut démarrer la tâche
+    if (task.helper !== (supabase.auth.getUser() as any)?.data?.user?.id) return false
     return true
   }
 
-  // Vérifier si l'utilisateur peut terminer une tâche
   const canCompleteTask = (task: Task): boolean => {
-    if (!user) return false
+    if (!task) return false
     if (task.status !== 'in-progress') return false
-    if (task.helper !== user.id) return false // Seul l'aide peut terminer la tâche
+    if (task.helper !== (supabase.auth.getUser() as any)?.data?.user?.id) return false
     return true
   }
 
-  // Vérifier si l'utilisateur peut annuler une tâche
   const canCancelTask = (task: Task): boolean => {
-    if (!user) return false
-    if (['completed', 'cancelled'].includes(task.status)) return false
-    if (task.author !== user.id && task.helper !== user.id) return false
-    return true
+    if (!task) return false
+    const userId = (supabase.auth.getUser() as any)?.data?.user?.id
+    if (!userId) return false
+    
+    // L'auteur peut toujours annuler
+    if (task.author === userId) return true
+    
+    // L'aide peut annuler si la tâche est acceptée ou en cours
+    if (task.helper === userId && ['accepted', 'in-progress'].includes(task.status)) return true
+    
+    // L'aide peut annuler sa demande en attente
+    if (task.status === 'pending-approval' && task.helper === userId) return true
+    
+    return false
   }
 
-  // Récupérer les tâches acceptées par l'utilisateur
-  const getAcceptedTasks = async (): Promise<Task[]> => {
-    if (!user) return []
-
+  // NOUVELLE FONCTIONNALITÉ: Récupérer les demandes en attente
+  const getPendingRequests = async (): Promise<PendingRequest[]> => {
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return []
+
+      const { data, error } = await supabase
+        .from('pending_task_requests')
+        .select(`
+          *,
+          task:tasks(*, author_profile:profiles!tasks_author_fkey(*), helper_profile:profiles!tasks_helper_fkey(*)),
+          helper_profile:profiles!pending_task_requests_helper_id_fkey(*)
+        `)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      return data || []
+    } catch (err) {
+      console.error('Erreur lors de la récupération des demandes en attente:', err)
+      return []
+    }
+  }
+
+  // NOUVELLE FONCTIONNALITÉ: Récupérer les demandes en attente pour l'auteur
+  const getPendingRequestsForAuthor = async (): Promise<PendingRequest[]> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return []
+
+      const { data, error } = await supabase
+        .from('pending_task_requests')
+        .select(`
+          *,
+          task:tasks(*, author_profile:profiles!tasks_author_fkey(*), helper_profile:profiles!tasks_helper_fkey(*)),
+          helper_profile:profiles!pending_task_requests_helper_id_fkey(*)
+        `)
+        .eq('status', 'pending')
+        .eq('task.author', user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      return data || []
+    } catch (err) {
+      console.error('Erreur lors de la récupération des demandes en attente:', err)
+      return []
+    }
+  }
+
+  const getAcceptedTasks = async (): Promise<Task[]> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return []
+
       const { data, error } = await supabase
         .from('tasks')
         .select(`
           *,
-          author_profile:profiles!tasks_author_fkey (
-            id,
-            name,
-            avatar_url,
-            rating,
-            rating_count
-          ),
-          helper_profile:profiles!tasks_helper_fkey (
-            id,
-            name,
-            avatar_url,
-            rating,
-            rating_count
-          )
+          author_profile:profiles!tasks_author_fkey(*),
+          helper_profile:profiles!tasks_helper_fkey(*)
         `)
         .eq('helper', user.id)
-        .in('status', ['accepted', 'in-progress', 'completed'])
-        .order('created_at', { ascending: false })
+        .in('status', ['accepted', 'in-progress'])
+        .order('updated_at', { ascending: false })
 
       if (error) throw error
+
       return data || []
     } catch (err) {
       console.error('Erreur lors de la récupération des tâches acceptées:', err)
@@ -214,33 +373,19 @@ export function useTaskActions() {
     }
   }
 
-  // Récupérer l'historique des acceptations
   const getAcceptanceHistory = async (): Promise<TaskAcceptance[]> => {
-    if (!user) return []
-
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return []
+
       const { data, error } = await supabase
         .from('task_acceptances')
-        .select(`
-          *,
-          task:tasks (
-            id,
-            title,
-            description,
-            category,
-            budget,
-            status,
-            author_profile:profiles!tasks_author_fkey (
-              id,
-              name,
-              avatar_url
-            )
-          )
-        `)
+        .select('*')
         .eq('helper_id', user.id)
         .order('created_at', { ascending: false })
 
       if (error) throw error
+
       return data || []
     } catch (err) {
       console.error('Erreur lors de la récupération de l\'historique:', err)
@@ -248,29 +393,42 @@ export function useTaskActions() {
     }
   }
 
-  // Effacer l'erreur
   const clearError = () => {
     setError(null)
   }
 
   return {
-    // Actions
+    // Nouvelles fonctionnalités
+    requestTaskApproval,
+    approveTaskRequest,
+    rejectTaskRequest,
+    extendTaskRequest,
+    getPendingRequests,
+    getPendingRequestsForAuthor,
+    
+    // Fonctions existantes modifiées
     acceptTask,
     startTask,
     completeTask,
     cancelTask,
     
-    // Vérifications
+    // Nouvelles vérifications de permissions
+    canRequestTask,
+    canApproveRequest,
+    canRejectRequest,
+    canExtendRequest,
+    
+    // Vérifications existantes
     canAcceptTask,
     canStartTask,
     canCompleteTask,
     canCancelTask,
     
-    // Récupération de données
+    // Fonctions utilitaires
     getAcceptedTasks,
     getAcceptanceHistory,
     
-    // État
+    // États
     loading,
     error,
     clearError

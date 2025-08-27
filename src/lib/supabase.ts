@@ -88,6 +88,28 @@ export type Database = {
           stripe_payment_intent?: string | null
         }
       }
+      pending_task_requests: {
+        Row: {
+          id: string
+          task_id: string
+          helper_id: string
+          requested_at: string
+          expires_at: string
+          status: string
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          task_id: string
+          helper_id: string
+          notes?: string | null
+        }
+        Update: {
+          status?: string
+          notes?: string | null
+          expires_at?: string
+        }
+      }
       task_acceptances: {
         Row: {
           id: string
@@ -247,6 +269,40 @@ export type Database = {
           p_message: string
         }
         Returns: string
+      }
+      request_task_approval: {
+        Args: {
+          p_task_id: string
+          p_helper_id: string
+          p_notes?: string
+        }
+        Returns: boolean
+      }
+      approve_task_request: {
+        Args: {
+          p_task_id: string
+          p_author_id: string
+        }
+        Returns: boolean
+      }
+      reject_task_request: {
+        Args: {
+          p_task_id: string
+          p_author_id: string
+        }
+        Returns: boolean
+      }
+      extend_task_request: {
+        Args: {
+          p_task_id: string
+          p_author_id: string
+          p_extension_minutes: number
+        }
+        Returns: boolean
+      }
+      cleanup_expired_requests: {
+        Args: Record<string, never>
+        Returns: number
       }
     }
   }

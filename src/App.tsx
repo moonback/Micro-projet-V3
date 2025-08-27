@@ -1,37 +1,35 @@
 import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from './hooks/useAuth'
-import { useNotifications } from './hooks/useNotifications'
 import SplashScreen from './components/SplashScreen'
 import HomePage from './components/HomePage'
 import AuthForm from './components/AuthForm'
-import BottomNavigation from './components/BottomNavigation'
 import TaskFeed from './components/TaskFeed'
 import CreateTask from './components/CreateTask'
 import MyTasks from './components/MyTasks'
 import AcceptedTasks from './components/AcceptedTasks'
+import PendingRequests from './components/PendingRequests'
 import Messages from './components/Messages'
 import Profile from './components/Profile'
 import TaskDetail from './components/TaskDetail'
 import ChatView from './components/ChatView'
-import NotificationToast from './components/NotificationToast'
+import BottomNavigation from './components/BottomNavigation'
+import { showNotification } from './components/NotificationToast'
 import type { Database } from './lib/supabase'
 
 type Task = Database['public']['Tables']['tasks']['Row'] & {
   author_profile?: Database['public']['Tables']['profiles']['Row']
 }
 
-type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'accepted-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
+type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'accepted-tasks' | 'pending-requests' | 'messages' | 'profile' | 'task-detail' | 'chat'
 
 function App() {
-  const { user, loading } = useAuth()
-  const { notifications, removeNotification } = useNotifications()
   const [currentView, setCurrentView] = useState<View>('splash')
-  const [activeTab, setActiveTab] = useState<View>('feed')
+  const [hasSeenSplash, setHasSeenSplash] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [chatTaskId, setChatTaskId] = useState<string | null>(null)
-  const [hasSeenSplash, setHasSeenSplash] = useState(false)
+  const { user, loading: authLoading } = useAuth()
 
-  // Gérer la navigation après le splash
   useEffect(() => {
     if (hasSeenSplash) {
       if (user) {
@@ -42,16 +40,15 @@ function App() {
     }
   }, [hasSeenSplash, user])
 
-  // Gérer le changement d'état d'authentification
   useEffect(() => {
-    if (hasSeenSplash && !loading) {
-      if (user) {
-        setCurrentView('feed')
-      } else {
-        setCurrentView('home')
-      }
+    if (authLoading) return
+
+    if (user && currentView === 'home') {
+      setCurrentView('feed')
+    } else if (!user && currentView === 'feed') {
+      setCurrentView('home')
     }
-  }, [user, loading, hasSeenSplash])
+  }, [user, authLoading, currentView])
 
   const handleSplashComplete = () => {
     setHasSeenSplash(true)
@@ -67,49 +64,47 @@ function App() {
 
   const handleTaskPress = (task: Task) => {
     setSelectedTask(task)
-    setActiveTab('task-detail')
     setCurrentView('task-detail')
   }
 
   const handleChatOpen = (taskId: string) => {
     setChatTaskId(taskId)
-    setActiveTab('chat')
     setCurrentView('chat')
   }
 
   const handleBackToFeed = () => {
-    setCurrentView('feed')
-    setActiveTab('feed')
     setSelectedTask(null)
-    setChatTaskId(null)
+    setCurrentView('feed')
   }
 
   const handleBackToTaskDetail = () => {
-    setCurrentView('task-detail')
-    setActiveTab('task-detail')
     setChatTaskId(null)
+    setCurrentView('task-detail')
   }
 
   const handleTabChange = (tab: View) => {
-    if (tab === 'feed') {
-      setSelectedTask(null)
-      setChatTaskId(null)
+    if (tab === 'task-detail' && !selectedTask) {
+      return
     }
-    setActiveTab(tab)
+    if (tab === 'chat' && !chatTaskId) {
+      return
+    }
     setCurrentView(tab)
   }
 
-  const handleSignOut = () => {
-    setCurrentView('home')
-    setActiveTab('feed')
-    setSelectedTask(null)
-    setChatTaskId(null)
+  const handleSignOut = async () => {
+    try {
+      // Sign out logic here
+      setCurrentView('home')
+      showNotification('success', 'Déconnexion réussie')
+    } catch (error) {
+      showNotification('error', 'Erreur lors de la déconnexion')
+    }
   }
 
   const handleTaskAccepted = (taskId: string) => {
-    // Optionnel : recharger les tâches ou mettre à jour l'état
-    console.log('Task accepted:', taskId)
-    // Ici vous pourriez mettre à jour l'état local ou recharger les tâches
+    showNotification('success', 'Demande d\'approbation envoyée !')
+    // Optionally refresh the feed
   }
 
   const renderCurrentView = () => {
@@ -124,14 +119,19 @@ function App() {
         return <AuthForm />
       
       case 'feed':
-        return <TaskFeed onTaskPress={handleTaskPress} onTaskAccepted={handleTaskAccepted} />
+        return (
+          <TaskFeed 
+            onTaskPress={handleTaskPress}
+            onTaskAccepted={handleTaskAccepted}
+          />
+        )
       
       case 'create':
         return <CreateTask />
       
       case 'my-tasks':
         return (
-          <MyTasks
+          <MyTasks 
             onTaskPress={handleTaskPress}
             onCreateTask={() => setCurrentView('create')}
             onTaskAccepted={handleTaskAccepted}
@@ -141,6 +141,9 @@ function App() {
       case 'accepted-tasks':
         return <AcceptedTasks />
       
+      case 'pending-requests':
+        return <PendingRequests />
+      
       case 'messages':
         return <Messages onChatOpen={handleChatOpen} />
       
@@ -149,64 +152,55 @@ function App() {
       
       case 'task-detail':
         return selectedTask ? (
-          <TaskDetail
+          <TaskDetail 
             task={selectedTask}
             onBack={handleBackToFeed}
             onChatOpen={handleChatOpen}
           />
-        ) : (
-          <TaskFeed onTaskPress={handleTaskPress} onTaskAccepted={handleTaskAccepted} />
-        )
+        ) : null
       
       case 'chat':
         return chatTaskId ? (
-          <ChatView
+          <ChatView 
             taskId={chatTaskId}
             onBack={handleBackToTaskDetail}
           />
-        ) : (
-          <TaskFeed onTaskPress={handleTaskPress} onTaskAccepted={handleTaskAccepted} />
-        )
+        ) : null
       
       default:
-        return <TaskFeed onTaskPress={handleTaskPress} onTaskAccepted={handleTaskAccepted} />
+        return <TaskFeed onTaskPress={handleTaskPress} />
     }
   }
 
-  // Ne pas afficher la navigation pour les vues spéciales
-  const showBottomNavigation = !['splash', 'home', 'auth', 'task-detail', 'chat'].includes(currentView)
-
-  if (loading && !hasSeenSplash) {
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Chargement de MicroTask...</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto bg-white shadow-lg min-h-screen flex flex-col">
-        <main className="flex-1 overflow-hidden">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentView}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.3 }}
+        >
           {renderCurrentView()}
-        </main>
-        {showBottomNavigation && (
-          <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
-        )}
-      </div>
+        </motion.div>
+      </AnimatePresence>
 
-      {/* Nouveau système de notifications */}
-      <NotificationToast />
-
-      {/* Ancien système de notifications pour compatibilité */}
-      {notifications.map((notification) => (
-        <div key={notification.id} className="hidden">
-          {/* Les anciennes notifications sont maintenant gérées par react-hot-toast */}
-        </div>
-      ))}
+      {/* Navigation du bas - seulement pour les vues principales */}
+      {user && !['splash', 'home', 'auth', 'task-detail', 'chat'].includes(currentView) && (
+        <BottomNavigation 
+          activeTab={currentView} 
+          onTabChange={handleTabChange}
+        />
+      )}
     </div>
   )
 }
