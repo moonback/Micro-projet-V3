@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Mail, Lock, User, AlertCircle } from 'lucide-react'
+import { Mail, Lock, User, AlertCircle, CheckCircle, Info } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 
 export default function AuthForm() {
@@ -9,6 +9,7 @@ export default function AuthForm() {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showEmailVerification, setShowEmailVerification] = useState(false)
   const { signIn, signUp } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,6 +21,13 @@ export default function AuthForm() {
       if (isSignUp) {
         const { error } = await signUp(email, password, name)
         if (error) throw error
+        
+        // Afficher la notification de vérification d'email
+        setShowEmailVerification(true)
+        // Réinitialiser le formulaire
+        setEmail('')
+        setPassword('')
+        setName('')
       } else {
         const { error } = await signIn(email, password)
         if (error) throw error
@@ -29,6 +37,71 @@ export default function AuthForm() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleBackToForm = () => {
+    setShowEmailVerification(false)
+    setError('')
+  }
+
+  // Afficher la notification de vérification d'email
+  if (showEmailVerification) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Compte Créé avec Succès !
+            </h1>
+            <p className="text-gray-600">
+              Vérifiez votre email pour activer votre compte
+            </p>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start space-x-3">
+              <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div className="text-sm text-blue-800">
+                <p className="font-medium mb-2">Instructions de vérification :</p>
+                <ul className="space-y-1 text-blue-700">
+                  <li>• Vérifiez votre boîte de réception</li>
+                  <li>• Cliquez sur le lien de confirmation</li>
+                  <li>• Revenez sur l'application pour vous connecter</li>
+                </ul>
+                <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
+                  <p className="font-medium text-xs">⚠️ Note importante :</p>
+                  <p className="text-xs">Si le lien contient "localhost", remplacez-le par l'URL de production de votre site.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={handleBackToForm}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+            >
+              Retour au Formulaire
+            </button>
+            
+            <button
+              onClick={() => setIsSignUp(false)}
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
+            >
+              Se Connecter
+            </button>
+          </div>
+
+          <div className="mt-6 text-center text-sm text-gray-500">
+            <p>Vous n'avez pas reçu l'email ?</p>
+            <p>Vérifiez vos spams ou contactez le support</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

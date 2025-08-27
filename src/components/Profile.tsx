@@ -18,7 +18,7 @@ interface UserStats {
 }
 
 export default function Profile({ onSignOut }: ProfileProps) {
-  const { user, signOut } = useAuth()
+  const { user, profile: authProfile, loading: authLoading } = useAuth()
   const [profile, setProfile] = useState<Database['public']['Tables']['profiles']['Row'] | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -38,24 +38,59 @@ export default function Profile({ onSignOut }: ProfileProps) {
   useEffect(() => {
     if (user) {
       loadProfile()
-      loadUserStats()
     }
-  }, [user])
+  }, [user, authProfile])
 
   const loadProfile = async () => {
+    if (!user) return
+
     try {
-      const { data, error } = await supabase
+      setLoading(true)
+      
+      // D'abord, essayer de charger le profil existant
+      let { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .single()
 
-      if (error) throw error
-      setProfile(data)
-      setEditForm({
-        name: data.name || '',
-        phone: data.phone || ''
-      })
+      if (error && error.code === 'PGRST116') {
+        // Profil non trouvé, le créer automatiquement
+        console.log('Profile not found, creating new profile...')
+        
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            name: user.user_metadata?.name || user.email?.split('@')[0] || 'Utilisateur',
+            rating: 0,
+            rating_count: 0,
+            is_verified: false
+          })
+          .select()
+          .single()
+
+        if (createError) {
+          console.error('Error creating profile:', createError)
+          throw createError
+        }
+
+        data = newProfile
+        console.log('New profile created:', data)
+      } else if (error) {
+        throw error
+      }
+
+      if (data) {
+        setProfile(data)
+        setEditForm({
+          name: data.name || '',
+          phone: data.phone || ''
+        })
+        
+        // Charger les statistiques après avoir le profil
+        loadUserStats()
+      }
     } catch (error) {
       console.error('Error loading profile:', error)
     } finally {
@@ -146,25 +181,51 @@ export default function Profile({ onSignOut }: ProfileProps) {
 
   const handleSignOutClick = async () => {
     try {
-      await signOut()
+      await supabase.auth.signOut()
       onSignOut()
     } catch (error) {
       console.error('Error signing out:', error)
     }
   }
 
-  if (loading) {
+  // Afficher le chargement si l'authentification ou le profil est en cours de chargement
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Chargement du profil...</p>
+        </div>
       </div>
     )
   }
 
+  // Afficher une erreur si pas d'utilisateur
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">Utilisateur non connecté</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Afficher une erreur si pas de profil
   if (!profile) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-gray-500">Profil non trouvé</p>
+        <div className="text-center">
+          <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">Erreur lors du chargement du profil</p>
+          <button
+            onClick={loadProfile}
+            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Réessayer
+          </button>
+        </div>
       </div>
     )
   }

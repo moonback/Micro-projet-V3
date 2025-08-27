@@ -23,11 +23,21 @@ export function useAuth() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          loadProfile(session.user.id)
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id)
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          setUser(session.user)
+          await loadProfile(session.user.id)
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null)
+          setProfile(null)
+          setLoading(false)
+        } else if (session?.user) {
+          setUser(session.user)
+          await loadProfile(session.user.id)
         } else {
+          setUser(null)
           setProfile(null)
           setLoading(false)
         }
@@ -39,76 +49,144 @@ export function useAuth() {
 
   const loadProfile = async (userId: string) => {
     try {
+      console.log('Loading profile for user:', userId)
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single()
 
-      if (error && error.code !== 'PGRST116') {
-        throw error
-      }
+      if (error && error.code === 'PGRST116') {
+        // Profil non trouvé, le créer automatiquement
+        console.log('Profile not found, creating new profile...')
+        
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            name: 'Nouvel Utilisateur',
+            rating: 0,
+            rating_count: 0,
+            is_verified: false
+          })
+          .select()
+          .single()
 
-      setProfile(data)
+        if (createError) {
+          console.error('Error creating profile:', createError)
+          throw createError
+        }
+
+        console.log('New profile created:', newProfile)
+        setProfile(newProfile)
+      } else if (error) {
+        console.error('Error loading profile:', error)
+        throw error
+      } else {
+        console.log('Profile loaded:', data)
+        setProfile(data)
+      }
     } catch (error) {
-      console.error('Error loading profile:', error)
+      console.error('Error in loadProfile:', error)
     } finally {
       setLoading(false)
     }
   }
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    return { error }
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      
+      if (data.user && !error) {
+        // Le profil sera chargé automatiquement par onAuthStateChange
+        console.log('User signed in:', data.user.id)
+      }
+      
+      return { error }
+    } catch (error) {
+      console.error('Sign in error:', error)
+      return { error }
+    }
   }
 
   const signUp = async (email: string, password: string, name: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-
-    if (data.user && !error) {
-      // Create profile with all required fields
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        name,
-        rating: 0,
-        rating_count: 0,
-        is_verified: false
+    try {
+      console.log('Signing up user:', email, name)
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name
+          }
+        }
       })
 
-      if (profileError) {
-        console.error('Error creating profile:', profileError)
-      }
-    }
+      if (data.user && !error) {
+        console.log('User signed up:', data.user.id)
+        
+        // Créer le profil immédiatement
+        const { error: profileError } = await supabase.from('profiles').insert({
+          id: data.user.id,
+          name: name,
+          rating: 0,
+          rating_count: 0,
+          is_verified: false
+        })
 
-    return { data, error }
+        if (profileError) {
+          console.error('Error creating profile during signup:', profileError)
+        } else {
+          console.log('Profile created during signup')
+        }
+      }
+
+      return { data, error }
+    } catch (error) {
+      console.error('Sign up error:', error)
+      return { error }
+    }
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    return { error }
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('Sign out error:', error)
+      }
+      return { error }
+    } catch (error) {
+      console.error('Sign out error:', error)
+      return { error }
+    }
   }
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!user) return { error: new Error('No user') }
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', user.id)
-      .select()
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id)
+        .select()
+        .single()
 
-    if (data) {
-      setProfile(data)
+      if (data) {
+        setProfile(data)
+        console.log('Profile updated:', data)
+      }
+
+      return { data, error }
+    } catch (error) {
+      console.error('Update profile error:', error)
+      return { error }
     }
-
-    return { data, error }
   }
 
   return {

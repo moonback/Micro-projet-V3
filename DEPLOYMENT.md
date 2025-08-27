@@ -88,6 +88,16 @@ Build failed
 - Vérifier les variables d'environnement
 - Tester le build localement
 
+### **Problème de Redirection Email**
+```
+Lien d'activation contient "localhost" au lieu de l'URL de production
+```
+
+**Solutions** :
+- Configurer `VITE_SITE_URL` dans Netlify avec l'URL de production
+- Vérifier que la variable d'environnement est bien définie
+- Redéployer après modification des variables d'environnement
+
 ## 🔍 **Vérification Post-Déploiement**
 
 ### **1. Test des Fonctionnalités**

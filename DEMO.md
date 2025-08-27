@@ -83,6 +83,31 @@ const loadUserStats = async () => {
 }
 ```
 
+### **AuthForm.tsx (Mis à Jour)**
+```typescript
+// Nouvelle fonctionnalité de vérification d'email
+const [showEmailVerification, setShowEmailVerification] = useState(false)
+
+// Affichage automatique après inscription réussie
+if (isSignUp) {
+  const { error } = await signUp(email, password, name)
+  if (error) throw error
+  
+  // Afficher la notification de vérification d'email
+  setShowEmailVerification(true)
+  // Réinitialiser le formulaire
+  setEmail('')
+  setPassword('')
+  setName('')
+}
+
+// Interface de vérification d'email
+- Écran dédié avec icône de succès
+- Instructions étape par étape
+- Boutons de navigation (Retour, Connexion)
+- Conseils en cas de problème
+```
+
 ## 🎨 **Éléments Visuels**
 
 ### **Palette de Couleurs**
