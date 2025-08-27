@@ -1,7 +1,7 @@
 import React from 'react'
 import { Home, Plus, ListTodo, MessageCircle, User } from 'lucide-react'
 
-type View = 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
+type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
 
 interface BottomNavigationProps {
   activeTab: View

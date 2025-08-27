@@ -1,6 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { useNotifications } from './hooks/useNotifications'
+import SplashScreen from './components/SplashScreen'
+import HomePage from './components/HomePage'
 import AuthForm from './components/AuthForm'
 import BottomNavigation from './components/BottomNavigation'
 import TaskFeed from './components/TaskFeed'
@@ -17,44 +19,72 @@ type Task = Database['public']['Tables']['tasks']['Row'] & {
   author_profile?: Database['public']['Tables']['profiles']['Row']
 }
 
-type View = 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
+type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
 
 function App() {
   const { user, loading } = useAuth()
   const { notifications, removeNotification } = useNotifications()
+  const [currentView, setCurrentView] = useState<View>('splash')
   const [activeTab, setActiveTab] = useState<View>('feed')
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [chatTaskId, setChatTaskId] = useState<string | null>(null)
+  const [hasSeenSplash, setHasSeenSplash] = useState(false)
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    )
+  // Gérer la navigation après le splash
+  useEffect(() => {
+    if (hasSeenSplash) {
+      if (user) {
+        setCurrentView('feed')
+      } else {
+        setCurrentView('home')
+      }
+    }
+  }, [hasSeenSplash, user])
+
+  // Gérer le changement d'état d'authentification
+  useEffect(() => {
+    if (hasSeenSplash && !loading) {
+      if (user) {
+        setCurrentView('feed')
+      } else {
+        setCurrentView('home')
+      }
+    }
+  }, [user, loading, hasSeenSplash])
+
+  const handleSplashComplete = () => {
+    setHasSeenSplash(true)
   }
 
-  if (!user) {
-    return <AuthForm />
+  const handleGetStarted = () => {
+    if (user) {
+      setCurrentView('feed')
+    } else {
+      setCurrentView('auth')
+    }
   }
 
   const handleTaskPress = (task: Task) => {
     setSelectedTask(task)
     setActiveTab('task-detail')
+    setCurrentView('task-detail')
   }
 
   const handleChatOpen = (taskId: string) => {
     setChatTaskId(taskId)
     setActiveTab('chat')
+    setCurrentView('chat')
   }
 
   const handleBackToFeed = () => {
+    setCurrentView('feed')
     setActiveTab('feed')
     setSelectedTask(null)
     setChatTaskId(null)
   }
 
   const handleBackToTaskDetail = () => {
+    setCurrentView('task-detail')
     setActiveTab('task-detail')
     setChatTaskId(null)
   }
@@ -65,25 +95,47 @@ function App() {
       setChatTaskId(null)
     }
     setActiveTab(tab)
+    setCurrentView(tab)
   }
 
-  const renderActiveView = () => {
-    switch (activeTab) {
+  const handleSignOut = () => {
+    setCurrentView('home')
+    setActiveTab('feed')
+    setSelectedTask(null)
+    setChatTaskId(null)
+  }
+
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'splash':
+        return <SplashScreen onComplete={handleSplashComplete} />
+      
+      case 'home':
+        return <HomePage onGetStarted={handleGetStarted} />
+      
+      case 'auth':
+        return <AuthForm />
+      
       case 'feed':
         return <TaskFeed onTaskPress={handleTaskPress} />
+      
       case 'create':
         return <CreateTask />
+      
       case 'my-tasks':
         return (
           <MyTasks
             onTaskPress={handleTaskPress}
-            onCreateTask={() => setActiveTab('create')}
+            onCreateTask={() => setCurrentView('create')}
           />
         )
+      
       case 'messages':
         return <Messages onChatOpen={handleChatOpen} />
+      
       case 'profile':
-        return <Profile />
+        return <Profile onSignOut={handleSignOut} />
+      
       case 'task-detail':
         return selectedTask ? (
           <TaskDetail
@@ -94,6 +146,7 @@ function App() {
         ) : (
           <TaskFeed onTaskPress={handleTaskPress} />
         )
+      
       case 'chat':
         return chatTaskId ? (
           <ChatView
@@ -103,19 +156,28 @@ function App() {
         ) : (
           <TaskFeed onTaskPress={handleTaskPress} />
         )
+      
       default:
         return <TaskFeed onTaskPress={handleTaskPress} />
     }
   }
 
-  // Ne pas afficher la navigation pour les vues détaillées
-  const showBottomNavigation = !['task-detail', 'chat'].includes(activeTab)
+  // Ne pas afficher la navigation pour les vues spéciales
+  const showBottomNavigation = !['splash', 'home', 'auth', 'task-detail', 'chat'].includes(currentView)
+
+  if (loading && !hasSeenSplash) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-md mx-auto bg-white shadow-lg min-h-screen flex flex-col">
-        <main className="flex-1 pb-16 overflow-hidden">
-          {renderActiveView()}
+        <main className="flex-1 overflow-hidden">
+          {renderCurrentView()}
         </main>
         {showBottomNavigation && (
           <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
