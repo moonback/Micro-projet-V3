@@ -1,18 +1,20 @@
 import React from 'react'
 import { Home, Plus, ListTodo, MessageCircle, User } from 'lucide-react'
 
+type View = 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
+
 interface BottomNavigationProps {
-  activeTab: string
-  onTabChange: (tab: string) => void
+  activeTab: View
+  onTabChange: (tab: View) => void
 }
 
 export default function BottomNavigation({ activeTab, onTabChange }: BottomNavigationProps) {
   const tabs = [
-    { id: 'feed', label: 'Accueil', icon: Home },
-    { id: 'create', label: 'Nouvelle Tâche', icon: Plus },
-    { id: 'my-tasks', label: 'Mes Tâches', icon: ListTodo },
-    { id: 'messages', label: 'Messages', icon: MessageCircle },
-    { id: 'profile', label: 'Profil', icon: User },
+    { id: 'feed' as View, label: 'Accueil', icon: Home },
+    { id: 'create' as View, label: 'Nouvelle Tâche', icon: Plus },
+    { id: 'my-tasks' as View, label: 'Mes Tâches', icon: ListTodo },
+    { id: 'messages' as View, label: 'Messages', icon: MessageCircle },
+    { id: 'profile' as View, label: 'Profil', icon: User },
   ]
 
   return (
