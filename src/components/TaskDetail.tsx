@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Euro, Calendar, Clock, Star, MessageCircle, CheckCircle, Play, XCircle, AlertTriangle, User, Tag, Zap, TrendingUp, Shield, Heart } from 'lucide-react'
+import { ArrowLeft, MapPin, Euro, Calendar, Clock, Star, MessageCircle, CheckCircle, Play, XCircle, AlertTriangle, User, Tag, Zap, TrendingUp, Shield, Heart, Crown, Globe, Building, Camera } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { Database } from '../lib/supabase'
