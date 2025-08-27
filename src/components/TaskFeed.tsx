@@ -30,26 +30,26 @@ const categories = [
   { name: 'Jardinage', icon: '🌱', color: 'bg-emerald-100 text-emerald-700' }
 ]
 
-const QuickStats = () => (
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="grid grid-cols-3 gap-4 p-4"
-  >
-    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white">
-      <div className="text-2xl font-bold">127</div>
-      <div className="text-blue-100 text-sm">Tâches actives</div>
-    </div>
-    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white">
-      <div className="text-2xl font-bold">89%</div>
-      <div className="text-green-100 text-sm">Taux succès</div>
-    </div>
-    <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 text-white">
-      <div className="text-2xl font-bold">€2.4K</div>
-      <div className="text-purple-100 text-sm">Ce mois</div>
-    </div>
-  </motion.div>
-)
+// const QuickStats = () => (
+//   <motion.div 
+//     initial={{ opacity: 0, y: 20 }}
+//     animate={{ opacity: 1, y: 0 }}
+//     className="grid grid-cols-3 gap-4 p-4"
+//   >
+//     <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white">
+//       <div className="text-2xl font-bold">127</div>
+//       <div className="text-blue-100 text-sm">Tâches actives</div>
+//     </div>
+//     <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white">
+//       <div className="text-2xl font-bold">89%</div>
+//       <div className="text-green-100 text-sm">Taux succès</div>
+//     </div>
+//     <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 text-white">
+//       <div className="text-2xl font-bold">€2.4K</div>
+//       <div className="text-purple-100 text-sm">Ce mois</div>
+//     </div>
+//   </motion.div>
+// )
 
 const CategorySelector = ({ onSelect, selectedCategory }: { onSelect: (category: string) => void, selectedCategory: string }) => (
   <div className="px-4 pb-4">
@@ -368,7 +368,7 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
       </div>
 
       {/* Statistiques rapides */}
-      <QuickStats />
+      {/* <QuickStats /> */}
 
       {/* Sélecteur de catégories */}
       <CategorySelector onSelect={handleCategorySelect} selectedCategory={filters.category} />
