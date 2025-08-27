@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Camera, MapPin, Calendar, Euro, Type, FileText, ArrowLeft, ArrowRight, Check, X, Zap, TrendingUp, Star } from 'lucide-react'
+import { Camera, MapPin, Calendar, Euro, Type, FileText, ArrowLeft, ArrowRight, Check, X, Zap, TrendingUp, Star, Clock, Tag, Globe, AlertTriangle, Crown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
@@ -11,13 +11,31 @@ export default function CreateTask() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
+  const [tags, setTags] = useState<string[]>([])
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium')
   const [budget, setBudget] = useState('')
+  const [estimatedDuration, setEstimatedDuration] = useState('')
   const [deadline, setDeadline] = useState('')
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [address, setAddress] = useState('')
+  const [city, setCity] = useState('')
+  const [postalCode, setPostalCode] = useState('')
+  const [country, setCountry] = useState('France')
+  const [isUrgent, setIsUrgent] = useState(false)
+  const [isFeatured, setIsFeatured] = useState(false)
+  const [availableHours, setAvailableHours] = useState({
+    monday: ['09:00-12:00', '14:00-18:00'],
+    tuesday: ['09:00-12:00', '14:00-18:00'],
+    wednesday: ['09:00-12:00', '14:00-18:00'],
+    thursday: ['09:00-12:00', '14:00-18:00'],
+    friday: ['09:00-12:00', '14:00-18:00'],
+    saturday: ['09:00-12:00'],
+    sunday: []
+  })
   const [showLocationPicker, setShowLocationPicker] = useState(false)
   const [loading, setLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [selectedPhotos, setSelectedPhotos] = useState<File[]>([])
 
   const categories = [
     { name: 'Livraison', icon: '🚚', color: 'from-blue-500 to-blue-600', bgColor: 'bg-blue-100', textColor: 'text-blue-700' },
@@ -32,10 +50,23 @@ export default function CreateTask() {
     { name: 'Autre', icon: '✨', color: 'from-gray-500 to-gray-600', bgColor: 'bg-gray-100', textColor: 'text-gray-700' }
   ]
 
+  const priorities = [
+    { value: 'low', label: 'Faible', color: 'from-gray-400 to-gray-500', icon: '🐌' },
+    { value: 'medium', label: 'Moyenne', color: 'from-blue-400 to-blue-500', icon: '⚡' },
+    { value: 'high', label: 'Élevée', color: 'from-orange-400 to-orange-500', icon: '🔥' },
+    { value: 'urgent', label: 'Urgente', color: 'from-red-400 to-red-500', icon: '🚨' }
+  ]
+
+  const commonTags = [
+    'Urgent', 'Flexible', 'À domicile', 'Transport', 'Manuel', 'Intellectuel', 
+    'Créatif', 'Technique', 'Social', 'Environnemental', 'Éducatif', 'Santé'
+  ]
+
   const steps = [
-    { id: 1, title: 'Informations', description: 'Titre et description', icon: Type },
-    { id: 2, title: 'Localisation', description: 'Où se trouve la tâche', icon: MapPin },
-    { id: 3, title: 'Budget & Détails', description: 'Prix et échéance', icon: Euro }
+    { id: 1, title: 'Informations', description: 'Titre, description et catégorie', icon: Type },
+    { id: 2, title: 'Détails', description: 'Priorité, durée et disponibilités', icon: Clock },
+    { id: 3, title: 'Localisation', description: 'Où se trouve la tâche', icon: MapPin },
+    { id: 4, title: 'Budget & Finalisation', description: 'Prix, échéance et photos', icon: Euro }
   ]
 
   // Fonction utilitaire pour s'assurer que le profil existe
@@ -78,6 +109,25 @@ export default function CreateTask() {
     }
   }
 
+  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+    setSelectedPhotos(prev => [...prev, ...files])
+  }
+
+  const removePhoto = (index: number) => {
+    setSelectedPhotos(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const addTag = (tag: string) => {
+    if (!tags.includes(tag)) {
+      setTags(prev => [...prev, tag])
+    }
+  }
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(prev => prev.filter(tag => tag !== tagToRemove))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !location) return
@@ -91,24 +141,39 @@ export default function CreateTask() {
         throw new Error('Impossible de créer ou vérifier le profil utilisateur')
       }
 
-      // Maintenant créer la tâche
+      // Préparer les données de la tâche
+      const taskData = {
+        title,
+        description,
+        category,
+        tags: tags.length > 0 ? tags : null,
+        priority,
+        budget: parseFloat(budget),
+        estimated_duration: estimatedDuration || null,
+        deadline: deadline ? new Date(deadline).toISOString() : null,
+        location: {
+          type: 'Point',
+          coordinates: [location.lng, location.lat]
+        },
+        latitude: location.lat,
+        longitude: location.lng,
+        address,
+        city: city || null,
+        postal_code: postalCode || null,
+        country,
+        author: user.id,
+        status: 'open',
+        currency: 'EUR',
+        is_urgent: isUrgent,
+        is_featured: isFeatured,
+        available_hours: availableHours,
+        payment_status: 'pending'
+      }
+
+      // Créer la tâche
       const { error } = await supabase
         .from('tasks')
-        .insert({
-          title,
-          description,
-          category,
-          budget: parseFloat(budget),
-          deadline: deadline ? new Date(deadline).toISOString() : null,
-          location: {
-            type: 'Point',
-            coordinates: [location.lng, location.lat]
-          },
-          address,
-          author: user.id,
-          status: 'open',
-          currency: 'EUR'
-        })
+        .insert(taskData)
 
       if (error) throw error
 
@@ -116,10 +181,19 @@ export default function CreateTask() {
       setTitle('')
       setDescription('')
       setCategory('')
+      setTags([])
+      setPriority('medium')
       setBudget('')
+      setEstimatedDuration('')
       setDeadline('')
       setLocation(null)
       setAddress('')
+      setCity('')
+      setPostalCode('')
+      setCountry('France')
+      setIsUrgent(false)
+      setIsFeatured(false)
+      setSelectedPhotos([])
       setCurrentStep(1)
       
       alert('Tâche créée avec succès !')
@@ -138,7 +212,7 @@ export default function CreateTask() {
   }
 
   const nextStep = () => {
-    if (currentStep < 3) setCurrentStep(currentStep + 1)
+    if (currentStep < 4) setCurrentStep(currentStep + 1)
   }
 
   const prevStep = () => {
@@ -148,8 +222,9 @@ export default function CreateTask() {
   const canGoToNext = () => {
     switch (currentStep) {
       case 1: return title.trim() && description.trim() && category
-      case 2: return location && address
-      case 3: return budget && parseFloat(budget) > 0
+      case 2: return priority && (estimatedDuration || true) // Durée optionnelle
+      case 3: return location && address
+      case 4: return budget && parseFloat(budget) > 0
       default: return false
     }
   }
@@ -185,16 +260,16 @@ export default function CreateTask() {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.3 + index * 0.1, type: "spring", stiffness: 200 }}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold text-sm shadow-lg ${
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm shadow-lg ${
                     currentStep >= step.id 
                       ? 'bg-gradient-to-br from-white to-blue-50 text-blue-600' 
                       : 'bg-white/20 text-white/70 backdrop-blur-sm'
                   }`}
                 >
-                  {currentStep > step.id ? <Check className="w-6 h-6" /> : <step.icon className="w-6 h-6" />}
+                  {currentStep > step.id ? <Check className="w-5 h-5" /> : <step.icon className="w-5 h-5" />}
                 </motion.div>
                 {index < steps.length - 1 && (
-                  <div className={`w-20 h-1 mx-3 rounded-full ${
+                  <div className={`w-16 h-1 mx-2 rounded-full ${
                     currentStep > step.id ? 'bg-gradient-to-r from-white to-blue-200' : 'bg-white/30'
                   }`} />
                 )}
@@ -308,12 +383,161 @@ export default function CreateTask() {
                   ))}
                 </div>
               </motion.div>
+
+              {/* Tags */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+                className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
+              >
+                <label className="block text-sm font-semibold text-gray-700 mb-4 flex items-center">
+                  <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center mr-3">
+                    <Tag className="w-4 h-4 text-white" />
+                  </div>
+                  Tags (Optionnel)
+                </label>
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {commonTags.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => addTag(tag)}
+                        className={`px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                          tags.includes(tag)
+                            ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                  {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag) => (
+                        <div key={tag} className="flex items-center bg-blue-100 text-blue-700 px-3 py-2 rounded-full">
+                          <span className="text-sm font-medium">{tag}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeTag(tag)}
+                            className="ml-2 text-blue-500 hover:text-blue-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
             </motion.div>
           )}
 
           {currentStep === 2 && (
             <motion.div
               key="step2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
+              {/* Priorité */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.6 }}
+                className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
+              >
+                <label className="block text-sm font-semibold text-gray-700 mb-4 flex items-center">
+                  <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mr-3">
+                    <AlertTriangle className="w-4 h-4 text-white" />
+                  </div>
+                  Niveau de Priorité
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {priorities.map((priorityItem) => (
+                    <button
+                      key={priorityItem.value}
+                      type="button"
+                      onClick={() => setPriority(priorityItem.value as any)}
+                      className={`p-4 rounded-2xl border-2 transition-all ${
+                        priority === priorityItem.value
+                          ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="text-2xl mb-2">{priorityItem.icon}</div>
+                      <div className="text-sm font-medium text-gray-700">{priorityItem.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Durée estimée */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+                className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
+              >
+                <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                  <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mr-3">
+                    <Clock className="w-4 h-4 text-white" />
+                  </div>
+                  Durée Estimée (Optionnel)
+                </label>
+                <input
+                  type="text"
+                  value={estimatedDuration}
+                  onChange={(e) => setEstimatedDuration(e.target.value)}
+                  className="w-full px-4 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg transition-all"
+                  placeholder="ex: 2 heures, 1 jour, 30 minutes..."
+                />
+              </motion.div>
+
+              {/* Options spéciales */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+                className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
+              >
+                <label className="block text-sm font-semibold text-gray-700 mb-4 flex items-center">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
+                    <Crown className="w-4 h-4 text-white" />
+                  </div>
+                  Options Spéciales
+                </label>
+                <div className="space-y-4">
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={isUrgent}
+                      onChange={(e) => setIsUrgent(e.target.checked)}
+                      className="w-5 h-5 text-red-600 rounded focus:ring-red-500"
+                    />
+                    <span className="text-gray-700 font-medium">Marquer comme urgente</span>
+                  </label>
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={isFeatured}
+                      onChange={(e) => setIsFeatured(e.target.checked)}
+                      className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-gray-700 font-medium">Mettre en avant</span>
+                  </label>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {currentStep === 3 && (
+            <motion.div
+              key="step3"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -349,13 +573,39 @@ export default function CreateTask() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-3xl p-6 shadow-lg"
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
-                      <Check className="w-6 h-6 text-white" />
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
+                        <Check className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-green-800 text-lg">Emplacement sélectionné</p>
+                        <p className="text-green-700">{address}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-green-800 text-lg">Emplacement sélectionné</p>
-                      <p className="text-green-700">{address}</p>
+                    
+                    {/* Champs de localisation supplémentaires */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Ville</label>
+                        <input
+                          type="text"
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          placeholder="Ville"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Code Postal</label>
+                        <input
+                          type="text"
+                          value={postalCode}
+                          onChange={(e) => setPostalCode(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          placeholder="Code postal"
+                        />
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -363,9 +613,9 @@ export default function CreateTask() {
             </motion.div>
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 4 && (
             <motion.div
-              key="step3"
+              key="step4"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -436,6 +686,7 @@ export default function CreateTask() {
                   type="file"
                   accept="image/*"
                   multiple
+                  onChange={handlePhotoUpload}
                   className="hidden"
                 />
                 <motion.button
@@ -448,6 +699,28 @@ export default function CreateTask() {
                   <Camera className="w-12 h-12 mx-auto mb-3 text-gray-400" />
                   <p className="font-medium text-lg">Appuyez pour ajouter des photos</p>
                 </motion.button>
+                
+                {/* Photos sélectionnées */}
+                {selectedPhotos.length > 0 && (
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    {selectedPhotos.map((photo, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={URL.createObjectURL(photo)}
+                          alt={`Photo ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(index)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             </motion.div>
           )}
@@ -476,7 +749,7 @@ export default function CreateTask() {
             <span className="text-sm">Précédent</span>
           </motion.button>
 
-          {currentStep < 3 ? (
+          {currentStep < 4 ? (
             <motion.button
               type="button"
               onClick={nextStep}
