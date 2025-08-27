@@ -20,8 +20,19 @@ export function useAuth() {
 
     // Get initial session
     const getInitialSession = async () => {
+      // Timeout de sécurité pour le démarrage
+      const startupTimeoutId = setTimeout(() => {
+        if (mountedRef.current && loading) {
+          console.log('Startup timeout after 15s, forcing loading to false')
+          setLoading(false)
+        }
+      }, 15000) // 15 secondes
+
       try {
         const { data: { session } } = await supabase.auth.getSession()
+        
+        // Annuler le timeout car l'opération s'est terminée
+        clearTimeout(startupTimeoutId)
         
         if (mountedRef.current) {
           if (session?.user) {
@@ -33,6 +44,8 @@ export function useAuth() {
         }
       } catch (error) {
         console.error('Error getting initial session:', error)
+        // Annuler le timeout en cas d'erreur
+        clearTimeout(startupTimeoutId)
         if (mountedRef.current) {
           setLoading(false)
         }
@@ -46,25 +59,59 @@ export function useAuth() {
         
         console.log('Auth state changed:', event, session?.user?.id)
         
-        if (event === 'SIGNED_IN' && session?.user) {
-          setUser(session.user)
-          await loadProfile(session.user.id)
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null)
-          setProfile(null)
-          setLoading(false)
-        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          // Ne pas recharger le profil pour un refresh de token
-          setUser(session.user)
-        } else if (event === 'USER_UPDATED' && session?.user) {
-          setUser(session.user)
-        } else if (session?.user && !profile) {
-          setUser(session.user)
-          await loadProfile(session.user.id)
-        } else if (!session?.user) {
-          setUser(null)
-          setProfile(null)
-          setLoading(false)
+        switch (event) {
+          case 'SIGNED_IN':
+            if (session?.user) {
+              setUser(session.user)
+              // Charger le profil seulement si on n'en a pas déjà un
+              if (!profile || profile.id !== session.user.id) {
+                await loadProfile(session.user.id)
+              }
+            }
+            break
+            
+          case 'SIGNED_OUT':
+            setUser(null)
+            setProfile(null)
+            setLoading(false)
+            // Vider le cache lors de la déconnexion
+            profileCache.clear()
+            loadingProfiles.clear()
+            break
+            
+          case 'TOKEN_REFRESHED':
+            if (session?.user) {
+              setUser(session.user)
+              // Ne pas recharger le profil pour un refresh de token
+            }
+            break
+            
+          case 'USER_UPDATED':
+            if (session?.user) {
+              setUser(session.user)
+            }
+            break
+            
+          case 'INITIAL_SESSION':
+            // Ignorer cet événement car on gère déjà la session initiale
+            // Ne pas recharger le profil si on en a déjà un
+            if (session?.user && !profile) {
+              setUser(session.user)
+              await loadProfile(session.user.id)
+            }
+            break
+            
+          default:
+            // Gérer les autres cas
+            if (session?.user && !profile) {
+              setUser(session.user)
+              await loadProfile(session.user.id)
+            } else if (!session?.user) {
+              setUser(null)
+              setProfile(null)
+              setLoading(false)
+            }
+            break
         }
       }
     )
@@ -78,12 +125,15 @@ export function useAuth() {
   }, [])
 
   const loadProfile = async (userId: string) => {
+    console.log('loadProfile called for user:', userId)
+    
     // Vérifier le cache
     if (profileCache.has(userId)) {
       console.log('Using cached profile for user:', userId)
       if (mountedRef.current) {
         setProfile(profileCache.get(userId)!)
         setLoading(false)
+        console.log('Profile loaded from cache, loading set to false')
       }
       return
     }
@@ -94,16 +144,48 @@ export function useAuth() {
       return
     }
 
+    // Vérifier si on a déjà un profil pour cet utilisateur
+    if (profile && profile.id === userId) {
+      console.log('Profile already exists for user:', userId)
+      setLoading(false)
+      return
+    }
+
     loadingProfiles.add(userId)
+    console.log('Starting profile load for user:', userId)
+
+    // Timeout de sécurité pour éviter le blocage infini
+    const timeoutId = setTimeout(() => {
+      if (mountedRef.current && loading) {
+        console.log('Profile loading timeout after 10s, forcing loading to false')
+        setLoading(false)
+        loadingProfiles.delete(userId)
+      }
+    }, 10000) // 10 secondes
 
     try {
       console.log('Loading profile for user:', userId)
       
-      const { data, error } = await supabase
+      // Créer une promesse avec timeout pour la requête Supabase
+      const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single()
+
+      // Timeout de 8 secondes pour la requête elle-même
+      const queryTimeout = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Supabase query timeout after 8s')), 8000)
+      })
+
+      // Race entre la requête et le timeout
+      const { data, error } = await Promise.race([
+        profilePromise,
+        queryTimeout
+      ]) as any
+
+      // Annuler le timeout car l'opération s'est terminée
+      clearTimeout(timeoutId)
 
       if (error && error.code === 'PGRST116') {
         // Profil non trouvé, le créer automatiquement
@@ -133,9 +215,32 @@ export function useAuth() {
         
         if (mountedRef.current) {
           setProfile(newProfile)
+          setLoading(false)
+          console.log('New profile created and loading set to false')
         }
       } else if (error) {
         console.error('Error loading profile:', error)
+        
+        // En cas d'erreur, créer un profil temporaire pour éviter de bloquer l'app
+        console.log('Creating fallback profile to prevent app blocking')
+        const fallbackProfile = {
+          id: userId,
+          name: 'Utilisateur Temporaire',
+          phone: null,
+          avatar_url: null,
+          is_verified: false,
+          rating: 0,
+          rating_count: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        
+        if (mountedRef.current) {
+          setProfile(fallbackProfile)
+          setLoading(false)
+          console.log('Fallback profile set, loading set to false')
+        }
+        
         throw error
       } else {
         console.log('Profile loaded:', data)
@@ -145,15 +250,22 @@ export function useAuth() {
         
         if (mountedRef.current) {
           setProfile(data)
+          setLoading(false)
+          console.log('Profile loaded successfully and loading set to false')
         }
       }
     } catch (error) {
       console.error('Error in loadProfile:', error)
-    } finally {
-      loadingProfiles.delete(userId)
+      // Annuler le timeout en cas d'erreur
+      clearTimeout(timeoutId)
+      // En cas d'erreur, on continue quand même pour éviter de bloquer l'app
       if (mountedRef.current) {
         setLoading(false)
+        console.log('Error occurred, loading set to false')
       }
+    } finally {
+      loadingProfiles.delete(userId)
+      console.log('Profile loading completed for user:', userId)
     }
   }
 

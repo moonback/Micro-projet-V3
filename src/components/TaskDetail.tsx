@@ -4,6 +4,7 @@ import { ArrowLeft, MapPin, Euro, Calendar, Clock, Star, MessageCircle, CheckCir
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { Database } from '../lib/supabase'
+import type { TaskWithProfiles } from '../types/task'
 import Header from './Header'
 
 // Fonction pour récupérer l'adresse à partir des coordonnées GPS
@@ -39,7 +40,7 @@ type Task = Database['public']['Tables']['tasks']['Row'] & {
 }
 
 interface TaskDetailProps {
-  task: Task
+  task: TaskWithProfiles
   onBack: () => void
   onChatOpen: (taskId: string) => void
 }

@@ -1,17 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Send, ArrowLeft, Paperclip, MessageCircle } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Send, Paperclip, Image, File, ArrowLeft, User, Clock, CheckCircle, AlertTriangle, Star, MapPin, Euro, Tag, Zap, TrendingUp, ChevronRight } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import type { TaskWithProfiles } from '../types/task'
 import type { Database } from '../lib/supabase'
 import Header from './Header'
 
 type Message = Database['public']['Tables']['messages']['Row'] & {
   sender_profile?: Database['public']['Tables']['profiles']['Row']
-}
-
-type Task = Database['public']['Tables']['tasks']['Row'] & {
-  author_profile?: Database['public']['Tables']['profiles']['Row']
-  helper_profile?: Database['public']['Tables']['profiles']['Row']
 }
 
 interface ChatViewProps {
@@ -22,7 +19,7 @@ interface ChatViewProps {
 export default function ChatView({ taskId, onBack }: ChatViewProps) {
   const { user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([])
-  const [task, setTask] = useState<Task | null>(null)
+  const [task, setTask] = useState<TaskWithProfiles | null>(null)
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)

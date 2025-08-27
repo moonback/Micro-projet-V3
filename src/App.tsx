@@ -13,11 +13,10 @@ import Profile from './components/Profile'
 import TaskDetail from './components/TaskDetail'
 import ChatView from './components/ChatView'
 import NotificationToast from './components/NotificationToast'
-import type { Database } from './lib/supabase'
-
-type Task = Database['public']['Tables']['tasks']['Row'] & {
-  author_profile?: Database['public']['Tables']['profiles']['Row']
-}
+import AuthStatus from './components/AuthStatus'
+import TimeoutMonitor from './components/TimeoutMonitor'
+import SupabaseDiagnostic from './components/SupabaseDiagnostic'
+import type { TaskWithProfiles } from './types/task'
 
 type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
 
@@ -26,9 +25,15 @@ function App() {
   const { notifications, removeNotification } = useNotifications()
   const [currentView, setCurrentView] = useState<View>('splash')
   const [activeTab, setActiveTab] = useState<View>('feed')
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [selectedTask, setSelectedTask] = useState<TaskWithProfiles | null>(null)
   const [chatTaskId, setChatTaskId] = useState<string | null>(null)
   const [hasSeenSplash, setHasSeenSplash] = useState(false)
+
+  // Debug: Logger les changements d'état
+  useEffect(() => {
+    console.log('App: loading changed to:', loading)
+    console.log('App: user changed to:', user?.id || 'null')
+  }, [loading, user])
 
   // Gérer la navigation après le splash
   useEffect(() => {
@@ -64,7 +69,7 @@ function App() {
     }
   }
 
-  const handleTaskPress = (task: Task) => {
+  const handleTaskPress = (task: TaskWithProfiles) => {
     setSelectedTask(task)
     setActiveTab('task-detail')
     setCurrentView('task-detail')
@@ -203,6 +208,15 @@ function App() {
           {/* Les anciennes notifications sont maintenant gérées par react-hot-toast */}
         </div>
       ))}
+
+      {/* Composant de statut d'authentification */}
+      <AuthStatus />
+      
+      {/* Composant de surveillance des timeouts */}
+      <TimeoutMonitor />
+      
+      {/* Composant de diagnostic Supabase */}
+      <SupabaseDiagnostic />
     </div>
   )
 }
