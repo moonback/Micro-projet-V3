@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { MapPin, List, Filter, RefreshCw } from 'lucide-react'
+import { MapPin, List, Filter, RefreshCw, Search, Grid3X3 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import TaskCard from './TaskCard'
 import TaskMap from './TaskMap'
@@ -222,36 +223,71 @@ export default function TaskFeed({ onTaskPress }: TaskFeedProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full"
+        />
+        <p className="text-gray-500 font-medium">Chargement des tâches...</p>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-900">Tâches Disponibles</h1>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50"
-            title="Actualiser les tâches"
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex flex-col h-full"
+    >
+      {/* Header moderne */}
+      <div className="bg-white border-b border-gray-200 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <motion.h1 
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            className="text-2xl font-bold text-gray-900"
           >
-            <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-          </button>
-          <button
-            onClick={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
-            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-          >
-            {viewMode === 'list' ? <MapPin className="w-5 h-5" /> : <List className="w-5 h-5" />}
-          </button>
+            Tâches Disponibles
+          </motion.h1>
+          
+          <div className="flex items-center space-x-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="p-3 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50"
+              title="Actualiser les tâches"
+            >
+              <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
+              className="p-3 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-700 transition-colors"
+            >
+              {viewMode === 'list' ? <MapPin className="w-5 h-5" /> : <List className="w-5 h-5" />}
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Barre de recherche améliorée */}
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Rechercher des tâches..."
+            className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all"
+          />
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filtres */}
       <TaskFilters
         onFiltersChange={handleFiltersChange}
         onSearchChange={handleSearchChange}
@@ -259,51 +295,92 @@ export default function TaskFeed({ onTaskPress }: TaskFeedProps) {
         filters={filters}
       />
 
-      {/* Content */}
-      {viewMode === 'map' ? (
-        <TaskMap tasks={filteredTasks} onTaskPress={onTaskPress} />
-      ) : (
-        <div className="flex-1 overflow-y-auto">
-          {filteredTasks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-              <MapPin className="w-12 h-12 mb-2" />
-              <p>
-                {searchQuery || Object.values(filters).some(f => f !== '' && f !== null && f !== 5)
-                  ? 'Aucune tâche ne correspond à vos critères'
-                  : 'Aucune tâche disponible dans votre région'
-                }
-              </p>
-              {searchQuery || Object.values(filters).some(f => f !== '' && f !== null && f !== 5) && (
-                <button
-                  onClick={() => {
-                    setSearchQuery('')
-                    setFilters({
-                      category: '',
-                      maxBudget: null,
-                      minBudget: null,
-                      radius: 5,
-                      status: 'open'
-                    })
-                  }}
-                  className="mt-2 text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Effacer les filtres
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="p-4 space-y-4">
-              {filteredTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onPress={onTaskPress}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+      {/* Contenu avec animations */}
+      <AnimatePresence mode="wait">
+        {viewMode === 'map' ? (
+          <motion.div
+            key="map"
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -100 }}
+            transition={{ duration: 0.3 }}
+            className="flex-1"
+          >
+            <TaskMap tasks={filteredTasks} onTaskPress={onTaskPress} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="list"
+            initial={{ opacity: 0, x: -100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            transition={{ duration: 0.3 }}
+            className="flex-1 overflow-y-auto"
+          >
+            {filteredTasks.length === 0 ? (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center justify-center h-64 text-gray-500"
+              >
+                <MapPin className="w-16 h-16 mb-4 text-gray-300" />
+                <p className="text-lg font-medium mb-2">
+                  {searchQuery || Object.values(filters).some(f => f !== '' && f !== null && f !== 5)
+                    ? 'Aucune tâche ne correspond à vos critères'
+                    : 'Aucune tâche disponible dans votre région'}
+                </p>
+                <p className="text-sm text-gray-400 text-center">
+                  {searchQuery || Object.values(filters).some(f => f !== '' && f !== null && f !== 5)
+                    ? 'Essayez de modifier vos filtres de recherche'
+                    : 'Revenez plus tard ou élargissez votre zone de recherche'}
+                </p>
+                
+                {(searchQuery || Object.values(filters).some(f => f !== '' && f !== null && f !== 5)) && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setSearchQuery('')
+                      setFilters({
+                        category: '',
+                        maxBudget: null,
+                        minBudget: null,
+                        radius: 5,
+                        status: 'open'
+                      })
+                    }}
+                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-colors"
+                  >
+                    Effacer les filtres
+                  </motion.button>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div 
+                layout
+                className="p-4 space-y-4"
+              >
+                <AnimatePresence>
+                  {filteredTasks.map((task, index) => (
+                    <motion.div
+                      key={task.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <TaskCard
+                        task={task}
+                        onPress={onTaskPress}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   )
 }
