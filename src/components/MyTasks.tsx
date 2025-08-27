@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Filter, ListTodo, CheckCircle, Clock, Star, TrendingUp, Zap } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Plus, Clock, CheckCircle, XCircle, AlertTriangle, Star, Euro, MapPin, Calendar, Tag, Zap, TrendingUp, ChevronRight, ListTodo } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import TaskCard from './TaskCard'
 import type { Database } from '../lib/supabase'
+import Header from './Header'
+import TaskCard from './TaskCard'
 
 type Task = Database['public']['Tables']['tasks']['Row'] & {
   author_profile?: Database['public']['Tables']['profiles']['Row']
@@ -102,68 +103,23 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      {/* Header avec gradient moderne */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-6 bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white relative overflow-hidden"
-      >
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative">
-          <div className="flex items-center justify-between mb-6">
-            <motion.h1 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2, duration: 0.8 }}
-              className="text-2xl font-bold"
-            >
-              Mes Tâches
-            </motion.h1>
-            <div className="flex items-center space-x-2">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onCreateTask}
-                className="p-3 rounded-2xl bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all"
-              >
-                <Plus className="w-5 h-5" />
-              </motion.button>
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-3 rounded-2xl bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all"
-              >
-                <Filter className="w-5 h-5" />
-              </motion.button>
-            </div>
-          </div>
-
-          {/* Statistiques rapides */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.8 }}
-            className="grid grid-cols-4 gap-3"
-          >
-            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 text-center">
-              <div className="text-lg font-bold">{stats.created}</div>
-              <div className="text-xs text-blue-100">Créées</div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 text-center">
-              <div className="text-lg font-bold">{stats.accepted}</div>
-              <div className="text-xs text-blue-100">Acceptées</div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 text-center">
-              <div className="text-lg font-bold">{stats.open}</div>
-              <div className="text-xs text-blue-100">Ouvertes</div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 text-center">
-              <div className="text-lg font-bold">{stats.completed}</div>
-              <div className="text-xs text-blue-100">Terminées</div>
-            </div>
-          </motion.div>
-        </div>
-      </motion.div>
+             <Header
+         title="Mes Tâches"
+         subtitle="Gérez vos tâches créées et acceptées"
+         showSearch={false}
+         showFilters={false}
+         showViewToggle={false}
+         showRefresh={false}
+         rightButtons={[
+           {
+             icon: Plus,
+             onClick: onCreateTask,
+             tooltip: 'Créer une nouvelle tâche'
+           }
+         ]}
+         showStats={true}
+         stats={stats}
+       />
 
       {/* Onglets modernes */}
       <motion.div 

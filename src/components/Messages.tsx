@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { MessageCircle, Search } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { MessageCircle, Clock, CheckCircle, XCircle, User, MapPin, Euro, Calendar, ChevronRight, Search } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { Database } from '../lib/supabase'
+import Header from './Header'
 
 type Message = Database['public']['Tables']['messages']['Row'] & {
   profiles?: Database['public']['Tables']['profiles']['Row']
@@ -110,20 +112,16 @@ export default function Messages({ onChatOpen }: MessagesProps) {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="p-4 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-900 mb-4">Messages</h1>
-        
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Rechercher des conversations..."
-          />
-        </div>
-      </div>
+             <Header
+         title="Messages"
+         subtitle="Gérez vos conversations et échanges"
+         showSearch={true}
+         searchQuery={searchQuery}
+         onSearchChange={setSearchQuery}
+         showFilters={false}
+         showViewToggle={false}
+         showRefresh={false}
+       />
 
       <div className="flex-1 overflow-y-auto">
         {filteredConversations.length === 0 ? (

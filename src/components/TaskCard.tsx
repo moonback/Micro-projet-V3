@@ -1,17 +1,13 @@
 import React from 'react'
-import { Clock, MapPin, Euro, User, CheckCircle, Truck, Wrench, ShoppingCart, Home, PawPrint, Leaf, Monitor, BookOpen, Package } from 'lucide-react'
+import { Clock, MapPin, Euro, User, CheckCircle, Truck, Wrench, ShoppingCart, Home, PawPrint, Leaf, Monitor, BookOpen, Package, Tag, AlertTriangle, Star, Crown } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import type { Database } from '../lib/supabase'
-
-type Task = Database['public']['Tables']['tasks']['Row'] & {
-  author_profile?: Database['public']['Tables']['profiles']['Row']
-}
+import type { TaskWithProfiles } from '../types/task'
 
 interface TaskCardProps {
-  task: Task
-  onPress: (task: Task) => void
+  task: TaskWithProfiles
+  onPress: (task: TaskWithProfiles) => void
   onTaskAccepted?: (taskId: string) => void
 }
 
@@ -36,9 +32,11 @@ export default function TaskCard({ task, onPress, onTaskAccepted }: TaskCardProp
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open': return 'bg-green-100 text-green-800 border-green-200'
-      case 'accepted': return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'in-progress': return 'bg-orange-100 text-orange-800 border-orange-200'
+      case 'assigned': return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'in_progress': return 'bg-orange-100 text-orange-800 border-orange-200'
       case 'completed': return 'bg-purple-100 text-purple-800 border-purple-200'
+      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200'
+      case 'expired': return 'bg-gray-100 text-gray-800 border-gray-200'
       default: return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
@@ -46,10 +44,32 @@ export default function TaskCard({ task, onPress, onTaskAccepted }: TaskCardProp
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'open': return 'Ouverte'
-      case 'accepted': return 'Acceptée'
-      case 'in-progress': return 'En Cours'
+      case 'assigned': return 'Assignée'
+      case 'in_progress': return 'En Cours'
       case 'completed': return 'Terminée'
+      case 'cancelled': return 'Annulée'
+      case 'expired': return 'Expirée'
       default: return status
+    }
+  }
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'low': return 'bg-gray-100 text-gray-700 border-gray-200'
+      case 'medium': return 'bg-blue-100 text-blue-700 border-blue-200'
+      case 'high': return 'bg-orange-100 text-orange-700 border-orange-200'
+      case 'urgent': return 'bg-red-100 text-red-700 border-red-200'
+      default: return 'bg-gray-100 text-gray-700 border-gray-200'
+    }
+  }
+
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case 'low': return 'Faible'
+      case 'medium': return 'Moyenne'
+      case 'high': return 'Élevée'
+      case 'urgent': return 'Urgente'
+      default: return priority
     }
   }
 
@@ -76,8 +96,9 @@ export default function TaskCard({ task, onPress, onTaskAccepted }: TaskCardProp
       const { error } = await supabase
         .from('tasks')
         .update({ 
-          status: 'accepted',
-          helper: user.id 
+          status: 'assigned',
+          helper: user.id,
+          assigned_at: new Date().toISOString()
         })
         .eq('id', task.id)
 
@@ -127,9 +148,49 @@ export default function TaskCard({ task, onPress, onTaskAccepted }: TaskCardProp
           </div>
         </div>
         
-        <div className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getStatusColor(task.status)}`}>
-          {getStatusLabel(task.status)}
+        <div className="flex flex-col items-end space-y-2">
+          <div className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getStatusColor(task.status)}`}>
+            {getStatusLabel(task.status)}
+          </div>
+          {task.priority && (
+            <div className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(task.priority)}`}>
+              {getPriorityLabel(task.priority)}
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* Tags */}
+      {task.tags && task.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {task.tags.slice(0, 3).map((tag, index) => (
+            <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+              <Tag className="w-3 h-3 mr-1" />
+              {tag}
+            </span>
+          ))}
+          {task.tags.length > 3 && (
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-600">
+              +{task.tags.length - 3}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Badges spéciaux */}
+      <div className="flex items-center gap-2 mb-4">
+        {task.is_urgent && (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+            <AlertTriangle className="w-3 h-3 mr-1" />
+            Urgente
+          </span>
+        )}
+        {task.is_featured && (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
+            <Star className="w-3 h-3 mr-1" />
+            Mise en avant
+          </span>
+        )}
       </div>
 
       {/* Informations de la tâche */}
@@ -148,7 +209,7 @@ export default function TaskCard({ task, onPress, onTaskAccepted }: TaskCardProp
         <div className="flex items-center justify-between">
           <div className="flex items-center text-gray-600">
             <MapPin className="w-4 h-4 mr-2" />
-            <span className="text-sm">{task.address || formatDistance(task.location)}</span>
+            <span className="text-sm">{task.city || task.address || formatDistance(task.location)}</span>
           </div>
           
           <div className="flex items-center bg-green-50 px-3 py-2 rounded-xl">
@@ -156,43 +217,66 @@ export default function TaskCard({ task, onPress, onTaskAccepted }: TaskCardProp
             <span className="font-bold text-lg text-green-700">€{task.budget}</span>
           </div>
         </div>
+
+        {/* Durée estimée */}
+        {task.estimated_duration && (
+          <div className="flex items-center text-sm text-gray-600">
+            <Clock className="w-4 h-4 mr-2" />
+            <span>Durée estimée: {task.estimated_duration}</span>
+          </div>
+        )}
+
+        {/* Date limite */}
+        {task.deadline && (
+          <div className="flex items-center text-sm text-gray-600">
+            <Clock className="w-4 h-4 mr-2" />
+            <span>Limite: {new Date(task.deadline).toLocaleDateString('fr-FR')}</span>
+          </div>
+        )}
       </div>
 
       {/* Catégorie et Actions */}
-      {task.category && (
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
           <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium">
             {task.category}
           </span>
           
-          {/* Bouton Accepter - visible pour tous sauf l'auteur et l'aide actuel */}
-          {canAccept && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleAcceptTask}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-colors flex items-center space-x-2"
-            >
-              <CheckCircle className="w-4 h-4" />
-              <span>Accepter</span>
-            </motion.button>
-          )}
-
-          {/* Indicateur si l'utilisateur est l'aide */}
-          {isHelper && task.status === 'accepted' && (
-            <span className="inline-block bg-green-100 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium">
-              Vous êtes l'aide
-            </span>
-          )}
-
-          {/* Indicateur si l'utilisateur est l'auteur */}
-          {isAuthor && (
-            <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium">
-              Votre tâche
+          {/* Indicateur de priorité */}
+          {task.priority && task.priority !== 'medium' && (
+            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
+              {getPriorityLabel(task.priority)}
             </span>
           )}
         </div>
-      )}
+        
+        {/* Bouton Accepter - visible pour tous sauf l'auteur et l'aide actuel */}
+        {canAccept && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleAcceptTask}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-colors flex items-center space-x-2"
+          >
+            <CheckCircle className="w-4 h-4" />
+            <span>Accepter</span>
+          </motion.button>
+        )}
+
+        {/* Indicateur si l'utilisateur est l'aide */}
+        {isHelper && task.status === 'assigned' && (
+          <span className="inline-block bg-green-100 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium">
+            Vous êtes l'aide
+          </span>
+        )}
+
+        {/* Indicateur si l'utilisateur est l'auteur */}
+        {isAuthor && (
+          <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium">
+            Votre tâche
+          </span>
+        )}
+      </div>
     </motion.div>
   )
 }

@@ -1,15 +1,11 @@
 import React, { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import type { Database } from '../lib/supabase'
-
-type Task = Database['public']['Tables']['tasks']['Row'] & {
-  profiles?: Database['public']['Tables']['profiles']['Row']
-}
+import type { TaskWithProfiles } from '../types/task'
 
 interface TaskMapProps {
-  tasks: Task[]
-  onTaskPress: (task: Task) => void
+  tasks: TaskWithProfiles[]
+  onTaskPress: (task: TaskWithProfiles) => void
 }
 
 // Fix for default markers in Leaflet with Vite

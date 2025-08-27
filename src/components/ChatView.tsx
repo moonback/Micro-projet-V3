@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Send, ArrowLeft, Paperclip } from 'lucide-react'
+import { Send, ArrowLeft, Paperclip, MessageCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { Database } from '../lib/supabase'
+import Header from './Header'
 
 type Message = Database['public']['Tables']['messages']['Row'] & {
   sender_profile?: Database['public']['Tables']['profiles']['Row']
@@ -161,23 +162,19 @@ export default function ChatView({ taskId, onBack }: ChatViewProps) {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 bg-white">
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={onBack}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          
-          <div className="flex-1">
-            <h1 className="font-semibold text-gray-900">{task.title}</h1>
-            <p className="text-sm text-gray-600">
-              {otherParticipant?.name || 'Utilisateur'}
-            </p>
-          </div>
-        </div>
-      </div>
+             <Header
+         title={task.title}
+         subtitle={`Chat avec ${otherParticipant?.name || 'Utilisateur'}`}
+         showSearch={false}
+         showFilters={false}
+         showViewToggle={false}
+         showRefresh={false}
+         onBack={onBack}
+         participants={[
+           task.author_profile?.name || 'Utilisateur',
+           task.helper_profile?.name || 'Aideur'
+         ].filter(Boolean)}
+       />
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
