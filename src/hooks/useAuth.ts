@@ -1,29 +1,49 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import type { User } from '@supabase/supabase-js'
 import type { Database } from '../lib/supabase'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 
+// Cache global pour éviter les rechargements multiples
+let profileCache: Map<string, Profile> = new Map()
+let loadingProfiles: Set<string> = new Set()
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const mountedRef = useRef(true)
 
   useEffect(() => {
+    mountedRef.current = true
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        loadProfile(session.user.id)
-      } else {
-        setLoading(false)
+    const getInitialSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (mountedRef.current) {
+          if (session?.user) {
+            setUser(session.user)
+            await loadProfile(session.user.id)
+          } else {
+            setLoading(false)
+          }
+        }
+      } catch (error) {
+        console.error('Error getting initial session:', error)
+        if (mountedRef.current) {
+          setLoading(false)
+        }
       }
-    })
+    }
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mountedRef.current) return
+        
         console.log('Auth state changed:', event, session?.user?.id)
         
         if (event === 'SIGNED_IN' && session?.user) {
@@ -33,10 +53,15 @@ export function useAuth() {
           setUser(null)
           setProfile(null)
           setLoading(false)
-        } else if (session?.user) {
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          // Ne pas recharger le profil pour un refresh de token
+          setUser(session.user)
+        } else if (event === 'USER_UPDATED' && session?.user) {
+          setUser(session.user)
+        } else if (session?.user && !profile) {
           setUser(session.user)
           await loadProfile(session.user.id)
-        } else {
+        } else if (!session?.user) {
           setUser(null)
           setProfile(null)
           setLoading(false)
@@ -44,10 +69,33 @@ export function useAuth() {
       }
     )
 
-    return () => subscription.unsubscribe()
+    getInitialSession()
+
+    return () => {
+      mountedRef.current = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const loadProfile = async (userId: string) => {
+    // Vérifier le cache
+    if (profileCache.has(userId)) {
+      console.log('Using cached profile for user:', userId)
+      if (mountedRef.current) {
+        setProfile(profileCache.get(userId)!)
+        setLoading(false)
+      }
+      return
+    }
+
+    // Éviter les chargements multiples du même profil
+    if (loadingProfiles.has(userId)) {
+      console.log('Profile already loading for user:', userId)
+      return
+    }
+
+    loadingProfiles.add(userId)
+
     try {
       console.log('Loading profile for user:', userId)
       
@@ -79,18 +127,33 @@ export function useAuth() {
         }
 
         console.log('New profile created:', newProfile)
-        setProfile(newProfile)
+        
+        // Mettre en cache
+        profileCache.set(userId, newProfile)
+        
+        if (mountedRef.current) {
+          setProfile(newProfile)
+        }
       } else if (error) {
         console.error('Error loading profile:', error)
         throw error
       } else {
         console.log('Profile loaded:', data)
-        setProfile(data)
+        
+        // Mettre en cache
+        profileCache.set(userId, data)
+        
+        if (mountedRef.current) {
+          setProfile(data)
+        }
       }
     } catch (error) {
       console.error('Error in loadProfile:', error)
     } finally {
-      setLoading(false)
+      loadingProfiles.delete(userId)
+      if (mountedRef.current) {
+        setLoading(false)
+      }
     }
   }
 
@@ -102,7 +165,6 @@ export function useAuth() {
       })
       
       if (data.user && !error) {
-        // Le profil sera chargé automatiquement par onAuthStateChange
         console.log('User signed in:', data.user.id)
       }
       
@@ -159,6 +221,10 @@ export function useAuth() {
       if (error) {
         console.error('Sign out error:', error)
       }
+      // Vider le cache du profil
+      if (user) {
+        profileCache.delete(user.id)
+      }
       return { error }
     } catch (error) {
       console.error('Sign out error:', error)
@@ -178,8 +244,13 @@ export function useAuth() {
         .single()
 
       if (data) {
-        setProfile(data)
+        // Mettre à jour le cache
+        profileCache.set(user.id, data)
         console.log('Profile updated:', data)
+        
+        if (mountedRef.current) {
+          setProfile(data)
+        }
       }
 
       return { data, error }
