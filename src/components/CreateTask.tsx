@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import LocationPicker from './LocationPicker'
+import Header from './Header'
 
 export default function CreateTask() {
   const { user } = useAuth()
@@ -236,58 +237,15 @@ export default function CreateTask() {
   return (
     <div className="flex flex-col h-full bg-gray-50 relative">
       {/* Header avec gradient moderne */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-6 bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white relative overflow-hidden"
-      >
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative">
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.8 }}
-            className="text-2xl font-bold mb-6 text-center"
-          >
-            Créer une Nouvelle Tâche
-          </motion.h1>
-          
-          {/* Indicateur d'étapes moderne */}
-          <div className="flex items-center justify-between mb-6">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <motion.div 
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.3 + index * 0.1, type: "spring", stiffness: 200 }}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm shadow-lg ${
-                    currentStep >= step.id 
-                      ? 'bg-gradient-to-br from-white to-blue-50 text-blue-600' 
-                      : 'bg-white/20 text-white/70 backdrop-blur-sm'
-                  }`}
-                >
-                  {currentStep > step.id ? <Check className="w-5 h-5" /> : <step.icon className="w-5 h-5" />}
-                </motion.div>
-                {index < steps.length - 1 && (
-                  <div className={`w-16 h-1 mx-2 rounded-full ${
-                    currentStep > step.id ? 'bg-gradient-to-r from-white to-blue-200' : 'bg-white/30'
-                  }`} />
-                )}
-              </div>
-            ))}
-          </div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-            className="text-center"
-          >
-            <h2 className="text-lg font-semibold mb-2">{steps[currentStep - 1].title}</h2>
-            <p className="text-blue-100">{steps[currentStep - 1].description}</p>
-          </motion.div>
-        </div>
-      </motion.div>
+             <Header
+         title="Créer une Nouvelle Tâche"
+         subtitle={`Étape ${currentStep}/4: ${steps[currentStep - 1].title}`}
+         showSearch={false}
+         showFilters={false}
+         showViewToggle={false}
+         showRefresh={false}
+         className="bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white"
+       />
 
       {/* Contenu du formulaire */}
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 pb-24">

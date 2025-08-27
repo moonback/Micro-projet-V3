@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, MapPin, Calendar, Euro, User, CheckCircle, MessageCircle, Clock, Star, Tag, AlertTriangle, Crown, Camera, Globe, Building } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowLeft, MapPin, Euro, Calendar, Clock, Star, MessageCircle, CheckCircle, Play, XCircle, AlertTriangle, User, Tag, Zap, TrendingUp, Shield, Heart } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { Database } from '../lib/supabase'
+import Header from './Header'
 
 // Fonction pour récupérer l'adresse à partir des coordonnées GPS
 const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
@@ -233,29 +235,23 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 bg-white">
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={onBack}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-lg font-semibold text-gray-900">Détails de la Tâche</h1>
-            <div className="flex items-center space-x-2 mt-1">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
-                {getStatusLabel(task.status)}
-              </span>
-              {task.priority && (
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
-                  {getPriorityLabel(task.priority)}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+             <Header
+         title={task.title}
+         subtitle={`${getStatusLabel(task.status)} • ${getPriorityLabel(task.priority)}`}
+         showSearch={false}
+         showFilters={false}
+         showViewToggle={false}
+         showRefresh={false}
+         onBack={onBack}
+         rightButtons={[
+           {
+             icon: MessageCircle,
+             onClick: () => onChatOpen(task.id),
+             tooltip: 'Ouvrir le chat',
+             className: 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
+           }
+         ]}
+       />
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6">

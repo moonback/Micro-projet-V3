@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { User, Mail, Phone, Star, Calendar, LogOut, Edit, Save, X, ListTodo, CheckCircle, MessageCircle, TrendingUp, Award, Zap, Heart } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { User, Edit3, Save, X, Star, Euro, MapPin, Calendar, LogOut, Shield, Zap, Heart, TrendingUp, CheckCircle, Clock, AlertTriangle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { Database } from '../lib/supabase'
+import Header from './Header'
 
 interface ProfileProps {
   onSignOut: () => void
@@ -256,39 +257,22 @@ export default function Profile({ onSignOut }: ProfileProps) {
   return (
     <div className="flex flex-col h-full bg-gray-50 relative">
       {/* Header avec gradient moderne */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-6 bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white relative overflow-hidden"
-      >
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative text-center">
-          <motion.div 
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/30"
-          >
-            <User className="w-10 h-10" />
-          </motion.div>
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.8 }}
-            className="text-2xl font-bold mb-2"
-          >
-            {profile.name || 'Utilisateur'}
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-            className="text-blue-100"
-          >
-            Membre de la communauté MicroTask
-          </motion.p>
-        </div>
-      </motion.div>
+             <Header
+         title={profile.name || 'Mon Profil'}
+         subtitle="Gérez vos informations personnelles"
+         showSearch={false}
+         showFilters={false}
+         showViewToggle={false}
+         showRefresh={false}
+         rightButtons={[
+           {
+             icon: LogOut,
+             onClick: handleSignOutClick,
+             tooltip: 'Se déconnecter',
+             className: 'text-red-600 hover:text-red-800 hover:bg-red-50'
+           }
+         ]}
+       />
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6 pb-24 space-y-6">
@@ -379,17 +363,7 @@ export default function Profile({ onSignOut }: ProfileProps) {
                 
                 <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-100">
                   <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
-                    <Mail className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{user?.email}</p>
-                    <p className="text-sm text-gray-600">Adresse email</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-100">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <Phone className="w-5 h-5 text-white" />
+                    <MapPin className="w-5 h-5 text-white" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">{profile.phone || 'Non spécifié'}</p>
@@ -403,7 +377,7 @@ export default function Profile({ onSignOut }: ProfileProps) {
                   onClick={handleEdit}
                   className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 px-4 rounded-2xl font-medium hover:shadow-lg transition-all flex items-center justify-center shadow-md"
                 >
-                  <Edit className="w-4 h-4 mr-2" />
+                  <Edit3 className="w-4 h-4 mr-2" />
                   Modifier le Profil
                 </motion.button>
               </motion.div>
@@ -448,7 +422,7 @@ export default function Profile({ onSignOut }: ProfileProps) {
           className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
         >
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <ListTodo className="w-5 h-5 mr-2 text-blue-600" />
+            <Clock className="w-5 h-5 mr-2 text-blue-600" />
             Activité sur la Plateforme
           </h2>
           

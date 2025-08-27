@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import TaskCard from './TaskCard'
 import TaskMap from './TaskMap'
 import TaskFilters, { TaskFilters as TaskFiltersType } from './TaskFilters'
+import Header from './Header'
 import type { TaskWithProfiles } from '../types/task'
 
 interface TaskFeedProps {
@@ -480,147 +481,22 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header avec gradient moderne */}
-      {/* Header avec design moderne et futuriste */}
-<div className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-blue-900 text-white overflow-hidden">
-  {/* Éléments décoratifs d'arrière-plan */}
-  <div className="absolute inset-0">
-    <div className="absolute top-0 left-1/4 w-72 h-72 bg-cyan-500/20 rounded-full blur-3xl animate-pulse"></div>
-    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-  </div>
-  
-  <div className="relative z-10 p-6 pb-8">
-    <div className="flex items-center justify-between mb-8">
-      <div>
-        <motion.div 
-          initial={{ x: -30, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          className="flex items-center space-x-3 mb-2"
-        >
-          <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-xl">
-            <span className="text-lg">🚀</span>
-          </div>
-          <h1 className="text-3xl font-black bg-gradient-to-r from-white via-cyan-200 to-blue-200 bg-clip-text text-transparent">
-            Bonjour !
-          </h1>
-        </motion.div>
-        <motion.p 
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="text-cyan-200/80 text-sm font-medium ml-13"
-        >
-          Découvrez des opportunités extraordinaires près de chez vous
-        </motion.p>
-      </div>
-      
-      <div className="flex items-center space-x-3">
-        <motion.button
-          whileHover={{ scale: 1.05, rotate: 180 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="group p-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-cyan-500/25"
-        >
-          <RefreshCw className={`w-5 h-5 text-cyan-200 group-hover:text-white transition-colors ${refreshing ? 'animate-spin' : ''}`} />
-        </motion.button>
-        
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
-          className="group p-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-purple-500/25"
-        >
-          {viewMode === 'list' ? 
-            <MapPin className="w-5 h-5 text-purple-200 group-hover:text-white transition-colors" /> : 
-            <List className="w-5 h-5 text-purple-200 group-hover:text-white transition-colors" />
-          }
-        </motion.button>
-      </div>
-    </div>
+      {/* Header avec design moderne et professionnel */}
+             <Header
+         title="MicroTask"
+         subtitle="Trouvez votre prochaine opportunité"
+         searchQuery={searchQuery}
+         onSearchChange={handleSearchChange}
+         onFiltersOpen={() => setIsFiltersModalOpen(true)}
+         onCategoriesOpen={() => setIsCategoryModalOpen(true)}
+         onRefresh={handleRefresh}
+         refreshing={refreshing}
+         viewMode={viewMode}
+         onViewToggle={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
+         filters={filters}
+       />
 
-    {/* Barre de recherche futuriste */}
-    <motion.div 
-      initial={{ y: 30, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.3, type: "spring", stiffness: 100 }}
-      className="relative group"
-    >
-      {/* Glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/50 to-purple-500/50 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      
-      <div className="relative bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl overflow-hidden shadow-2xl">
-        <div className="flex items-center">
-          <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full ml-2 shadow-lg">
-            <Search className="w-6 h-6 text-white" />
-          </div>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Que souhaitez-vous accomplir aujourd'hui ?"
-            className="flex-1 px-6 py-4 bg-transparent border-0 text-white placeholder-cyan-200/60 text-lg font-medium focus:outline-none focus:ring-0"
-          />
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="mr-2 p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full shadow-lg hover:shadow-purple-500/50 transition-all duration-300"
-          >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </motion.button>
-        </div>
-      </div>
-    </motion.div>
 
-    {/* Indicateurs de tendance */}
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5 }}
-      className="flex items-center justify-center space-x-6 mt-6"
-    >
-      <div className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-xl rounded-full border border-white/20">
-        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-        <span className="text-xs text-cyan-200 font-medium">156 nouvelles tâches</span>
-      </div>
-      <div className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-xl rounded-full border border-white/20">
-        <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-        <span className="text-xs text-cyan-200 font-medium">Demande élevée</span>
-      </div>
-    </motion.div>
-  </div>
-</div>
-
-      {/* Boutons d'action pour les modales */}
-      <div className="px-4 py-4 flex gap-3">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setIsCategoryModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-3 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all"
-        >
-          <Tag className="w-4 h-4 text-blue-600" />
-          <span className="font-medium text-gray-700">
-            {filters.category || 'Catégories'}
-          </span>
-        </motion.button>
-
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setIsFiltersModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-3 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all"
-        >
-          <Filter className="w-4 h-4 text-blue-600" />
-          <span className="font-medium text-gray-700">Filtres</span>
-          {(filters.priority || filters.budgetMin || filters.budgetMax || filters.location || filters.tags.length > 0 || filters.isUrgent || filters.isFeatured || filters.status || filters.sortBy !== 'created_at') && (
-            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-          )}
-        </motion.button>
-      </div>
 
       {/* Badge de filtre actif */}
       {(filters.category || searchQuery || filters.priority || filters.budgetMin || filters.budgetMax || filters.location || filters.tags.length > 0 || filters.isUrgent || filters.isFeatured || filters.status || filters.sortBy !== 'created_at') && (
