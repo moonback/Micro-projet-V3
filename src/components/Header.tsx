@@ -140,13 +140,13 @@ export default function Header({
             {/* Bouton de recherche avancée */}
             {showFilters && onFiltersOpen && (
               <motion.button
-                whileHover={{ scale: 1.02, y: -1 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.05, y: -1 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={onFiltersOpen}
-                className="group relative flex items-center gap-3 px-5 py-3 bg-white/80 hover:bg-white backdrop-blur-sm text-blue-700 rounded-2xl border border-blue-200/60 shadow-lg hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300"
+                className="group relative p-3 bg-white/80 hover:bg-white backdrop-blur-sm text-blue-700 rounded-2xl border border-blue-200/60 shadow-lg hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300"
+                title="Recherche avancée"
               >
-                <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span className="font-semibold text-sm">Recherche avancée</span>
+                <Search className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 {hasActiveFilters() && (
                   <div className="absolute -top-1 -right-1">
                     <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-bounce"></div>
@@ -158,15 +158,13 @@ export default function Header({
             {/* Bouton catégories */}
             {onCategoriesOpen && (
               <motion.button
-                whileHover={{ scale: 1.02, y: -1 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.05, y: -1 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={onCategoriesOpen}
-                className="group flex items-center gap-3 px-5 py-3 bg-white/80 hover:bg-white backdrop-blur-sm text-gray-700 rounded-2xl border border-gray-200/60 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="group p-3 bg-white/80 hover:bg-white backdrop-blur-sm text-gray-700 rounded-2xl border border-gray-200/60 shadow-lg hover:shadow-xl transition-all duration-300"
+                title={filters?.category || 'Catégories'}
               >
-                <Tag className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span className="font-semibold text-sm">
-                  {filters?.category || 'Catégories'}
-                </span>
+                <Tag className="w-5 h-5 group-hover:scale-110 transition-transform" />
               </motion.button>
             )}
 
