@@ -15,8 +15,7 @@ export default function Profile({ onSignOut }: ProfileProps) {
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({
     name: '',
-    phone: '',
-    address: ''
+    phone: ''
   })
 
   useEffect(() => {
@@ -37,8 +36,7 @@ export default function Profile({ onSignOut }: ProfileProps) {
       setProfile(data)
       setEditForm({
         name: data.name || '',
-        phone: data.phone || '',
-        address: data.address || ''
+        phone: data.phone || ''
       })
     } catch (error) {
       console.error('Error loading profile:', error)
@@ -55,8 +53,7 @@ export default function Profile({ onSignOut }: ProfileProps) {
     setEditing(false)
     setEditForm({
       name: profile?.name || '',
-      phone: profile?.phone || '',
-      address: profile?.address || ''
+      phone: profile?.phone || ''
     })
   }
 
@@ -69,8 +66,7 @@ export default function Profile({ onSignOut }: ProfileProps) {
         .from('profiles')
         .update({
           name: editForm.name,
-          phone: editForm.phone,
-          address: editForm.address
+          phone: editForm.phone
         })
         .eq('id', user.id)
 
@@ -159,18 +155,6 @@ export default function Profile({ onSignOut }: ProfileProps) {
                 />
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Adresse
-                </label>
-                <input
-                  type="text"
-                  value={editForm.address}
-                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
               <div className="flex space-x-3">
                 <button
                   onClick={handleSave}
@@ -212,14 +196,6 @@ export default function Profile({ onSignOut }: ProfileProps) {
                 <div>
                   <p className="font-medium text-gray-900">{profile.phone || 'Non spécifié'}</p>
                   <p className="text-sm text-gray-600">Numéro de téléphone</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <MapPin className="w-5 h-5 text-gray-500" />
-                <div>
-                  <p className="font-medium text-gray-900">{profile.address || 'Non spécifié'}</p>
-                  <p className="text-sm text-gray-600">Adresse</p>
                 </div>
               </div>
               
