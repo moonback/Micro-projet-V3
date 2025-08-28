@@ -222,67 +222,7 @@ export default function Header({
           </div>
         </div>
 
-        {/* Bouton pour déployer la recherche */}
-        {showSearch && onSearchChange && (
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setIsSearchVisible(!isSearchVisible)}
-                className="flex items-center space-x-2 text-primary-600 font-medium"
-              >
-                <span>Recherche</span>
-                {isSearchVisible ? 
-                  <ChevronUp className="w-4 h-4" /> : 
-                  <ChevronDown className="w-4 h-4" />
-                }
-              </motion.button>
-            </div>
-            
-            <AnimatePresence>
-              {isSearchVisible && (
-                <motion.div 
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden"
-                >
-                  <div className="relative max-w-3xl">
-                    <div className="relative bg-white border border-primary-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
-                      <div className="flex items-center">
-                        <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-l-2xl">
-                          <Search className="w-5 h-5 text-white" />
-                        </div>
-                        <input
-                          type="text"
-                          value={searchQuery}
-                          onChange={(e) => onSearchChange(e.target.value)}
-                          placeholder="Rechercher des tâches, projets ou opportunités..."
-                          className="flex-1 px-6 py-4 bg-transparent border-0 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0 text-base"
-                        />
-                        <div className="flex items-center space-x-2 mr-4">
-                          <motion.button 
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="p-2 bg-primary-50 hover:bg-primary-100 rounded-xl transition-colors duration-200"
-                            title="Tendances"
-                          >
-                            <TrendingUp className="w-4 h-4 text-primary-600" />
-                          </motion.button>
-                          <kbd className="px-3 py-1 text-xs font-semibold text-gray-500 bg-gray-100 border border-gray-200 rounded-lg">
-                            Ctrl K
-                          </kbd>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
+
 
         {/* Statistiques améliorées */}
         {showStats && stats && (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { MapPin, List, Filter, RefreshCw, Search, Grid3X3, Zap, Clock, Star, TrendingUp, ChevronRight, X, Tag } from 'lucide-react'
+import { MapPin, List, Filter, RefreshCw, Search, Grid3X3, Zap, Clock, Star, TrendingUp, ChevronRight, X, Tag, SlidersHorizontal } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import TaskCard from './TaskCard'
@@ -19,14 +19,14 @@ let lastFetchTime = 0
 const CACHE_DURATION = 3 * 60 * 1000 // 3 minutes
 
 const categories = [
-  { name: 'Livraison', icon: '🚚', color: 'bg-blue-100 text-blue-700' },
-  { name: 'Transport', icon: '📦', color: 'bg-green-100 text-green-700' },
-  { name: 'Animaux', icon: '🐕', color: 'bg-purple-100 text-purple-700' },
-  { name: 'Ménage', icon: '🧹', color: 'bg-yellow-100 text-yellow-700' },
-  { name: 'Jardinage', icon: '🌱', color: 'bg-emerald-100 text-emerald-700' }
+  { name: 'Livraison', icon: '🚚', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { name: 'Transport', icon: '📦', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { name: 'Animaux', icon: '🐕', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  { name: 'Ménage', icon: '🧹', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { name: 'Jardinage', icon: '🌱', color: 'bg-green-50 text-green-700 border-green-200' }
 ]
 
-// Composant Modal pour les catégories
+// Composant Modal pour les catégories - Design compact
 const CategoryModal = ({ isOpen, onClose, onSelect, selectedCategory }: { 
   isOpen: boolean, 
   onClose: () => void, 
@@ -41,27 +41,27 @@ const CategoryModal = ({ isOpen, onClose, onSelect, selectedCategory }: {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white rounded-2xl p-6 w-full max-w-md"
+          initial={{ scale: 0.95, opacity: 0, y: 10 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 10 }}
+          className="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-gray-100"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Catégories populaires</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Catégories</h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-4 h-4 text-gray-500" />
             </button>
           </div>
           
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             {categories.map((category) => (
               <motion.button
                 key={category.name}
@@ -71,25 +71,27 @@ const CategoryModal = ({ isOpen, onClose, onSelect, selectedCategory }: {
                   onSelect(category.name)
                   onClose()
                 }}
-                className={`${category.color} p-4 rounded-xl text-sm font-medium flex flex-col items-center gap-2 ${
-                  selectedCategory === category.name ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+                className={`${category.color} p-3 rounded-2xl text-xs font-medium flex flex-col items-center gap-1.5 border transition-all ${
+                  selectedCategory === category.name 
+                    ? 'ring-2 ring-blue-500 ring-offset-1 shadow-lg scale-105' 
+                    : 'hover:shadow-md'
                 }`}
               >
-                <span className="text-2xl">{category.icon}</span>
+                <span className="text-xl">{category.icon}</span>
                 <span>{category.name}</span>
               </motion.button>
             ))}
           </div>
           
-          <div className="mt-6 pt-4 border-t border-gray-200">
+          <div className="mt-4 pt-3 border-t border-gray-100">
             <button
               onClick={() => {
                 onSelect('')
                 onClose()
               }}
-              className="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors"
+              className="w-full py-2.5 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl font-medium transition-colors text-sm"
             >
-              Voir toutes les catégories
+              Voir toutes
             </button>
           </div>
         </motion.div>
@@ -98,7 +100,7 @@ const CategoryModal = ({ isOpen, onClose, onSelect, selectedCategory }: {
   )
 }
 
-// Composant Modal pour les filtres
+// Composant Modal pour les filtres - Design compact
 const FiltersModal = ({ isOpen, onClose, filters, onFiltersChange, onReset }: {
   isOpen: boolean
   onClose: () => void
@@ -114,23 +116,23 @@ const FiltersModal = ({ isOpen, onClose, filters, onFiltersChange, onReset }: {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          initial={{ scale: 0.95, opacity: 0, y: 10 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.9, opacity: 0, y: 20 }}
-          className="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+          exit={{ scale: 0.95, opacity: 0, y: 10 }}
+          className="bg-white rounded-3xl p-5 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl border border-gray-100"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Filtres avancés</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Filtres</h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-4 h-4 text-gray-500" />
             </button>
           </div>
           
@@ -143,10 +145,10 @@ const FiltersModal = ({ isOpen, onClose, filters, onFiltersChange, onReset }: {
             }}
           />
           
-          <div className="mt-6 pt-4 border-t border-gray-200 flex gap-3">
+          <div className="mt-4 pt-3 border-t border-gray-100 flex gap-2">
             <button
               onClick={onClose}
-              className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors"
+              className="flex-1 py-2.5 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl font-medium transition-colors text-sm"
             >
               Fermer
             </button>
@@ -155,9 +157,9 @@ const FiltersModal = ({ isOpen, onClose, filters, onFiltersChange, onReset }: {
                 onReset()
                 onClose()
               }}
-              className="flex-1 py-3 px-4 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl font-medium transition-colors"
+              className="flex-1 py-2.5 px-4 bg-red-50 hover:bg-red-100 text-red-700 rounded-2xl font-medium transition-colors text-sm"
             >
-              Réinitialiser
+              Reset
             </button>
           </div>
         </motion.div>
@@ -468,69 +470,45 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+      <div className="flex flex-col items-center justify-center h-64 space-y-3">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full"
+          className="w-10 h-10 border-3 border-blue-200 border-t-blue-600 rounded-full"
         />
-        <p className="text-gray-500 font-medium">Chargement des tâches...</p>
+        <p className="text-gray-500 font-medium text-sm">Chargement...</p>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header avec design moderne et professionnel */}
-             <Header
-         title="MicroTask"
-         subtitle="Trouvez votre prochaine opportunité"
-         searchQuery={searchQuery}
-         onSearchChange={handleSearchChange}
-         onFiltersOpen={() => setIsFiltersModalOpen(true)}
-         onCategoriesOpen={() => setIsCategoryModalOpen(true)}
-         onRefresh={handleRefresh}
-         refreshing={refreshing}
-         viewMode={viewMode}
-         onViewToggle={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
-         filters={filters}
-       />
+    <div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Header compact et moderne */}
+      <Header
+        title="MicroTask"
+        subtitle="Trouvez votre prochaine opportunité"
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        onFiltersOpen={() => setIsFiltersModalOpen(true)}
+        onCategoriesOpen={() => setIsCategoryModalOpen(true)}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        viewMode={viewMode}
+        onViewToggle={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
+        filters={filters}
+      />
 
 
 
-      {/* Badge de filtre actif */}
-      {(filters.category || searchQuery || filters.priority || filters.budgetMin || filters.budgetMax || filters.location || filters.tags.length > 0 || filters.isUrgent || filters.isFeatured || filters.status || filters.sortBy !== 'created_at') && (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="px-4 pb-2"
-        >
-          <div className="flex items-center justify-between bg-blue-50 rounded-xl p-3">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-blue-600" />
-              <span className="text-blue-700 font-medium text-sm">
-                Filtres actifs: {filters.category && `${filters.category}`} {searchQuery && `"${searchQuery}"`} {filters.priority && `${filters.priority}`} {filters.budgetMin && `≥${filters.budgetMin}€`} {filters.budgetMax && `≤${filters.budgetMax}€`} {filters.location && `${filters.location}`} {filters.tags.length > 0 && `${filters.tags.length} tag(s)`} {filters.isUrgent && 'Urgent'} {filters.isFeatured && 'Mis en avant'} {filters.status && `${filters.status}`} {filters.sortBy !== 'created_at' && `${filters.sortBy}`}
-              </span>
-            </div>
-            <button
-              onClick={clearFilters}
-              className="text-blue-600 text-sm font-medium hover:text-blue-800 transition-colors"
-            >
-              Effacer
-            </button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Contenu avec animations */}
+      {/* Contenu avec animations fluides */}
       <AnimatePresence mode="wait">
         {viewMode === 'map' ? (
           <motion.div
             key="map"
-            initial={{ opacity: 0, x: 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             className="flex-1"
           >
             <TaskMap tasks={filteredTasks} onTaskPress={onTaskPress} />
@@ -538,53 +516,62 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
         ) : (
           <motion.div
             key="list"
-            initial={{ opacity: 0, x: -100 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 100 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             className="flex-1 overflow-y-auto"
           >
             {filteredTasks.length === 0 ? (
               <motion.div 
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center justify-center h-full text-center p-8"
+                className="flex flex-col items-center justify-center h-full text-center p-6"
               >
-                <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6">
-                  <Search className="w-12 h-12 text-gray-400" />
+                <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+                  <Search className="w-10 h-10 text-gray-400" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Aucune tâche trouvée
                 </h3>
-                <p className="text-gray-500 mb-6 max-w-sm">
-                  Aucune tâche ne correspond à vos critères de recherche. Essayez d'ajuster vos filtres.
+                <p className="text-gray-500 mb-4 max-w-xs text-sm">
+                  Aucune tâche ne correspond à vos critères. Essayez d'ajuster vos filtres.
                 </p>
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={clearFilters}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-3 rounded-2xl font-medium shadow-lg"
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-2.5 rounded-2xl font-medium shadow-lg text-sm"
                 >
-                  Voir toutes les tâches
+                  Voir toutes
                 </motion.button>
               </motion.div>
             ) : (
-              <div className="p-4 space-y-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-lg font-bold text-gray-900">
-                    {filteredTasks.length} tâche{filteredTasks.length > 1 ? 's' : ''} disponible{filteredTasks.length > 1 ? 's' : ''}
+              <div className="p-3 space-y-3">
+                {/* En-tête compact */}
+                <div className="flex items-center justify-between mb-1 px-1">
+                  <h2 className="text-base font-semibold text-gray-900">
+                    {filteredTasks.length} tâche{filteredTasks.length > 1 ? 's' : ''}
                   </h2>
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <span>Disponible{filteredTasks.length > 1 ? 's' : ''}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </div>
                 </div>
                 
+                {/* Liste des tâches avec animations optimisées */}
                 <AnimatePresence>
                   {filteredTasks.map((task, index) => (
                     <motion.div
                       key={task.id}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ 
+                        delay: Math.min(index * 0.05, 0.3), 
+                        duration: 0.2,
+                        ease: "easeOut"
+                      }}
                     >
                       <TaskCard
                         task={task}
