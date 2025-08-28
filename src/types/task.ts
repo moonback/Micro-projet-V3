@@ -212,6 +212,20 @@ export interface Conversation {
   lastActivity: string
 }
 
+// Type simplifié pour la liste des conversations
+export interface ConversationListItem {
+  taskId: string
+  title: string
+  status: string
+  lastMessage: string
+  lastMessageTime: string
+  lastMessageSender: string | null
+  unreadCount: number
+  otherParticipant: UserProfile | null
+  isAuthor: boolean
+  isHelper: boolean
+}
+
 // Types pour les notifications de messages
 export interface MessageNotification {
   id: string

@@ -176,8 +176,33 @@ export default function ChatView({ taskId, onBack }: ChatViewProps) {
     )
   }
 
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-gray-500">Utilisateur non connecté</p>
+      </div>
+    )
+  }
+
   const otherParticipant = task.author === user?.id ? task.helper_profile : task.author_profile
-  const canSendMessage = task.author === user?.id || task.helper === user?.id
+  
+  // Permettre l'envoi de messages si :
+  // 1. Vous êtes l'auteur de la tâche
+  // 2. Vous êtes l'aideur assigné
+  // 3. La tâche est ouverte et vous voulez postuler
+  const canSendMessage = task.author === user?.id || 
+                        task.helper === user?.id || 
+                        (task.status === 'open' && user?.id)
+  
+  // Debug: vérifier les permissions
+  console.log('Debug ChatView:', {
+    userId: user?.id,
+    taskAuthor: task.author,
+    taskHelper: task.helper,
+    canSendMessage,
+    user,
+    task
+  })
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -293,85 +318,85 @@ export default function ChatView({ taskId, onBack }: ChatViewProps) {
       {/* Zone de saisie */}
       {canSendMessage && (
         <div className="p-4 border-t border-gray-200 bg-white">
-          {/* Pièces jointes sélectionnées */}
-          {selectedFiles.length > 0 && (
-            <div className="mb-3 p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">
-                  Fichiers sélectionnés ({selectedFiles.length})
-                </span>
-                <button
-                  onClick={() => setSelectedFiles([])}
-                  className="text-red-500 hover:text-red-700 text-sm"
-                >
-                  Tout supprimer
-                </button>
-              </div>
-              <div className="space-y-2">
-                {selectedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
-                    <div className="flex items-center space-x-2">
-                      {getFileIcon(file.type)}
-                      <span className="text-sm text-gray-700 truncate">{file.name}</span>
-                    </div>
-                    <button
-                      onClick={() => removeFile(index)}
-                      className="text-red-500 hover:text-red-700 p-1"
-                    >
-                      ×
-                    </button>
+        {/* Pièces jointes sélectionnées */}
+        {selectedFiles.length > 0 && (
+          <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">
+                Fichiers sélectionnés ({selectedFiles.length})
+              </span>
+              <button
+                onClick={() => setSelectedFiles([])}
+                className="text-red-500 hover:text-red-700 text-sm"
+              >
+                Tout supprimer
+              </button>
+            </div>
+            <div className="space-y-2">
+              {selectedFiles.map((file, index) => (
+                <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+                  <div className="flex items-center space-x-2">
+                    {getFileIcon(file.type)}
+                    <span className="text-sm text-gray-700 truncate">{file.name}</span>
                   </div>
-                ))}
-              </div>
+                  <button
+                    onClick={() => removeFile(index)}
+                    className="text-red-500 hover:text-red-700 p-1"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
             </div>
-          )}
-
-          <div className="flex space-x-2">
-            {/* Bouton pièces jointes */}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              title="Ajouter des pièces jointes"
-            >
-              <Paperclip className="w-5 h-5 text-gray-500" />
-            </button>
-            
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              onChange={handleFileSelect}
-              className="hidden"
-              accept="image/*,.pdf,.doc,.docx,.txt"
-            />
-            
-            {/* Zone de saisie */}
-            <div className="flex-1 relative">
-              <textarea
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Tapez votre message..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                rows={1}
-                disabled={sending || uploading}
-              />
-            </div>
-            
-            {/* Bouton d'envoi */}
-            <button
-              onClick={handleSendMessage}
-              disabled={sending || uploading || (!newMessage.trim() && selectedFiles.length === 0)}
-              className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 transition-colors"
-            >
-              {sending || uploading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Send className="w-5 h-5" />
-              )}
-            </button>
           </div>
+        )}
+
+        <div className="flex space-x-2">
+          {/* Bouton pièces jointes */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            title="Ajouter des pièces jointes"
+          >
+            <Paperclip className="w-5 h-5 text-gray-500" />
+          </button>
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+            accept="image/*,.pdf,.doc,.docx,.txt"
+          />
+          
+          {/* Zone de saisie */}
+          <div className="flex-1 relative">
+            <textarea
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Tapez votre message..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows={1}
+              disabled={sending || uploading}
+            />
+          </div>
+          
+          {/* Bouton d'envoi */}
+          <button
+            onClick={handleSendMessage}
+            disabled={sending || uploading || (!newMessage.trim() && selectedFiles.length === 0)}
+            className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 transition-colors"
+          >
+            {sending || uploading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
+          </button>
         </div>
+      </div>
       )}
     </div>
   )

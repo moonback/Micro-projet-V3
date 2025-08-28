@@ -25,6 +25,7 @@ WHERE sender = auth.uid();
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('chat-attachments', 'chat-attachments', true);
 
 -- Politique RLS pour permettre la mise à jour des messages (marquage comme lu)
+DROP POLICY IF EXISTS "Users can update message read status" ON messages;
 CREATE POLICY "Users can update message read status" ON messages
 FOR UPDATE USING (
   auth.uid() IN (
@@ -35,6 +36,7 @@ FOR UPDATE USING (
 );
 
 -- Fonction pour marquer automatiquement les messages comme lus
+DROP FUNCTION IF EXISTS mark_messages_as_read(UUID, UUID);
 CREATE OR REPLACE FUNCTION mark_messages_as_read(task_id_param UUID, user_id_param UUID)
 RETURNS VOID AS $$
 BEGIN
@@ -47,20 +49,25 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Fonction pour compter les messages non lus d'une tâche
+DROP FUNCTION IF EXISTS count_unread_messages(UUID, UUID);
 CREATE OR REPLACE FUNCTION count_unread_messages(task_id_param UUID, user_id_param UUID)
 RETURNS INTEGER AS $$
 BEGIN
   RETURN (
     SELECT COUNT(*)::INTEGER
     FROM messages 
-    WHERE task_id = task_id_param 
+    WHERE id = task_id_param 
       AND sender != user_id_param 
       AND is_read = FALSE
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Trigger pour appliquer la validation (à supprimer en premier)
+DROP TRIGGER IF EXISTS validate_message_update_trigger ON messages;
+
 -- Fonction pour valider les mises à jour des messages
+DROP FUNCTION IF EXISTS validate_message_update();
 CREATE OR REPLACE FUNCTION validate_message_update()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -85,19 +92,47 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger pour appliquer la validation
+-- Recréer le trigger après la fonction
 CREATE TRIGGER validate_message_update_trigger
   BEFORE UPDATE ON messages
   FOR EACH ROW
   EXECUTE FUNCTION validate_message_update();
 
+-- Politique pour permettre la lecture des messages
+DROP POLICY IF EXISTS "Users can view messages" ON messages;
+CREATE POLICY "Users can view messages" ON messages
+FOR SELECT USING (
+  -- Permettre si l'utilisateur est l'auteur de la tâche
+  auth.uid() IN (SELECT author FROM tasks WHERE id = task_id)
+  OR
+  -- Permettre si l'utilisateur est l'aideur assigné
+  auth.uid() IN (SELECT helper FROM tasks WHERE id = task_id)
+  OR
+  -- Permettre si la tâche est ouverte (pour voir les messages publics)
+  EXISTS (
+    SELECT 1 FROM tasks 
+    WHERE id = task_id 
+      AND status = 'open'
+  )
+);
+
 -- Politique pour permettre l'insertion de nouveaux messages
+DROP POLICY IF EXISTS "Users can insert messages" ON messages;
 CREATE POLICY "Users can insert messages" ON messages
 FOR INSERT WITH CHECK (
   auth.uid() = sender AND
-  auth.uid() IN (
-    SELECT author FROM tasks WHERE id = task_id
-    UNION
-    SELECT helper FROM tasks WHERE id = task_id
+  (
+    -- Permettre si l'utilisateur est l'auteur de la tâche
+    auth.uid() IN (SELECT author FROM tasks WHERE id = task_id)
+    OR
+    -- Permettre si l'utilisateur est l'aideur assigné
+    auth.uid() IN (SELECT helper FROM tasks WHERE id = task_id)
+    OR
+    -- Permettre si la tâche est ouverte (pour postuler)
+    EXISTS (
+      SELECT 1 FROM tasks 
+      WHERE id = task_id 
+        AND status = 'open'
+    )
   )
 );
