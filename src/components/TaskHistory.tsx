@@ -511,202 +511,387 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
             <p className="text-gray-500">Essayez de modifier vos filtres de recherche</p>
           </div>
         ) : (
-          tasks.map((task) => (
-            <motion.div
-              key={task.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => onTaskPress?.(task)}
-            >
-              <div className="flex flex-col lg:flex-row gap-6">
-                {/* Informations principales */}
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{getCategoryIcon(task.category)}</span>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                          {task.title}
-                        </h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(task.status)}`}>
-                            {getStatusLabel(task.status)}
-                          </span>
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor(task.priority)}`}>
-                            {getPriorityLabel(task.priority)}
-                          </span>
+          tasks.map((task) => {
+            // Déterminer si la tâche doit être grisée
+            const isTaskCompleted = task.status === 'completed'
+            const isTaskAssigned = task.helper && ['assigned', 'in_progress', 'pending_approval'].includes(task.status)
+            const shouldGrayOut = isTaskCompleted || isTaskAssigned
+            
+            return (
+              <motion.div
+                key={task.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all cursor-pointer ${
+                  shouldGrayOut 
+                    ? 'bg-gray-50 opacity-75 hover:opacity-90' 
+                    : 'bg-white'
+                }`}
+                onClick={() => onTaskPress?.(task)}
+              >
+                <div className="flex flex-col lg:flex-row gap-6">
+                  {/* Informations principales */}
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <span className={`text-2xl ${shouldGrayOut ? 'opacity-60' : ''}`}>
+                          {getCategoryIcon(task.category)}
+                        </span>
+                        <div>
+                          <h3 className={`text-lg font-semibold mb-1 ${
+                            shouldGrayOut ? 'text-gray-600' : 'text-gray-900'
+                          }`}>
+                            {task.title}
+                          </h3>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(task.status)}`}>
+                              {getStatusLabel(task.status)}
+                            </span>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor(task.priority)}`}>
+                              {getPriorityLabel(task.priority)}
+                            </span>
+                            
+                            {/* Indicateurs pour le propriétaire */}
+                            {user?.id === task.author && (
+                              <>
+                                {/* Indicateur d'assignation */}
+                                {task.helper && (
+                                  <span className="px-2 py-1 text-xs font-medium rounded-full border bg-purple-100 text-purple-800 border-purple-200 flex items-center gap-1">
+                                    <User className="w-3 h-3" />
+                                    Assignée
+                                  </span>
+                                )}
+                                
+                                {/* Indicateur de finalisation */}
+                                {task.status === 'completed' && (
+                                  <span className="px-2 py-1 text-xs font-medium rounded-full border bg-green-100 text-green-800 border-green-200 flex items-center gap-1">
+                                    <CheckCircle className="w-3 h-3" />
+                                    Finalisée
+                                  </span>
+                                )}
+                                
+                                {/* Indicateur de progression */}
+                                {task.status === 'in_progress' && (
+                                  <span className="px-2 py-1 text-xs font-medium rounded-full border bg-orange-100 text-orange-800 border-orange-200 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    En cours
+                                  </span>
+                                )}
+                              </>
+                            )}
+                            
+                            {/* Indicateurs pour l'aide */}
+                            {user?.id === task.helper && (
+                              <>
+                                {task.status === 'completed' && (
+                                  <span className="px-2 py-1 text-xs font-medium rounded-full border bg-green-100 text-green-800 border-green-200 flex items-center gap-1">
+                                    <CheckCircle className="w-3 h-3" />
+                                    Terminée
+                                  </span>
+                                )}
+                                
+                                {task.status === 'in_progress' && (
+                                  <span className="px-2 py-1 text-xs font-medium rounded-full border bg-orange-100 text-orange-800 border-orange-200 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    En cours
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <div className={`text-xl font-bold ${
+                          shouldGrayOut ? 'text-gray-500' : 'text-green-600'
+                        }`}>
+                          {task.budget}€
+                        </div>
+                        <div className={`text-sm ${
+                          shouldGrayOut ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          {task.currency}
                         </div>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <div className="text-xl font-bold text-green-600">
-                        {task.budget}€
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {task.currency}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  {task.description && (
-                    <p className="text-gray-700 mb-4 line-clamp-2">
-                      {task.description}
-                    </p>
-                  )}
-
-                  {/* Métadonnées */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>Créée le {formatDate(task.created_at)}</span>
-                    </div>
-                    
-                    {task.deadline && (
-                      <div className="flex items-center gap-2">
-                        <ClockIcon className="w-4 h-4" />
-                        <span>Échéance : {formatDate(task.deadline)}</span>
-                      </div>
+                    {/* Description */}
+                    {task.description && (
+                      <p className={`mb-4 line-clamp-2 ${
+                        shouldGrayOut ? 'text-gray-500' : 'text-gray-700'
+                      }`}>
+                        {task.description}
+                      </p>
                     )}
-                    
-                    {task.estimated_duration && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        <span>Durée : {formatDuration(task.estimated_duration)}</span>
-                      </div>
-                    )}
-                    
-                    {task.address && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        <span className="truncate">{task.address}</span>
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Tags */}
-                  {task.tags && task.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-4">
-                      {task.tags.slice(0, 5).map((tag, index) => (
-                        <span
-                          key={index}
-                          className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
-                        >
-                          {tag}
+                    {/* Métadonnées */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <Calendar className={`w-4 h-4 ${shouldGrayOut ? 'text-gray-400' : ''}`} />
+                        <span className={shouldGrayOut ? 'text-gray-500' : ''}>
+                          Créée le {formatDate(task.created_at)}
                         </span>
-                      ))}
-                      {task.tags.length > 5 && (
-                        <span className="px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
-                          +{task.tags.length - 5}
-                        </span>
+                      </div>
+                      
+                      {task.deadline && (
+                        <div className="flex items-center gap-2">
+                          <ClockIcon className={`w-4 h-4 ${shouldGrayOut ? 'text-gray-400' : ''}`} />
+                          <span className={shouldGrayOut ? 'text-gray-500' : ''}>
+                            Échéance : {formatDate(task.deadline)}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {task.estimated_duration && (
+                        <div className="flex items-center gap-2">
+                          <Clock className={`w-4 h-4 ${shouldGrayOut ? 'text-gray-400' : ''}`} />
+                          <span className={shouldGrayOut ? 'text-gray-500' : ''}>
+                            Durée : {formatDuration(task.estimated_duration)}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {task.address && (
+                        <div className="flex items-center gap-2">
+                          <MapPin className={`w-4 h-4 ${shouldGrayOut ? 'text-gray-400' : ''}`} />
+                          <span className={`truncate ${shouldGrayOut ? 'text-gray-500' : ''}`}>
+                            {task.address}
+                          </span>
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
 
-                {/* Informations secondaires */}
-                <div className="lg:w-48 space-y-4">
-                  {/* Statistiques des candidatures */}
-                  {showApplications && (
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <h4 className="font-medium text-gray-900 mb-2">Candidatures</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>Total :</span>
-                          <span className="font-medium">{task.total_applications || 0}</span>
+                    {/* Informations détaillées pour le propriétaire */}
+                    {user?.id === task.author && (
+                      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          État de votre tâche
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Statut :</span>
+                            <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(task.status)}`}>
+                              {getStatusLabel(task.status)}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Assignation :</span>
+                            {task.helper ? (
+                              <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                                ✓ Assignée
+                              </span>
+                            ) : (
+                              <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                                En attente
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Progression :</span>
+                            {task.status === 'completed' ? (
+                              <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                                ✓ Terminée
+                              </span>
+                            ) : task.status === 'in_progress' ? (
+                              <span className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full">
+                                🔄 En cours
+                              </span>
+                            ) : (
+                              <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                ⏳ En attente
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex justify-between">
-                          <span>En attente :</span>
-                          <span className="font-medium">{task.pending_applications || 0}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Acceptées :</span>
-                          <span className="font-medium">{task.accepted_applications || 0}</span>
+                        
+                        {/* Informations sur l'aide assignée */}
+                        {task.helper && task.helper_profile && (
+                          <div className="mt-3 pt-3 border-t border-blue-200">
+                            <div className="flex items-center gap-2 text-blue-800">
+                              <span className="font-medium">Aide assignée :</span>
+                              <span>{task.helper_profile.name || 'Anonyme'}</span>
+                              {task.helper_profile.rating && (
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                                  <span className="text-xs">{task.helper_profile.rating.toFixed(1)}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Tags */}
+                    {task.tags && task.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        {task.tags.slice(0, 5).map((tag, index) => (
+                          <span
+                            key={index}
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              shouldGrayOut 
+                                ? 'bg-gray-200 text-gray-500' 
+                                : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {task.tags.length > 5 && (
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            shouldGrayOut 
+                              ? 'bg-gray-300 text-gray-600' 
+                              : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            +{task.tags.length - 5}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Informations secondaires */}
+                  <div className="lg:w-48 space-y-4">
+                    {/* Statistiques des candidatures */}
+                    {showApplications && (
+                      <div className={`rounded-lg p-3 ${
+                        shouldGrayOut ? 'bg-gray-100' : 'bg-gray-50'
+                      }`}>
+                        <h4 className={`font-medium mb-2 ${
+                          shouldGrayOut ? 'text-gray-600' : 'text-gray-900'
+                        }`}>
+                          Candidatures
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className={shouldGrayOut ? 'text-gray-500' : ''}>Total :</span>
+                            <span className={`font-medium ${shouldGrayOut ? 'text-gray-600' : ''}`}>
+                              {task.total_applications || 0}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className={shouldGrayOut ? 'text-gray-500' : ''}>En attente :</span>
+                            <span className={`font-medium ${shouldGrayOut ? 'text-gray-600' : ''}`}>
+                              {task.pending_applications || 0}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className={shouldGrayOut ? 'text-gray-500' : ''}>Acceptées :</span>
+                            <span className={`font-medium ${shouldGrayOut ? 'text-gray-600' : ''}`}>
+                              {task.accepted_applications || 0}
+                            </span>
+                          </div>
                         </div>
                       </div>
+                    )}
+
+                    {/* Profils des participants */}
+                    <div className="space-y-3">
+                      {task.author_profile && (
+                        <div className="text-center">
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 ${
+                            shouldGrayOut ? 'bg-gray-200' : 'bg-blue-100'
+                          }`}>
+                            {task.author_profile.avatar_url ? (
+                              <img 
+                                src={task.author_profile.avatar_url} 
+                                alt={task.author_profile.name || 'Auteur'}
+                                className={`w-12 h-12 rounded-full object-cover ${
+                                  shouldGrayOut ? 'opacity-60' : ''
+                                }`}
+                              />
+                            ) : (
+                              <User className={`w-6 h-6 ${shouldGrayOut ? 'text-gray-500' : 'text-blue-600'}`} />
+                            )}
+                          </div>
+                          <div className="text-sm">
+                            <div className={`font-medium ${
+                              shouldGrayOut ? 'text-gray-600' : 'text-gray-900'
+                            }`}>
+                              {task.author_profile.name || 'Auteur'}
+                            </div>
+                            <div className={shouldGrayOut ? 'text-gray-500' : 'text-gray-600'}>
+                              Créateur
+                            </div>
+                            {task.author_profile.rating && (
+                              <div className="flex items-center justify-center gap-1 mt-1">
+                                <Star className={`w-3 h-3 ${shouldGrayOut ? 'text-gray-400' : 'text-yellow-500'} fill-current`} />
+                                <span className={`text-xs ${shouldGrayOut ? 'text-gray-500' : ''}`}>
+                                  {task.author_profile.rating.toFixed(1)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {task.helper_profile && (
+                        <div className="text-center">
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 ${
+                            shouldGrayOut ? 'bg-gray-200' : 'bg-green-100'
+                          }`}>
+                            {task.helper_profile.avatar_url ? (
+                              <img 
+                                src={task.helper_profile.avatar_url} 
+                                alt={task.helper_profile.name || 'Aide'}
+                                className={`w-12 h-12 rounded-full object-cover ${
+                                  shouldGrayOut ? 'opacity-60' : ''
+                                }`}
+                              />
+                            ) : (
+                              <User className={`w-6 h-6 ${shouldGrayOut ? 'text-gray-500' : 'text-green-600'}`} />
+                            )}
+                          </div>
+                          <div className="text-sm">
+                            <div className={`font-medium ${
+                              shouldGrayOut ? 'text-gray-600' : 'text-gray-900'
+                            }`}>
+                              {task.helper_profile.name || 'Aide'}
+                            </div>
+                            <div className={shouldGrayOut ? 'text-gray-500' : 'text-gray-600'}>
+                              Aide assigné
+                            </div>
+                            {task.helper_profile.rating && (
+                              <div className="flex items-center justify-center gap-1 mt-1">
+                                <Star className={`w-3 h-3 ${shouldGrayOut ? 'text-gray-400' : 'text-yellow-500'} fill-current`} />
+                                <span className={`text-xs ${shouldGrayOut ? 'text-gray-500' : ''}`}>
+                                  {task.helper_profile.rating.toFixed(1)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
 
-                  {/* Profils des participants */}
-                  <div className="space-y-3">
-                    {task.author_profile && (
-                      <div className="text-center">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                          {task.author_profile.avatar_url ? (
-                            <img 
-                              src={task.author_profile.avatar_url} 
-                              alt={task.author_profile.name || 'Auteur'}
-                              className="w-12 h-12 rounded-full object-cover"
-                            />
-                          ) : (
-                            <User className="w-6 h-6 text-blue-600" />
-                          )}
-                        </div>
-                        <div className="text-sm">
-                          <div className="font-medium text-gray-900">
-                            {task.author_profile.name || 'Auteur'}
-                          </div>
-                          <div className="text-gray-600">Créateur</div>
-                          {task.author_profile.rating && (
-                            <div className="flex items-center justify-center gap-1 mt-1">
-                              <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                              <span className="text-xs">{task.author_profile.rating.toFixed(1)}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {task.helper_profile && (
-                      <div className="text-center">
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                          {task.helper_profile.avatar_url ? (
-                            <img 
-                              src={task.helper_profile.avatar_url} 
-                              alt={task.helper_profile.name || 'Aide'}
-                              className="w-12 h-12 rounded-full object-cover"
-                            />
-                          ) : (
-                            <User className="w-6 h-6 text-green-600" />
-                          )}
-                        </div>
-                        <div className="text-sm">
-                          <div className="font-medium text-gray-900">
-                            {task.helper_profile.name || 'Aide'}
-                          </div>
-                          <div className="text-gray-600">Aide assigné</div>
-                          {task.helper_profile.rating && (
-                            <div className="flex items-center justify-center gap-1 mt-1">
-                              <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                              <span className="text-xs">{task.helper_profile.rating.toFixed(1)}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-col gap-2">
-                    {onTaskPress && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onTaskPress(task)
-                        }}
-                        className="btn-primary w-full flex items-center justify-center gap-2"
-                      >
-                        <Eye className="w-4 h-4" />
-                        Voir détails
-                      </button>
-                    )}
+                    {/* Actions */}
+                    <div className="flex flex-col gap-2">
+                      {onTaskPress && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onTaskPress(task)
+                          }}
+                          className={`w-full flex items-center justify-center gap-2 ${
+                            shouldGrayOut 
+                              ? 'btn-secondary opacity-75 hover:opacity-90' 
+                              : 'btn-primary'
+                          }`}
+                        >
+                          <Eye className="w-4 h-4" />
+                          Voir détails
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))
+              </motion.div>
+            )
+          })
         )}
       </div>
 
