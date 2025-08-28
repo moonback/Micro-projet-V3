@@ -226,7 +226,7 @@ export function useUserLocation() {
     if (user) {
       loadUserLocation()
     }
-  }, [user, loadUserLocation])
+  }, [user]) // Retirer loadUserLocation des dépendances
 
   return {
     ...locationState,
