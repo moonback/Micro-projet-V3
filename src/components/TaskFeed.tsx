@@ -26,6 +26,7 @@ interface TaskFilters {
 interface TaskFeedProps {
   onTaskPress: (task: TaskWithProfiles) => void
   onTaskAccepted?: (taskId: string) => void
+  onApplyToTask?: (task: TaskWithProfiles) => void
 }
 
 // Cache global pour les tâches
@@ -39,7 +40,7 @@ const CACHE_DURATION = 3 * 60 * 1000 // 3 minutes
 
 
 
-export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps) {
+export default function TaskFeed({ onTaskPress, onTaskAccepted, onApplyToTask }: TaskFeedProps) {
   const { user } = useAuth()
   const [tasks, setTasks] = useState<TaskWithProfiles[]>([])
   const [filteredTasks, setFilteredTasks] = useState<TaskWithProfiles[]>([])
@@ -769,6 +770,7 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
                           task={task}
                           onPress={onTaskPress}
                           onTaskAccepted={onTaskAccepted}
+                          onApplyToTask={onApplyToTask}
                           isDesktop={!isMobile}
                         />
                       </motion.div>

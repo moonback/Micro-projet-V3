@@ -9,10 +9,11 @@ interface TaskCardProps {
   task: TaskWithProfiles
   onPress: (task: TaskWithProfiles) => void
   onTaskAccepted?: (taskId: string) => void
+  onApplyToTask?: (task: TaskWithProfiles) => void
   isDesktop?: boolean
 }
 
-export default function TaskCard({ task, onPress, onTaskAccepted, isDesktop = false }: TaskCardProps) {
+export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask, isDesktop = false }: TaskCardProps) {
   const { user } = useAuth()
   const [accepting, setAccepting] = useState(false)
 
@@ -203,11 +204,21 @@ export default function TaskCard({ task, onPress, onTaskAccepted, isDesktop = fa
     ? 'mt-auto pt-4 border-t border-gray-100'
     : 'flex items-center justify-between'
 
+  const handleCardClick = () => {
+    // Si c'est une tâche qui ne nous appartient pas et qu'on a onApplyToTask, utiliser cette fonction
+    if (onApplyToTask && user && task.author !== user.id) {
+      onApplyToTask(task)
+    } else {
+      // Sinon, utiliser la fonction normale onPress
+      onPress(task)
+    }
+  }
+
   return (
     <motion.div
       whileHover={{ y: isDesktop ? -4 : -2 }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => onPress(task)}
+      onClick={handleCardClick}
       className={cardClasses}
     >
       {/* En-tête avec statut et priorité */}

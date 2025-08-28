@@ -3,7 +3,7 @@ import { Home, Plus, ListTodo, User, MapPin } from 'lucide-react'
 import { motion } from 'framer-motion'
 import MessageNotificationBadge from './MessageNotificationBadge'
 
-type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat' | 'task-history'
+type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat' | 'task-history' | 'task-application'
 
 interface BottomNavigationProps {
   activeTab: View

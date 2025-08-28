@@ -13,12 +13,13 @@ import Messages from './components/Messages'
 import Profile from './components/Profile'
 import TaskDetail from './components/TaskDetail'
 import TaskHistory from './components/TaskHistory'
+import TaskApplicationView from './components/TaskApplicationView'
 import ChatView from './components/ChatView'
 import NotificationToast from './components/NotificationToast'
 import Logo from './components/Logo'
 import type { TaskWithProfiles } from './types/task'
 
-type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat' | 'task-history'
+type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat' | 'task-history' | 'task-application'
 
 function App() {
   const { user, loading, profile } = useAuth() // Récupérer aussi le profile
@@ -29,6 +30,7 @@ function App() {
   const [selectedTask, setSelectedTask] = useState<TaskWithProfiles | null>(null)
   const [chatTaskId, setChatTaskId] = useState<string | null>(null)
   const [hasSeenSplash, setHasSeenSplash] = useState(false)
+  const [taskForApplication, setTaskForApplication] = useState<TaskWithProfiles | null>(null)
 
   // Gérer la navigation après le splash et l'état d'authentification
   useEffect(() => {
@@ -100,6 +102,17 @@ function App() {
     // Ici vous pourriez mettre à jour l'état local ou recharger les tâches
   }
 
+  const handleApplyToTask = (task: TaskWithProfiles) => {
+    setTaskForApplication(task)
+    setCurrentView('task-application')
+  }
+
+  const handleBackFromApplication = () => {
+    setCurrentView('feed')
+    setActiveTab('feed')
+    setTaskForApplication(null)
+  }
+
   const renderCurrentView = () => {
     switch (currentView) {
       case 'splash':
@@ -112,7 +125,7 @@ function App() {
         return <AuthForm />
       
       case 'feed':
-        return <TaskFeed onTaskPress={handleTaskPress} onTaskAccepted={handleTaskAccepted} />
+        return <TaskFeed onTaskPress={handleTaskPress} onTaskAccepted={handleTaskAccepted} onApplyToTask={handleApplyToTask} />
       
       case 'create':
         return <CreateTask onBack={handleBackToFeed} />
@@ -139,6 +152,17 @@ function App() {
             onTaskPress={handleTaskPress}
             showApplications={true}
           />
+        )
+      
+      case 'task-application':
+        return taskForApplication ? (
+          <TaskApplicationView
+            task={taskForApplication}
+            onBack={handleBackFromApplication}
+            onChatOpen={handleChatOpen}
+          />
+        ) : (
+          <div>Erreur : Tâche non trouvée</div>
         )
       
       case 'task-detail':
@@ -168,7 +192,7 @@ function App() {
   }
 
   // Ne pas afficher la navigation pour les vues spéciales
-  const showBottomNavigation = !['splash', 'home', 'auth', 'task-detail', 'chat'].includes(currentView)
+  const showBottomNavigation = !['splash', 'home', 'auth', 'task-detail', 'chat', 'task-application'].includes(currentView)
 
   // Détecter si on est sur desktop
   const [isDesktop, setIsDesktop] = useState(false)
