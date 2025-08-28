@@ -22,7 +22,7 @@ import type { TaskWithProfiles } from './types/task'
 type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat' | 'task-history' | 'task-application'
 
 function App() {
-  const { user, loading, profile } = useAuth() // Récupérer aussi le profile
+  const { user, loading, profile, signOut } = useAuth() // Récupérer aussi le profile et signOut
   const { notifications, removeNotification } = useNotifications()
   const { hasPermission: hasNotificationPermission } = useMessageNotifications()
   const [currentView, setCurrentView] = useState<View>('splash')
@@ -89,11 +89,30 @@ function App() {
     setCurrentView(tab)
   }
 
-  const handleSignOut = () => {
-    setCurrentView('home')
-    setActiveTab('feed')
-    setSelectedTask(null)
-    setChatTaskId(null)
+  const handleSignOut = async () => {
+    try {
+      // Déconnecter l'utilisateur de Supabase
+      const { error } = await signOut()
+      if (error) {
+        console.error('Erreur lors de la déconnexion:', error)
+        // Même en cas d'erreur, on peut rediriger vers la page d'accueil
+      }
+      
+      // Réinitialiser l'état local
+      setCurrentView('home')
+      setActiveTab('feed')
+      setSelectedTask(null)
+      setChatTaskId(null)
+      setTaskForApplication(null)
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error)
+      // En cas d'erreur, rediriger quand même
+      setCurrentView('home')
+      setActiveTab('feed')
+      setSelectedTask(null)
+      setChatTaskId(null)
+      setTaskForApplication(null)
+    }
   }
 
   const handleTaskAccepted = (taskId: string) => {

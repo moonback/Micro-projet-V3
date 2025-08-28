@@ -18,7 +18,12 @@ import {
   TrendingDown,
   ArrowLeft,
   BarChart3,
-  History
+  History,
+  X,
+  PieChart,
+  Activity,
+  Target,
+  Award
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { TaskHistoryItem } from '../types/task'
@@ -30,6 +35,378 @@ interface TaskHistoryProps {
   showApplications?: boolean
   onBack?: () => void
   title?: string
+}
+
+// Composant modal pour la vue d'ensemble
+interface OverviewModalProps {
+  isOpen: boolean
+  onClose: () => void
+  stats: {
+    total: number
+    completed: number
+    inProgress: number
+    cancelled: number
+    totalBudget: number
+    avgBudget: number
+  }
+  tasks: TaskHistoryItem[]
+}
+
+function OverviewModal({ isOpen, onClose, stats, tasks }: OverviewModalProps) {
+  const getCategoryStats = () => {
+    const categoryCount: Record<string, number> = {}
+    const categoryBudget: Record<string, number> = {}
+    
+    tasks.forEach(task => {
+      if (!categoryCount[task.category]) {
+        categoryCount[task.category] = 0
+        categoryBudget[task.category] = 0
+      }
+      categoryCount[task.category]++
+      categoryBudget[task.category] += task.budget || 0
+    })
+    
+    return Object.keys(categoryCount).map(category => ({
+      category,
+      count: categoryCount[category],
+      budget: categoryBudget[category],
+      percentage: (categoryCount[category] / stats.total) * 100
+    })).sort((a, b) => b.count - a.count)
+  }
+
+  const getMonthlyStats = () => {
+    const monthlyData: Record<string, { count: number; budget: number }> = {}
+    
+    tasks.forEach(task => {
+      const date = new Date(task.created_at)
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = { count: 0, budget: 0 }
+      }
+      
+      monthlyData[monthKey].count++
+      monthlyData[monthKey].budget += task.budget || 0
+    })
+    
+    return Object.keys(monthlyData)
+      .sort()
+      .slice(-6) // 6 derniers mois
+      .map(month => ({
+        month,
+        ...monthlyData[month]
+      }))
+  }
+
+  const getStatusDistribution = () => {
+    const statusCount: Record<string, number> = {}
+    tasks.forEach(task => {
+      statusCount[task.status] = (statusCount[task.status] || 0) + 1
+    })
+    
+    return Object.entries(statusCount).map(([status, count]) => ({
+      status,
+      count,
+      percentage: (count / stats.total) * 100
+    }))
+  }
+
+  const categoryStats = getCategoryStats()
+  const monthlyStats = getMonthlyStats()
+  const statusDistribution = getStatusDistribution()
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header du modal */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-white bg-opacity-20 rounded-xl">
+                    <BarChart3 className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold">Vue d'ensemble détaillée</h2>
+                    <p className="text-blue-100 text-lg">Analyse complète de vos tâches et performances</p>
+                  </div>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Contenu du modal */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              <div className="space-y-8">
+                {/* Statistiques principales */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-blue-600 text-sm font-medium">Total des tâches</p>
+                        <p className="text-3xl font-bold text-blue-900">{stats.total}</p>
+                      </div>
+                      <div className="p-3 bg-blue-500 text-white rounded-lg">
+                        <Target className="w-6 h-6" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-green-600 text-sm font-medium">Tâches terminées</p>
+                        <p className="text-3xl font-bold text-green-900">{stats.completed}</p>
+                        <p className="text-sm text-green-700">
+                          {stats.total > 0 ? ((stats.completed / stats.total) * 100).toFixed(1) : 0}%
+                        </p>
+                      </div>
+                      <div className="p-3 bg-green-500 text-white rounded-lg">
+                        <CheckCircle className="w-6 h-6" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-xl border border-orange-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-orange-600 text-sm font-medium">En cours</p>
+                        <p className="text-3xl font-bold text-orange-900">{stats.inProgress}</p>
+                        <p className="text-sm text-orange-700">
+                          {stats.total > 0 ? ((stats.inProgress / stats.total) * 100).toFixed(1) : 0}%
+                        </p>
+                      </div>
+                      <div className="p-3 bg-orange-500 text-white rounded-lg">
+                        <Activity className="w-6 h-6" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-xl border border-red-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-red-600 text-sm font-medium">Annulées/Expirées</p>
+                        <p className="text-3xl font-bold text-red-900">{stats.cancelled}</p>
+                        <p className="text-sm text-red-700">
+                          {stats.total > 0 ? ((stats.cancelled / stats.total) * 100).toFixed(1) : 0}%
+                        </p>
+                      </div>
+                      <div className="p-3 bg-red-500 text-white rounded-lg">
+                        <XCircle className="w-6 h-6" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Budget et finances */}
+                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-6">
+                  <h3 className="text-xl font-semibold text-emerald-900 mb-4 flex items-center gap-2">
+                    <DollarSign className="w-5 h-5" />
+                    Analyse financière
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-emerald-700 mb-2">
+                        {stats.totalBudget.toFixed(2)}€
+                      </div>
+                      <div className="text-sm text-emerald-600">Budget total investi</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-emerald-700 mb-2">
+                        {stats.avgBudget.toFixed(2)}€
+                      </div>
+                      <div className="text-sm text-emerald-600">Budget moyen par tâche</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-emerald-700 mb-2">
+                        {stats.total > 0 ? (stats.totalBudget / stats.total).toFixed(2) : 0}€
+                      </div>
+                      <div className="text-sm text-emerald-600">Coût moyen par tâche</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Distribution par catégorie */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <PieChart className="w-5 h-5" />
+                      Répartition par catégorie
+                    </h3>
+                    <div className="space-y-4">
+                      {categoryStats.map((item, index) => (
+                        <div key={item.category} className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-4 h-4 rounded-full" style={{
+                              backgroundColor: `hsl(${index * 60}, 70%, 60%)`
+                            }}></div>
+                            <span className="font-medium text-gray-700">{item.category}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-gray-900">{item.count}</div>
+                            <div className="text-sm text-gray-500">{item.percentage.toFixed(1)}%</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5" />
+                      Distribution par statut
+                    </h3>
+                    <div className="space-y-4">
+                      {statusDistribution.map((item, index) => (
+                        <div key={item.status} className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-4 h-4 rounded-full" style={{
+                              backgroundColor: `hsl(${index * 45}, 70%, 60%)`
+                            }}></div>
+                            <span className="font-medium text-gray-700">
+                              {item.status === 'open' ? 'Ouverte' :
+                               item.status === 'pending_approval' ? 'En attente' :
+                               item.status === 'assigned' ? 'Assignée' :
+                               item.status === 'in_progress' ? 'En cours' :
+                               item.status === 'completed' ? 'Terminée' :
+                               item.status === 'cancelled' ? 'Annulée' :
+                               item.status === 'expired' ? 'Expirée' : item.status}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-gray-900">{item.count}</div>
+                            <div className="text-sm text-gray-500">{item.percentage.toFixed(1)}%</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Évolution mensuelle */}
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Évolution mensuelle
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {monthlyStats.map((monthData, index) => (
+                      <div key={monthData.month} className="bg-gray-50 rounded-lg p-4">
+                        <div className="text-center">
+                          <div className="text-lg font-semibold text-gray-900 mb-2">
+                            {new Date(monthData.month + '-01').toLocaleDateString('fr-FR', {
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <div className="font-medium text-gray-700">{monthData.count}</div>
+                              <div className="text-gray-500">Tâches</div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-700">{monthData.budget.toFixed(2)}€</div>
+                              <div className="text-gray-500">Budget</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Insights et recommandations */}
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
+                  <h3 className="text-xl font-semibold text-purple-900 mb-4 flex items-center gap-2">
+                    <Award className="w-5 h-5" />
+                    Insights et recommandations
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-purple-800">Points positifs</h4>
+                      <ul className="space-y-2 text-sm text-purple-700">
+                        {stats.completed > 0 && (
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            {stats.completed} tâches terminées avec succès
+                          </li>
+                        )}
+                        {stats.totalBudget > 0 && (
+                          <li className="flex items-center gap-2">
+                            <DollarSign className="w-4 h-4 text-green-500" />
+                            Budget total de {stats.totalBudget.toFixed(2)}€ investi
+                          </li>
+                        )}
+                        {stats.inProgress > 0 && (
+                          <li className="flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-orange-500" />
+                            {stats.inProgress} tâches actuellement en cours
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-purple-800">Suggestions d'amélioration</h4>
+                      <ul className="space-y-2 text-sm text-purple-700">
+                        {stats.cancelled > stats.total * 0.2 && (
+                          <li className="flex items-center gap-2">
+                            <XCircle className="w-4 h-4 text-red-500" />
+                            Réduire le taux d'annulation (actuellement {((stats.cancelled / stats.total) * 100).toFixed(1)}%)
+                          </li>
+                        )}
+                        {stats.avgBudget > 100 && (
+                          <li className="flex items-center gap-2">
+                            <DollarSign className="w-4 h-4 text-yellow-500" />
+                            Optimiser les budgets (moyenne élevée de {stats.avgBudget.toFixed(2)}€)
+                          </li>
+                        )}
+                        {categoryStats.length > 0 && (
+                          <li className="flex items-center gap-2">
+                            <Target className="w-4 h-4 text-blue-500" />
+                            Diversifier les catégories de tâches
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer du modal */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+              <div className="flex justify-end">
+                <button
+                  onClick={onClose}
+                  className="btn-primary px-6 py-2"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
 }
 
 export default function TaskHistory({ onTaskPress, showApplications = false, onBack, title = "Tâches validées" }: TaskHistoryProps) {
@@ -47,6 +424,7 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [showFilters, setShowFilters] = useState(false)
   const [selectedTask, setSelectedTask] = useState<TaskHistoryItem | null>(null)
+  const [showOverviewModal, setShowOverviewModal] = useState(false)
 
   // Charger l'historique des tâches
   const loadTaskHistory = async () => {
@@ -335,9 +713,15 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
           <h2 className="text-xl font-semibold text-gray-900">
             Vue d'ensemble
           </h2>
-          <div className="flex items-center gap-2 text-blue-600">
-            <BarChart3 className="w-5 h-5" />
-            <span className="text-sm font-medium">Statistiques</span>
+          <div className="flex items-center gap-3">
+            
+            <button
+              onClick={() => setShowOverviewModal(true)}
+              className="btn-primary flex items-center gap-2 px-4 py-2 text-sm"
+            >
+              <Eye className="w-4 h-4" />
+              Voir détails
+            </button>
           </div>
         </div>
         
@@ -897,6 +1281,14 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
 
       {/* Modal de confirmation */}
       <ModalComponent />
+
+      {/* Modal de vue d'ensemble */}
+      <OverviewModal
+        isOpen={showOverviewModal}
+        onClose={() => setShowOverviewModal(false)}
+        stats={stats}
+        tasks={tasks}
+      />
     </div>
   )
 }

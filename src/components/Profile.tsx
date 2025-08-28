@@ -181,13 +181,10 @@ export default function Profile({ onSignOut }: ProfileProps) {
     }
   }
 
-  const handleSignOutClick = async () => {
-    try {
-      await supabase.auth.signOut()
-      onSignOut()
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
+  const handleSignOutClick = () => {
+    // Utiliser directement la fonction onSignOut passée en props
+    // qui gère la déconnexion et la redirection
+    onSignOut()
   }
 
   // Afficher le chargement si l'authentification ou le profil est en cours de chargement
