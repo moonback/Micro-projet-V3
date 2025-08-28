@@ -344,27 +344,25 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header avec toutes les fonctionnalités */}
-             <Header
-         title="MicroTask"
-         subtitle="Trouvez votre prochaine opportunité"
-         searchQuery={filters.search}
-         onSearchChange={handleSearchChange}
-         onFiltersOpen={() => {
-           // Les modales sont maintenant gérées directement dans le Header
-         }}
-         onCategoriesOpen={() => {
-           // Les modales sont maintenant gérées directement dans le Header
-         }}
-         onRefresh={handleRefresh}
-         refreshing={refreshing}
-         viewMode={viewMode}
-         onViewToggle={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
-         filters={filters}
-         showSearch={true}
-         showFilters={true}
-         showViewToggle={true}
-         showRefresh={true}
-       />
+                           <Header
+          searchQuery={filters.search}
+          onSearchChange={handleSearchChange}
+          onFiltersOpen={() => {
+            // Les modales sont maintenant gérées directement dans le Header
+          }}
+          onCategoriesOpen={() => {
+            // Les modales sont maintenant gérées directement dans le Header
+          }}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
+          viewMode={viewMode}
+          onViewToggle={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
+          filters={filters}
+          showSearch={true}
+          showFilters={true}
+          showViewToggle={true}
+          showRefresh={true}
+        />
 
 
 

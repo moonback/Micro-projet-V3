@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Search, RefreshCw, MapPin, List, Tag, Filter, ArrowLeft, Sparkles, TrendingUp, Bell, Settings, User, ChevronDown, ChevronUp, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Logo from './Logo'
 
 interface HeaderButton {
   icon: React.ComponentType<{ className?: string; size?: number | string }>
@@ -357,50 +358,20 @@ export default function Header({
               </motion.button>
             )}
             
-            {/* Logo amélioré avec animation */}
-            <motion.div 
-              className="relative"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <span className="text-lg">🚀</span>
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full border-2 border-white shadow-sm" />
-              <div className="absolute -top-1 -left-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-            </motion.div>
+            {/* Logo personnalisé avec image PNG */}
+            <Logo size="lg" />
             
-            {/* Titre et sous-titre améliorés */}
-            <div className="space-y-1">
-              <div className="flex items-center space-x-3">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  {title}
-                </h1>
-                {filters?.category && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="flex items-center space-x-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full"
-                  >
-                    <span className="text-sm">{getCategoryIcon(filters.category)}</span>
-                    <span className="text-xs font-medium text-blue-700">{filters.category}</span>
-                  </motion.div>
-                )}
-              </div>
-              
-              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                <p className="font-medium">{subtitle}</p>
-                {participants.length > 0 && (
-                  <>
-                    <span className="text-gray-300">•</span>
-                    <div className="flex items-center space-x-1">
-                      <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                      <span className="text-xs font-medium">{participants.join(' • ')}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+            {/* Badge de catégorie si sélectionnée */}
+            {filters?.category && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="flex items-center space-x-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full"
+              >
+                <span className="text-sm">{getCategoryIcon(filters.category)}</span>
+                <span className="text-xs font-medium text-blue-700">{filters.category}</span>
+              </motion.div>
+            )}
           </div>
           
           {/* Section droite - Actions améliorées */}
