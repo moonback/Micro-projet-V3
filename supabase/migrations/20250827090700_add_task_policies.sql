@@ -18,8 +18,7 @@ CREATE POLICY "Helpers can update task progress"
   TO authenticated
   USING (auth.uid() = helper)
   WITH CHECK (
-    status IN ('in_progress', 'completed') AND
-    (OLD.status = 'assigned' OR OLD.status = 'in_progress')
+    status IN ('in_progress', 'completed')
   );
 
 -- Politique pour permettre aux utilisateurs de voir les tâches avec les nouveaux champs

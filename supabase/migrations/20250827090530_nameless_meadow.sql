@@ -171,8 +171,7 @@ create policy "Helpers can update task progress"
   to authenticated
   using (auth.uid() = helper)
   with check (
-    status in ('in_progress', 'completed') and
-    (old.status = 'assigned' or old.status = 'in_progress')
+    status in ('in_progress', 'completed')
   );
 
 -- Messages policies
