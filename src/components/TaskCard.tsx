@@ -173,11 +173,36 @@ export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask,
     }
   }
 
+  const handleCompleteTask = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!user || !canCompleteTask) return
+
+    if (!confirm('Êtes-vous sûr de vouloir marquer cette tâche comme terminée ?')) return
+
+    setAccepting(true)
+    try {
+      const { error } = await supabase
+        .rpc('mark_task_completed', { task_id_param: task.id })
+
+      if (error) throw error
+
+      alert('Tâche marquée comme terminée avec succès !')
+      // Recharger la page pour mettre à jour l'affichage
+      window.location.reload()
+    } catch (error: any) {
+      console.error('Error marking task as completed:', error)
+      alert('Erreur lors de la finalisation de la tâche')
+    } finally {
+      setAccepting(false)
+    }
+  }
+
   const canAcceptTask = user && 
                        task.status === 'open' && 
                        task.author !== user.id && 
                        !hasApplied &&
                        onTaskAccepted
+  const canCompleteTask = user && user.id === task.helper && task.status === 'in_progress'
 
   // Design adaptatif selon la taille d'écran
   const cardClasses = isDesktop 
@@ -331,6 +356,28 @@ export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask,
               <>
                 <CheckCircle className="w-4 h-4" />
                 <span>Postuler à la Tâche</span>
+              </>
+            )}
+          </motion.button>
+        ) : canCompleteTask ? (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleCompleteTask}
+            disabled={accepting}
+            className={`w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center space-x-2 ${
+              accepting ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            {accepting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Finalisation...</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4" />
+                <span>Marquer comme Terminée</span>
               </>
             )}
           </motion.button>

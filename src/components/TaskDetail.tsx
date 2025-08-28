@@ -148,7 +148,7 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
       setHasApplied(true)
       // Optionnel : recharger la page ou mettre à jour l'état
       window.location.reload()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error applying for task:', error)
       if (error.code === '23505') {
         alert('Vous avez déjà candidaté à cette tâche')
@@ -177,7 +177,7 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
       if (error) throw error
 
       window.location.reload()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error starting task:', error)
       alert('Erreur lors du démarrage de la tâche')
     } finally {
@@ -186,23 +186,20 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
   }
 
   const handleCompleteTask = async () => {
-    if (!user) return
+    if (!user || !confirm('Êtes-vous sûr de vouloir marquer cette tâche comme terminée ?')) return
 
     setActionLoading(true)
     try {
       const { error } = await supabase
-        .from('tasks')
-        .update({ 
-          status: 'completed',
-          completed_at: new Date().toISOString()
-        })
-        .eq('id', task.id)
+        .rpc('mark_task_completed', { task_id_param: task.id })
 
       if (error) throw error
 
+      alert('Tâche marquée comme terminée avec succès !')
+      // Recharger la tâche pour mettre à jour l'affichage
       window.location.reload()
-    } catch (error) {
-      console.error('Error completing task:', error)
+    } catch (error: any) {
+      console.error('Error marking task as completed:', error)
       alert('Erreur lors de la finalisation de la tâche')
     } finally {
       setActionLoading(false)
@@ -222,7 +219,7 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
       if (error) throw error
 
       window.location.reload()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cancelling task:', error)
       alert('Erreur lors de l\'annulation de la tâche')
     } finally {
