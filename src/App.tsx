@@ -159,7 +159,18 @@ function App() {
   // Ne pas afficher la navigation pour les vues spéciales
   const showBottomNavigation = !['splash', 'home', 'auth', 'task-detail', 'chat'].includes(currentView)
 
+  // Détecter si on est sur desktop
+  const [isDesktop, setIsDesktop] = useState(false)
 
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 1024)
+    }
+
+    checkScreenSize()
+    window.addEventListener('resize', checkScreenSize)
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [])
 
   // Afficher toujours le SplashScreen en premier
   if (!hasSeenSplash) {
@@ -168,12 +179,84 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto bg-white shadow-lg min-h-screen flex flex-col">
+      {/* Layout adaptatif : contraint sur mobile, plein écran sur desktop */}
+      <div className={`${isDesktop ? 'w-full' : 'max-w-md mx-auto'} bg-white shadow-lg min-h-screen flex flex-col`}>
         <main className="flex-1 overflow-hidden">
           {renderCurrentView()}
         </main>
+        {/* Navigation adaptative : bottom sur mobile, sidebar sur desktop */}
         {showBottomNavigation && (
-          <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+          <>
+            {/* Navigation mobile */}
+            <div className="lg:hidden">
+              <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            
+            {/* Navigation desktop - sidebar latérale (en premier pour le z-index) */}
+            {showBottomNavigation && isDesktop && (
+            {/* Navigation desktop - sidebar latérale */}
+            {isDesktop && (
+              <div className="hidden lg:block fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 shadow-lg z-40">
+                <div className="p-6">
+                  <div className="mb-8">
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">MicroTask</h2>
+                    <p className="text-sm text-gray-600">Navigation rapide</p>
+                  </div>
+                  
+                  <nav className="space-y-2">
+                    {[
+                      { id: 'feed', label: 'Accueil', icon: '🏠' },
+                      { id: 'my-tasks', label: 'Mes Tâches', icon: '📋' },
+                      { id: 'create', label: 'Créer', icon: '➕' },
+                      { id: 'messages', label: 'Messages', icon: '💬' },
+                      { id: 'profile', label: 'Profil', icon: '👤' }
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleTabChange(item.id as View)}
+                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                          activeTab === item.id
+                            ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg'
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                      >
+                        <span className="text-lg">{item.icon}</span>
+                        <span className="font-medium">{item.label}</span>
+                      </button>
+                    ))}
+                  </nav>
+                  
+                  {/* Informations utilisateur */}
+                  {user && (
+                    <div className="mt-8 pt-6 border-t border-gray-200">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-lg">
+                            {profile?.name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">
+                            {profile?.name || 'Utilisateur'}
+                          </p>
+                          <p className="text-sm text-gray-500 truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full mt-4 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+                      >
+                        Se déconnecter
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

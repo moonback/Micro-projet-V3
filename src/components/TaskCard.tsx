@@ -1,6 +1,6 @@
-import React from 'react'
-import { Clock, MapPin, Euro, User, CheckCircle, Truck, Wrench, ShoppingCart, Home, PawPrint, Leaf, Monitor, BookOpen, Package, Tag, AlertTriangle, Star, Crown } from 'lucide-react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
+import { MapPin, Clock, Euro, Star, User, CheckCircle, AlertTriangle, TrendingUp, Zap, Tag, Calendar, MessageCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { TaskWithProfiles } from '../types/task'
@@ -9,272 +9,293 @@ interface TaskCardProps {
   task: TaskWithProfiles
   onPress: (task: TaskWithProfiles) => void
   onTaskAccepted?: (taskId: string) => void
+  isDesktop?: boolean
 }
 
-export default function TaskCard({ task, onPress, onTaskAccepted }: TaskCardProps) {
+export default function TaskCard({ task, onPress, onTaskAccepted, isDesktop = false }: TaskCardProps) {
   const { user } = useAuth()
+  const [accepting, setAccepting] = useState(false)
 
   const formatDistance = (location: any) => {
-    // In a real app, calculate distance based on user's location
-    return 'à 1,2 km'
+    if (!location || !location.coordinates) return 'Distance inconnue'
+    // Calcul simple de distance (à améliorer avec une vraie API)
+    return 'À proximité'
   }
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-    
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+
     if (diffInHours < 1) return 'À l\'instant'
-    if (diffInHours < 24) return `Il y a ${diffInHours}h`
-    return `Il y a ${Math.floor(diffInHours / 24)}j`
+    if (diffInHours < 24) return `Il y a ${Math.floor(diffInHours)}h`
+    if (diffInHours < 48) return 'Hier'
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'bg-green-100 text-green-800 border-green-200'
-      case 'assigned': return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'in_progress': return 'bg-orange-100 text-orange-800 border-orange-200'
-      case 'completed': return 'bg-purple-100 text-purple-800 border-purple-200'
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200'
-      case 'expired': return 'bg-gray-100 text-gray-800 border-gray-200'
-      default: return 'bg-gray-100 text-gray-800 border-gray-200'
+      case 'open':
+        return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'accepted':
+        return 'bg-green-100 text-green-800 border-green-200'
+      case 'in-progress':
+        return 'bg-orange-100 text-orange-800 border-orange-200'
+      case 'completed':
+        return 'bg-purple-100 text-purple-800 border-purple-200'
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'open': return 'Ouverte'
-      case 'assigned': return 'Assignée'
-      case 'in_progress': return 'En Cours'
-      case 'completed': return 'Terminée'
-      case 'cancelled': return 'Annulée'
-      case 'expired': return 'Expirée'
-      default: return status
+      case 'open':
+        return 'Disponible'
+      case 'accepted':
+        return 'Acceptée'
+      case 'in-progress':
+        return 'En cours'
+      case 'completed':
+        return 'Terminée'
+      default:
+        return status
     }
   }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'low': return 'bg-gray-100 text-gray-700 border-gray-200'
-      case 'medium': return 'bg-blue-100 text-blue-700 border-blue-200'
-      case 'high': return 'bg-orange-100 text-orange-700 border-orange-200'
-      case 'urgent': return 'bg-red-100 text-red-700 border-red-200'
-      default: return 'bg-gray-100 text-gray-700 border-gray-200'
+      case 'urgent':
+        return 'bg-red-100 text-red-800 border-red-200'
+      case 'high':
+        return 'bg-orange-100 text-orange-800 border-orange-200'
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      case 'low':
+        return 'bg-gray-100 text-gray-800 border-gray-200'
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
 
   const getPriorityLabel = (priority: string) => {
     switch (priority) {
-      case 'low': return 'Faible'
-      case 'medium': return 'Moyenne'
-      case 'high': return 'Élevée'
-      case 'urgent': return 'Urgente'
-      default: return priority
+      case 'urgent':
+        return 'Urgente'
+      case 'high':
+        return 'Élevée'
+      case 'medium':
+        return 'Moyenne'
+      case 'low':
+        return 'Faible'
+      default:
+        return priority
     }
   }
 
   const getCategoryIcon = (category: string) => {
-    switch (category?.toLowerCase()) {
-      case 'livraison': return Truck
-      case 'nettoyage': return Wrench
-      case 'courses': return ShoppingCart
-      case 'déménagement': return Package
-      case 'montage': return Wrench
-      case 'garde d\'animaux': return PawPrint
-      case 'jardinage': return Leaf
-      case 'aide informatique': return Monitor
-      case 'cours particuliers': return BookOpen
-      default: return Package
+    const categoryIcons: Record<string, string> = {
+      'Livraison': '🚚',
+      'Nettoyage': '🧹',
+      'Courses': '🛒',
+      'Déménagement': '📦',
+      'Montage': '🔧',
+      'Garde d\'Animaux': '🐾',
+      'Jardinage': '🌱',
+      'Aide Informatique': '💻',
+      'Cours Particuliers': '📚',
+      'Autre': '✨'
     }
+    return categoryIcons[category] || '🏷️'
   }
 
   const handleAcceptTask = async (e: React.MouseEvent) => {
-    e.stopPropagation() // Empêcher l'ouverture des détails
-    if (!user) return
+    e.stopPropagation()
+    if (!user || !onTaskAccepted) return
 
+    setAccepting(true)
     try {
       const { error } = await supabase
         .from('tasks')
         .update({ 
-          status: 'assigned',
-          helper: user.id,
-          assigned_at: new Date().toISOString()
+          helper: user.id, 
+          status: 'accepted',
+          accepted_at: new Date().toISOString()
         })
         .eq('id', task.id)
 
       if (error) throw error
-
-      // Notifier le composant parent
-      if (onTaskAccepted) {
-        onTaskAccepted(task.id)
-      }
-
-      // Optionnel : recharger la page ou mettre à jour l'état
-      window.location.reload()
+      onTaskAccepted(task.id)
     } catch (error) {
       console.error('Error accepting task:', error)
       alert('Erreur lors de l\'acceptation de la tâche')
+    } finally {
+      setAccepting(false)
     }
   }
 
-  const CategoryIcon = getCategoryIcon(task.category)
-  const isAuthor = user?.id === task.author
-  const isHelper = user?.id === task.helper
-  const canAccept = !isAuthor && !isHelper && task.status === 'open'
+  const canAcceptTask = user && 
+                       task.status === 'open' && 
+                       task.author !== user.id && 
+                       onTaskAccepted
+
+  // Design adaptatif selon la taille d'écran
+  const cardClasses = isDesktop 
+    ? 'bg-white rounded-2xl border border-gray-200 p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer h-full flex flex-col'
+    : 'bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer'
+
+  const headerClasses = isDesktop 
+    ? 'flex items-start justify-between mb-6'
+    : 'flex items-start justify-between mb-4'
+
+  const titleClasses = isDesktop 
+    ? 'text-xl font-bold text-gray-900 leading-tight mb-2'
+    : 'text-lg font-semibold text-gray-900 leading-tight mb-2'
+
+  const descriptionClasses = isDesktop 
+    ? 'text-gray-600 leading-relaxed mb-6'
+    : 'text-gray-600 leading-relaxed mb-4'
+
+  const metaClasses = isDesktop 
+    ? 'grid grid-cols-2 gap-4 mb-6'
+    : 'space-y-3 mb-4'
+
+  const actionClasses = isDesktop 
+    ? 'mt-auto pt-4 border-t border-gray-100'
+    : 'flex items-center justify-between'
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      whileHover={{ y: -2 }}
+      whileHover={{ y: isDesktop ? -4 : -2 }}
+      whileTap={{ scale: 0.98 }}
       onClick={() => onPress(task)}
-      className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer group"
+      className={cardClasses}
     >
-      {/* Header avec statut et catégorie */}
-      <div className="flex items-start justify-between mb-4">
+      {/* En-tête avec statut et priorité */}
+      <div className={headerClasses}>
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-            <CategoryIcon className="w-6 h-6 text-blue-600" />
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg">
+            {getCategoryIcon(task.category)}
           </div>
-          <div>
-            <h3 className="font-bold text-gray-900 text-lg mb-1 line-clamp-2 leading-tight">
+          <div className="flex-1 min-w-0">
+            <h3 className={titleClasses}>
               {task.title}
             </h3>
-            <p className="text-gray-600 text-sm line-clamp-2 leading-relaxed">
-              {task.description}
-            </p>
+            {isDesktop && (
+              <p className="text-sm text-gray-500 mb-2">
+                Par {task.author_profile?.name || 'Utilisateur'}
+              </p>
+            )}
           </div>
         </div>
         
         <div className="flex flex-col items-end space-y-2">
-          <div className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getStatusColor(task.status)}`}>
+          <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(task.status)}`}>
             {getStatusLabel(task.status)}
-          </div>
-          {task.priority && (
-            <div className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(task.priority)}`}>
-              {getPriorityLabel(task.priority)}
-            </div>
-          )}
+          </span>
+          <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getPriorityColor(task.priority)}`}>
+            {getPriorityLabel(task.priority)}
+          </span>
         </div>
+      </div>
+
+      {/* Description */}
+      <p className={descriptionClasses}>
+        {task.description}
+      </p>
+
+      {/* Métadonnées */}
+      <div className={metaClasses}>
+        <div className="flex items-center space-x-2 text-gray-600">
+          <Euro className="w-4 h-4" />
+          <span className="text-sm font-medium">€{task.budget}</span>
+        </div>
+        
+        <div className="flex items-center space-x-2 text-gray-600">
+          <MapPin className="w-4 h-4" />
+          <span className="text-sm">{formatDistance(task.location)}</span>
+        </div>
+        
+        <div className="flex items-center space-x-2 text-gray-600">
+          <Clock className="w-4 h-4" />
+          <span className="text-sm">{formatTimeAgo(task.created_at)}</span>
+        </div>
+        
+        {task.deadline && (
+          <div className="flex items-center space-x-2 text-gray-600">
+            <Calendar className="w-4 h-4" />
+            <span className="text-sm">
+              {new Date(task.deadline).toLocaleDateString('fr-FR')}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Tags */}
       {task.tags && task.tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
-          {task.tags.slice(0, 3).map((tag, index) => (
-            <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-              <Tag className="w-3 h-3 mr-1" />
+          {task.tags.slice(0, isDesktop ? 6 : 3).map((tag, index) => (
+            <span
+              key={index}
+              className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-200"
+            >
               {tag}
             </span>
           ))}
-          {task.tags.length > 3 && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-600">
-              +{task.tags.length - 3}
+          {task.tags.length > (isDesktop ? 6 : 3) && (
+            <span className="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-lg border border-gray-200">
+              +{task.tags.length - (isDesktop ? 6 : 3)}
             </span>
           )}
         </div>
       )}
 
-      {/* Badges spéciaux */}
-      <div className="flex items-center gap-2 mb-4">
-        {task.is_urgent && (
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
-            <AlertTriangle className="w-3 h-3 mr-1" />
-            Urgente
-          </span>
-        )}
-        {task.is_featured && (
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
-            <Star className="w-3 h-3 mr-1" />
-            Mise en avant
-          </span>
-        )}
-      </div>
-
-      {/* Informations de la tâche */}
-      <div className="space-y-3 mb-4">
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center text-gray-600">
-            <User className="w-4 h-4 mr-2" />
-            <span className="font-medium">{task.author_profile?.name || 'Anonyme'}</span>
-          </div>
-          <div className="flex items-center text-gray-500">
-            <Clock className="w-4 h-4 mr-2" />
-            <span>{formatTimeAgo(task.created_at)}</span>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center text-gray-600">
-            <MapPin className="w-4 h-4 mr-2" />
-            <span className="text-sm">{task.city || task.address || formatDistance(task.location)}</span>
-          </div>
-          
-          <div className="flex items-center bg-green-50 px-3 py-2 rounded-xl">
-            <Euro className="w-5 h-5 text-green-600 mr-1" />
-            <span className="font-bold text-lg text-green-700">€{task.budget}</span>
-          </div>
-        </div>
-
-        {/* Durée estimée */}
-        {task.estimated_duration && (
-          <div className="flex items-center text-sm text-gray-600">
-            <Clock className="w-4 h-4 mr-2" />
-            <span>Durée estimée: {task.estimated_duration}</span>
-          </div>
-        )}
-
-        {/* Date limite */}
-        {task.deadline && (
-          <div className="flex items-center text-sm text-gray-600">
-            <Clock className="w-4 h-4 mr-2" />
-            <span>Limite: {new Date(task.deadline).toLocaleDateString('fr-FR')}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Catégorie et Actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium">
-            {task.category}
-          </span>
-          
-          {/* Indicateur de priorité */}
-          {task.priority && task.priority !== 'medium' && (
-            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
-              {getPriorityLabel(task.priority)}
-            </span>
-          )}
-        </div>
-        
-        {/* Bouton Accepter - visible pour tous sauf l'auteur et l'aide actuel */}
-        {canAccept && (
+      {/* Actions */}
+      <div className={actionClasses}>
+        {canAcceptTask ? (
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={handleAcceptTask}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-colors flex items-center space-x-2"
+            disabled={accepting}
+            className={`w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center space-x-2 ${
+              accepting ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
-            <CheckCircle className="w-4 h-4" />
-            <span>Accepter</span>
+            {accepting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Acceptation...</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4" />
+                <span>Accepter la Tâche</span>
+              </>
+            )}
           </motion.button>
-        )}
-
-        {/* Indicateur si l'utilisateur est l'aide */}
-        {isHelper && task.status === 'assigned' && (
-          <span className="inline-block bg-green-100 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium">
-            Vous êtes l'aide
-          </span>
-        )}
-
-        {/* Indicateur si l'utilisateur est l'auteur */}
-        {isAuthor && (
-          <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium">
-            Votre tâche
-          </span>
+        ) : (
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center space-x-2 text-gray-500">
+              <MessageCircle className="w-4 h-4" />
+              <span className="text-sm">Cliquez pour voir les détails</span>
+            </div>
+            
+            {isDesktop && (
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1 text-yellow-600">
+                  <Star className="w-4 h-4 fill-current" />
+                  <span className="text-sm font-medium">
+                    {task.author_profile?.rating || 0}
+                  </span>
+                </div>
+                <span className="text-gray-400">•</span>
+                <span className="text-sm text-gray-500">
+                  {task.author_profile?.rating_count || 0} avis
+                </span>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </motion.div>

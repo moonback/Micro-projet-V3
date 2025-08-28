@@ -44,6 +44,20 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
   const [actionLoading, setActionLoading] = useState(false)
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null)
   const [isLoadingAddress, setIsLoadingAddress] = useState(false)
+  const [address, setAddress] = useState<string>('')
+  const [loading, setLoading] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Détecter la taille de l'écran
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+
+    checkScreenSize()
+    window.addEventListener('resize', checkScreenSize)
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [])
 
   const isAuthor = user?.id === task.author
   const isHelper = user?.id === task.helper
@@ -227,273 +241,278 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
     return duration
   }
 
+  const getCategoryIcon = (category: string) => {
+    const categoryIcons: Record<string, string> = {
+      'Livraison': '🚚',
+      'Nettoyage': '🧹',
+      'Courses': '🛒',
+      'Déménagement': '📦',
+      'Montage': '🔧',
+      'Garde d\'Animaux': '🐾',
+      'Jardinage': '🌱',
+      'Aide Informatique': '💻',
+      'Cours Particuliers': '📚',
+      'Autre': '✨'
+    }
+    return categoryIcons[category] || '🏷️'
+  }
+
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-gray-50">
       {/* Header */}
-             <Header
-         title={task.title}
-         subtitle={`${getStatusLabel(task.status)} • ${getPriorityLabel(task.priority)}`}
-         showSearch={false}
-         showFilters={false}
-         showViewToggle={false}
-         showRefresh={false}
-         onBack={onBack}
-         rightButtons={[
-           {
-             icon: MessageCircle,
-             onClick: () => onChatOpen(task.id),
-             tooltip: 'Ouvrir le chat',
-             className: 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
-           }
-         ]}
-       />
+      <Header
+        title={task.title}
+        subtitle={`Tâche ${task.status === 'open' ? 'disponible' : 'en cours'}`}
+        showSearch={false}
+        showFilters={false}
+        showViewToggle={false}
+        showRefresh={false}
+        onBack={onBack}
+        className="bg-white text-gray-900 shadow-sm border-b border-gray-200"
+      />
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        {/* Title and Description */}
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">{task.title}</h2>
-          <p className="text-gray-700 leading-relaxed">{task.description}</p>
-        </div>
-
-        {/* Tags */}
-        {task.tags && task.tags.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-              <Tag className="w-5 h-5 mr-2 text-blue-600" />
-              Tags
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {task.tags.map((tag, index) => (
-                <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                  <Tag className="w-4 h-4 mr-1" />
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Badges spéciaux */}
-        {(task.is_urgent || task.is_featured) && (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-              <Crown className="w-5 h-5 mr-2 text-yellow-600" />
-              Options Spéciales
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {task.is_urgent && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-50 text-red-700 border border-red-200">
-                  <AlertTriangle className="w-4 h-4 mr-1" />
-                  Urgente
-                </span>
-              )}
-              {task.is_featured && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
-                  <Star className="w-4 h-4 mr-1" />
-                  Mise en avant
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Task Info Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="flex items-center space-x-2 mb-2">
-              <Euro className="w-5 h-5 text-green-600" />
-              <span className="text-sm font-medium text-gray-600">Budget</span>
-            </div>
-            <p className="text-lg font-bold text-gray-900">€{task.budget}</p>
-          </div>
-
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="flex items-center space-x-2 mb-2">
-              <Calendar className="w-5 h-5 text-blue-600" />
-              <span className="text-sm font-medium text-gray-600">Date Limite</span>
-            </div>
-            <p className="text-lg font-bold text-gray-900">
-              {task.deadline ? new Date(task.deadline).toLocaleDateString('fr-FR') : 'Aucune'}
-            </p>
-          </div>
-
-          {task.estimated_duration && (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <Clock className="w-5 h-5 text-orange-600" />
-                <span className="text-sm font-medium text-gray-600">Durée Estimée</span>
-              </div>
-              <p className="text-lg font-bold text-gray-900">{formatDuration(task.estimated_duration)}</p>
-            </div>
-          )}
-
-          {task.payment_status && (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <Star className="w-5 h-5 text-purple-600" />
-                <span className="text-sm font-medium text-gray-600">Statut Paiement</span>
-              </div>
-              <p className="text-lg font-bold text-gray-900 capitalize">{task.payment_status}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Location */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-            <MapPin className="w-5 h-5 mr-2 text-red-600" />
-            Localisation
-          </h3>
-          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-            {isLoadingAddress ? (
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span className="text-gray-600">Récupération de l'adresse...</span>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-start space-x-3">
-                  <MapPin className="w-5 h-5 text-red-600 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-gray-900">{resolvedAddress || 'Adresse non disponible'}</p>
+      {/* Contenu principal avec layout adaptatif */}
+      <div className="flex-1 overflow-y-auto">
+        <div className={`${isMobile ? 'p-4' : 'p-6 lg:p-8'} max-w-7xl mx-auto`}>
+          <div className={`${isMobile ? 'space-y-4' : 'grid grid-cols-1 lg:grid-cols-3 gap-8'}`}>
+            {/* Colonne principale - Informations de la tâche */}
+            <div className={`${isMobile ? '' : 'lg:col-span-2'}`}>
+              {/* En-tête de la tâche */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                      {getCategoryIcon(task.category)}
+                    </div>
+                    <div>
+                      <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                        {task.title}
+                      </h1>
+                      <div className="flex items-center space-x-3">
+                        <span className={`px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(task.status)}`}>
+                          {getStatusLabel(task.status)}
+                        </span>
+                        <span className={`px-3 py-1 text-sm font-medium rounded-full border ${getPriorityColor(task.priority)}`}>
+                          {getPriorityLabel(task.priority)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Budget en évidence */}
+                  <div className="text-right">
+                    <div className="text-3xl lg:text-4xl font-bold text-green-600 mb-1">
+                      €{task.budget}
+                    </div>
+                    <div className="text-sm text-gray-500">Budget</div>
                   </div>
                 </div>
-                
-                {/* Informations de localisation supplémentaires */}
-                {(task.city || task.postal_code || task.country) && (
-                  <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-200">
-                    {task.city && (
-                      <div className="flex items-center space-x-2">
-                        <Building className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm text-gray-600">{task.city}</span>
-                      </div>
-                    )}
-                    {task.postal_code && (
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm text-gray-600">{task.postal_code}</span>
-                      </div>
-                    )}
-                    {task.country && (
-                      <div className="flex items-center space-x-2">
-                        <Globe className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm text-gray-600">{task.country}</span>
-                      </div>
-                    )}
+
+                {/* Description */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
+                  <p className="text-gray-700 leading-relaxed text-base lg:text-lg">
+                    {task.description}
+                  </p>
+                </div>
+
+                {/* Tags */}
+                {task.tags && task.tags.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Tags</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {task.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-2 bg-blue-50 text-blue-700 text-sm rounded-lg border border-blue-200 font-medium"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
-              </>
-            )}
-          </div>
-        </div>
 
-        {/* Photos */}
-        {task.photos && task.photos.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-              <Camera className="w-5 h-5 mr-2 text-purple-600" />
-              Photos
-            </h3>
-            <div className="grid grid-cols-3 gap-3">
-              {task.photos.map((photo, index) => (
-                <img
-                  key={index}
-                  src={photo}
-                  alt={`Photo ${index + 1}`}
-                  className="w-full h-24 object-cover rounded-lg"
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        
-
-        {/* Participants */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Participants</h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-blue-600" />
+                {/* Informations détaillées */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {task.estimated_duration && (
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
+                      <Clock className="w-5 h-5 text-gray-600" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">Durée estimée</div>
+                        <div className="text-sm text-gray-600">{formatDuration(task.estimated_duration)}</div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {task.deadline && (
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
+                      <Calendar className="w-5 h-5 text-gray-600" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">Date limite</div>
+                        <div className="text-sm text-gray-600">
+                          {new Date(task.deadline).toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900">Auteur</p>
-                  <p className="text-sm text-gray-600">{task.author_profile?.name || 'Anonyme'}</p>
+              </div>
+
+              {/* Localisation */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <MapPin className="w-5 h-5 mr-2 text-blue-600" />
+                  Localisation
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-xl">
+                    <MapPin className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <div className="font-medium text-gray-900">{address || 'Chargement...'}</div>
+                      {task.city && (
+                        <div className="text-sm text-gray-600">{task.city}, {task.country}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {canAccept && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleAcceptTask}
+                      disabled={actionLoading}
+                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center space-x-3"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      <span>Accepter cette Tâche</span>
+                    </motion.button>
+                  )}
+                  
+                  {isHelper && task.status === 'assigned' && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleStartTask}
+                      disabled={actionLoading}
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center space-x-3"
+                    >
+                      <TrendingUp className="w-5 h-5" />
+                      <span>Commencer la Tâche</span>
+                    </motion.button>
+                  )}
+                  
+                  {canComplete && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleCompleteTask}
+                      disabled={actionLoading}
+                      className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center space-x-3"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      <span>Marquer comme Terminée</span>
+                    </motion.button>
+                  )}
+                  
+                  {canCancel && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleCancelTask}
+                      disabled={actionLoading}
+                      className="flex-1 bg-gradient-to-r from-red-600 to-pink-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center space-x-3"
+                    >
+                      <XCircle className="w-5 h-5" />
+                      <span>Annuler la Tâche</span>
+                    </motion.button>
+                  )}
+                  
+                  {/* Bouton de chat toujours visible */}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => onChatOpen(task.id)}
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center space-x-3"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    <span>Ouvrir le Chat</span>
+                  </motion.button>
                 </div>
               </div>
             </div>
 
-            {task.helper_profile && (
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
+            {/* Colonne latérale - Informations complémentaires */}
+            {!isMobile && (
+              <div className="space-y-6">
+                {/* Profil de l'auteur */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Auteur de la Tâche</h3>
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold shadow-lg">
+                      {task.author_profile?.name?.charAt(0) || 'U'}
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                      {task.author_profile?.name || 'Utilisateur'}
+                    </h4>
+                    <div className="flex items-center justify-center space-x-1 text-yellow-600 mb-3">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${i < (task.author_profile?.rating || 0) ? 'fill-current' : ''}`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      {task.author_profile?.rating_count || 0} évaluation(s)
+                    </p>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Aide</p>
-                    <p className="text-sm text-gray-600">{task.helper_profile.name}</p>
+                </div>
+
+                {/* Statistiques de la tâche */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Créée le</span>
+                      <span className="font-medium text-gray-900">
+                        {new Date(task.created_at).toLocaleDateString('fr-FR')}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Statut</span>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(task.status)}`}>
+                        {getStatusLabel(task.status)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Priorité</span>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(task.priority)}`}>
+                        {getPriorityLabel(task.priority)}
+                      </span>
+                    </div>
+                    {task.is_urgent && (
+                      <div className="flex items-center justify-center p-2 bg-red-50 rounded-lg border border-red-200">
+                        <AlertTriangle className="w-4 h-4 text-red-600 mr-2" />
+                        <span className="text-sm font-medium text-red-700">Tâche urgente</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             )}
           </div>
-        </div>
-
-        {/* Actions */}
-        <div className="space-y-3">
-          {canAccept && (
-            <button
-              onClick={handleAcceptTask}
-              disabled={actionLoading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
-            >
-              {actionLoading ? 'Acceptation...' : 'Accepter cette tâche'}
-            </button>
-          )}
-
-          {isHelper && task.status === 'assigned' && (
-            <button
-              onClick={handleStartTask}
-              disabled={actionLoading}
-              className="w-full bg-orange-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-700 disabled:bg-orange-300 transition-colors"
-            >
-              {actionLoading ? 'Démarrage...' : 'Démarrer la tâche'}
-            </button>
-          )}
-
-          {canComplete && (
-            <button
-              onClick={handleCompleteTask}
-              disabled={actionLoading}
-              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 disabled:bg-green-300 transition-colors"
-            >
-              {actionLoading ? 'Finalisation...' : 'Marquer comme terminée'}
-            </button>
-          )}
-
-          {canCancel && (
-            <button
-              onClick={handleCancelTask}
-              disabled={actionLoading}
-              className="w-full bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 disabled:bg-red-300 transition-colors"
-            >
-              {actionLoading ? 'Annulation...' : 'Annuler la tâche'}
-            </button>
-          )}
-
-          {/* Chat button - accessible à tous les utilisateurs connectés */}
-          {user && (
-            <button
-              onClick={() => onChatOpen(task.id)}
-              className="w-full bg-gray-100 text-gray-900 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"
-            >
-              <MessageCircle className="w-5 h-5" />
-              <span>Ouvrir le chat</span>
-            </button>
-          )}
         </div>
       </div>
     </div>

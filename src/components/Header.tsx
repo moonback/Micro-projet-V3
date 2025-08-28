@@ -341,7 +341,7 @@ export default function Header({
 
   return (
     <div className={`relative bg-gradient-to-r from-white via-gray-50 to-white border-b border-gray-200 shadow-sm ${className}`}>
-      <div className="relative px-6 py-4">
+      <div className="relative px-4 lg:px-6 py-4">
         {/* En-tête principal compact */}
         <div className="flex items-center justify-between">
           {/* Section gauche - Logo et navigation */}
@@ -366,7 +366,7 @@ export default function Header({
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="flex items-center space-x-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full"
+                className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full"
               >
                 <span className="text-sm">{getCategoryIcon(filters.category)}</span>
                 <span className="text-xs font-medium text-blue-700">{filters.category}</span>
@@ -377,7 +377,7 @@ export default function Header({
           {/* Section droite - Actions améliorées */}
           <div className="flex items-center space-x-2">
             {/* Groupe de boutons principaux avec design moderne */}
-            <div className="flex items-center space-x-1 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-2xl p-1 shadow-sm">
+            <div className="hidden lg:flex items-center space-x-1 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-2xl p-1 shadow-sm">
               {/* Recherche avancée */}
               {showFilters && (
                 <motion.button
@@ -467,7 +467,7 @@ export default function Header({
 
             {/* Profil utilisateur amélioré */}
             <motion.div 
-              className="flex items-center ml-3 pl-3 border-l border-gray-200"
+              className="hidden lg:flex items-center ml-3 pl-3 border-l border-gray-200"
               whileHover={{ scale: 1.05 }}
             >
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-md hover:shadow-lg transition-shadow duration-300">
@@ -505,14 +505,14 @@ export default function Header({
                   <X className="w-3 h-3" />
                 </motion.button>
               )}
-              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 font-mono">
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 font-mono hidden lg:block">
                 ⌘K
               </div>
             </div>
           </motion.div>
         )}
 
-                {/* Statistiques améliorées */}
+        {/* Statistiques améliorées */}
         {showStats && stats && (
           <motion.div 
             className="mt-4"
@@ -520,7 +520,7 @@ export default function Header({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <motion.div 
                 whileHover={{ scale: 1.05, y: -2 }}
                 className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-3 text-center shadow-sm hover:shadow-md transition-all duration-300"
