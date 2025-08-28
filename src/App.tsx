@@ -159,20 +159,10 @@ function App() {
   // Ne pas afficher la navigation pour les vues spéciales
   const showBottomNavigation = !['splash', 'home', 'auth', 'task-detail', 'chat'].includes(currentView)
 
-  // Afficher un écran de chargement si useAuth est toujours en cours de chargement
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Chargement de MicroTask...</p>
-        </div>
-      </div>
-    )
-  }
 
-  // Si la splash n'a pas été vue et que le chargement est terminé, afficher la splash
-  if (!hasSeenSplash && currentView === 'splash') {
+
+  // Afficher toujours le SplashScreen en premier
+  if (!hasSeenSplash) {
     return <SplashScreen onComplete={handleSplashComplete} />
   }
 
