@@ -24,9 +24,9 @@ export default function BottomNavigation({ activeTab, onTabChange }: BottomNavig
     <motion.nav 
       initial={{ y: 100 }}
       animate={{ y: 0 }}
-      className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600 text-white border-t border-white/20 safe-area-pb z-50 shadow-2xl"
+      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-area-pb z-50 shadow-lg"
     >
-      <div className="flex justify-between items-center py-3 px-4">
+      <div className="flex justify-between items-center py-1 px-1">
         {tabs.map(({ id, label, icon: Icon, color }) => {
           const isActive = activeTab === id;
           
@@ -34,56 +34,56 @@ export default function BottomNavigation({ activeTab, onTabChange }: BottomNavig
             return (
               <motion.div
                 key={id}
-                className="relative -top-4 flex items-center justify-center"
-                whileHover={{ scale: 1.1 }}
+                className="relative -top-3 flex items-center justify-center"
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => onTabChange(id)}
               >
                 <motion.button
-                  className={`flex items-center justify-center w-16 h-16 rounded-full text-white shadow-xl transition-all duration-300 transform ${
+                  className={`flex items-center justify-center w-14 h-14 rounded-full text-white shadow-lg transition-all duration-300 transform ${
                     isActive 
-                      ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-green-500/25 ring-4 ring-white/20' 
-                      : 'bg-gradient-to-br from-white/20 to-white/10 shadow-white/25 ring-2 ring-white/30'
+                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/25 ring-2 ring-blue-200' 
+                      : 'bg-gradient-to-br from-gray-400 to-gray-500 shadow-gray-400/25 ring-1 ring-gray-200'
                   }`}
                 >
-                  <Icon size={28} className="text-white" />
+                  <Icon size={24} className="text-white" />
                 </motion.button>
               </motion.div>
             );
           }
 
           const activeColorClasses = {
-            blue: 'text-white bg-white/20',
-            purple: 'text-white bg-white/20',
-            orange: 'text-white bg-white/20',
-            indigo: 'text-white bg-white/20'
+            blue: 'text-blue-600 bg-blue-50',
+            purple: 'text-purple-600 bg-purple-50',
+            orange: 'text-orange-600 bg-orange-50',
+            indigo: 'text-indigo-600 bg-indigo-50'
           };
 
           const inactiveColorClasses = {
-            blue: 'text-white/70 hover:text-white hover:bg-white/10',
-            purple: 'text-white/70 hover:text-white hover:bg-white/10',
-            orange: 'text-white/70 hover:text-white hover:bg-white/10',
-            indigo: 'text-white/70 hover:text-white hover:bg-white/10'
+            blue: 'text-gray-500 hover:text-blue-600 hover:bg-blue-50/50',
+            purple: 'text-gray-500 hover:text-purple-600 hover:bg-purple-50/50',
+            orange: 'text-gray-500 hover:text-orange-600 hover:bg-orange-50/50',
+            indigo: 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50/50'
           };
 
           return (
             <motion.button
               key={id}
               onClick={() => onTabChange(id)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`relative flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 ease-in-out w-full max-w-[70px] group ${
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className={`relative flex flex-col items-center justify-center p-1.5 rounded-lg transition-all duration-200 ease-in-out w-full max-w-[60px] group ${
                 isActive ? activeColorClasses[color as keyof typeof activeColorClasses] : inactiveColorClasses[color as keyof typeof inactiveColorClasses]
               }`}
             >
-              <div className="relative z-10 p-2 rounded-full transition-all duration-200">
-                <Icon 
-                  size={24} 
-                  className="text-current"
-                />
+              <div className="relative z-10 p-1.5 rounded-lg transition-all duration-200">
+                                  <Icon 
+                    size={20} 
+                    className="text-current"
+                  />
               </div>
               <span 
-                className={`text-xs font-semibold mt-1 transition-all duration-200 text-current`}
+                className={`text-xs font-medium mt-0.5 transition-all duration-200 text-current`}
               >
                 {label}
               </span>
@@ -91,7 +91,7 @@ export default function BottomNavigation({ activeTab, onTabChange }: BottomNavig
               {isActive && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute bottom-0 inset-x-0 mx-auto w-10 h-1 rounded-full bg-white/80"
+                  className="absolute bottom-0 inset-x-0 mx-auto w-8 h-0.5 rounded-full bg-current"
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 />
               )}

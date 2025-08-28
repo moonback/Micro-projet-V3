@@ -71,52 +71,46 @@ export default function Header({
   }
 
   return (
-    <div className={`relative bg-white border-b border-gray-100 ${className}`}>
-      {/* Gradient subtil en arrière-plan */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 via-white to-blue-50/30 pointer-events-none" />
-      
-      <div className="relative px-6 py-4">
-        {/* En-tête principal */}
-        <div className="flex items-center justify-between mb-6">
+    <div className={`relative bg-white border-b border-gray-200 ${className}`}>
+      <div className="relative px-4 py-3">
+        {/* En-tête principal compact */}
+        <div className="flex items-center justify-between">
           {/* Section gauche - Logo et navigation */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {onBack && (
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={onBack}
-                className="p-2.5 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md"
+                className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all duration-200"
                 title="Retour"
               >
                 <ArrowLeft className="w-4 h-4 text-gray-600" />
               </motion.button>
             )}
             
-            {/* Logo amélioré */}
+            {/* Logo compact */}
             <div className="relative">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/25">
-                <span className="text-xl">🚀</span>
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-sm">
+                <span className="text-sm">🚀</span>
               </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm animate-pulse" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-white" />
             </div>
             
-            {/* Titre et sous-titre améliorés */}
-            <div className="space-y-1">
-              <div className="flex items-center space-x-3">
-                {/* <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-                  {title}
-                </h1> */}
-                
+            {/* Titre et sous-titre compacts */}
+            <div className="space-y-0.5">
+              <div className="flex items-center space-x-2">
+                <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
               </div>
               
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <div className="flex items-center space-x-2 text-xs text-gray-500">
                 <p>{subtitle}</p>
                 {participants.length > 0 && (
                   <>
-                    <span className="text-gray-400">•</span>
+                    <span className="text-gray-300">•</span>
                     <div className="flex items-center space-x-1">
-                      <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                      <span className="text-xs font-medium">{participants.join(' • ')}</span>
+                      <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+                      <span className="text-xs">{participants.join(' • ')}</span>
                     </div>
                   </>
                 )}
@@ -124,29 +118,27 @@ export default function Header({
             </div>
           </div>
           
-          {/* Section droite - Actions */}
-          <div className="flex items-center space-x-2">
+          {/* Section droite - Actions compactes */}
+          <div className="flex items-center space-x-1.5">
             {/* Groupe de boutons principaux */}
-            <div className="flex items-center space-x-1 bg-gray-50/80 backdrop-blur-sm border border-gray-200/80 rounded-xl p-1">
+            <div className="flex items-center space-x-0.5 bg-gray-50 border border-gray-200 rounded-lg p-0.5">
               {/* Recherche avancée */}
               {showFilters && onFiltersOpen && (
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={onFiltersOpen}
-                  className={`relative p-2.5 rounded-lg border transition-all duration-200 ${
+                  className={`relative p-2 rounded-md border transition-all duration-200 ${
                     hasActiveFilters() 
-                      ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm' 
+                      ? 'bg-blue-50 border-blue-200 text-blue-700' 
                       : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-blue-600'
                   }`}
                   title="Recherche avancée"
                 >
-                  <Search className="w-4 h-4" />
+                  <Search className="w-3.5 h-3.5" />
                   {hasActiveFilters() && (
-                    <div className="absolute -top-1 -right-1">
-                      <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-sm">
-                        <div className="w-full h-full bg-red-400 rounded-full animate-ping" />
-                      </div>
+                    <div className="absolute -top-0.5 -right-0.5">
+                      <div className="w-2 h-2 bg-red-500 rounded-full border border-white" />
                     </div>
                   )}
                 </motion.button>
@@ -155,28 +147,28 @@ export default function Header({
               {/* Catégories */}
               {onCategoriesOpen && (
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={onCategoriesOpen}
-                  className="p-2.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-indigo-600 rounded-lg transition-all duration-200"
+                  className="p-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-indigo-600 rounded-md transition-all duration-200"
                   title={filters?.category || 'Catégories'}
                 >
-                  <Tag className="w-4 h-4" />
+                  <Tag className="w-3.5 h-3.5" />
                 </motion.button>
               )}
 
               {/* Vue liste/carte */}
               {showViewToggle && onViewToggle && (
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={onViewToggle}
-                  className="p-2.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-purple-600 rounded-lg transition-all duration-200"
+                  className="p-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-purple-600 rounded-md transition-all duration-200"
                   title={viewMode === 'list' ? 'Voir la carte' : 'Voir la liste'}
                 >
                   {viewMode === 'list' ? 
-                    <MapPin className="w-4 h-4" /> : 
-                    <List className="w-4 h-4" />
+                    <MapPin className="w-3.5 h-3.5" /> : 
+                    <List className="w-3.5 h-3.5" />
                   }
                 </motion.button>
               )}
@@ -184,14 +176,14 @@ export default function Header({
               {/* Actualiser */}
               {showRefresh && onRefresh && (
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={onRefresh}
                   disabled={refreshing}
-                  className="p-2.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-green-600 rounded-lg transition-all duration-200 disabled:opacity-50"
+                  className="p-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-green-600 rounded-md transition-all duration-200 disabled:opacity-50"
                   title="Actualiser"
                 >
-                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
                 </motion.button>
               )}
             </div>
@@ -202,21 +194,21 @@ export default function Header({
               return (
                 <motion.button
                   key={index}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={button.onClick}
-                  className={`p-2.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md ${button.className || ''}`}
+                  className={`p-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 rounded-lg transition-all duration-200 ${button.className || ''}`}
                   title={button.tooltip}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5" />
                 </motion.button>
               )
             })}
 
-            {/* Profil utilisateur (exemple) */}
-            <div className="flex items-center space-x-2 ml-3 pl-3 border-l border-gray-200">
-              <div className="w-8 h-8 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
-                <User className="w-4 h-4 text-gray-600" />
+            {/* Profil utilisateur compact */}
+            <div className="flex items-center ml-2 pl-2 border-l border-gray-200">
+              <div className="w-6 h-6 bg-gradient-to-br from-gray-200 to-gray-300 rounded-md flex items-center justify-center">
+                <User className="w-3 h-3 text-gray-600" />
               </div>
             </div>
           </div>
@@ -224,51 +216,39 @@ export default function Header({
 
 
 
-        {/* Statistiques améliorées */}
+        {/* Statistiques compactes */}
         {showStats && stats && (
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-4 gap-2 mt-3">
             <motion.div 
-              whileHover={{ scale: 1.02, y: -2 }}
-              className="bg-white border border-blue-100 rounded-2xl p-4 text-center shadow-sm hover:shadow-md transition-all duration-200"
+              whileHover={{ scale: 1.01 }}
+              className="bg-white border border-blue-100 rounded-lg p-2 text-center shadow-sm"
             >
-              <div className="text-2xl font-bold text-blue-700 mb-2">{stats.created || 0}</div>
-              <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Créées</div>
-              <div className="mt-1 w-full bg-blue-100 rounded-full h-1">
-                <div className="bg-blue-600 h-1 rounded-full" style={{ width: '75%' }} />
-              </div>
+              <div className="text-lg font-bold text-blue-700 mb-1">{stats.created || 0}</div>
+              <div className="text-xs text-blue-600 font-medium">Créées</div>
             </motion.div>
             
             <motion.div 
-              whileHover={{ scale: 1.02, y: -2 }}
-              className="bg-white border border-emerald-100 rounded-2xl p-4 text-center shadow-sm hover:shadow-md transition-all duration-200"
+              whileHover={{ scale: 1.01 }}
+              className="bg-white border border-emerald-100 rounded-lg p-2 text-center shadow-sm"
             >
-              <div className="text-2xl font-bold text-emerald-700 mb-2">{stats.accepted || 0}</div>
-              <div className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Acceptées</div>
-              <div className="mt-1 w-full bg-emerald-100 rounded-full h-1">
-                <div className="bg-emerald-600 h-1 rounded-full" style={{ width: '60%' }} />
-              </div>
+              <div className="text-lg font-bold text-emerald-700 mb-1">{stats.accepted || 0}</div>
+              <div className="text-xs text-emerald-600 font-medium">Acceptées</div>
             </motion.div>
             
             <motion.div 
-              whileHover={{ scale: 1.02, y: -2 }}
-              className="bg-white border border-amber-100 rounded-2xl p-4 text-center shadow-sm hover:shadow-md transition-all duration-200"
+              whileHover={{ scale: 1.01 }}
+              className="bg-white border border-amber-100 rounded-lg p-2 text-center shadow-sm"
             >
-              <div className="text-2xl font-bold text-amber-700 mb-2">{stats.open || 0}</div>
-              <div className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Ouvertes</div>
-              <div className="mt-1 w-full bg-amber-100 rounded-full h-1">
-                <div className="bg-amber-600 h-1 rounded-full" style={{ width: '45%' }} />
-              </div>
+              <div className="text-lg font-bold text-amber-700 mb-1">{stats.open || 0}</div>
+              <div className="text-xs text-amber-600 font-medium">Ouvertes</div>
             </motion.div>
             
             <motion.div 
-              whileHover={{ scale: 1.02, y: -2 }}
-              className="bg-white border border-violet-100 rounded-2xl p-4 text-center shadow-sm hover:shadow-md transition-all duration-200"
+              whileHover={{ scale: 1.01 }}
+              className="bg-white border border-violet-100 rounded-lg p-2 text-center shadow-sm"
             >
-              <div className="text-2xl font-bold text-violet-700 mb-2">{stats.completed || 0}</div>
-              <div className="text-xs font-semibold text-violet-600 uppercase tracking-wider">Terminées</div>
-              <div className="mt-1 w-full bg-violet-100 rounded-full h-1">
-                <div className="bg-violet-600 h-1 rounded-full" style={{ width: '90%' }} />
-              </div>
+              <div className="text-lg font-bold text-violet-700 mb-1">{stats.completed || 0}</div>
+              <div className="text-xs text-violet-600 font-medium">Terminées</div>
             </motion.div>
           </div>
         )}
