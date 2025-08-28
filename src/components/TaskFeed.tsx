@@ -750,11 +750,11 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted, onApplyToTask }:
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className="flex-1 overflow-y-auto p-4 lg:p-6"
               >
-                {/* Grille desktop vs liste mobile */}
+                {/* Grille desktop vs liste mobile - optimisée pour 4 cartes par ligne */}
                 <div className={`${
                   isMobile 
                     ? 'space-y-4' 
-                    : 'grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6'
+                    : 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4'
                 }`}>
                   <AnimatePresence>
                     {filteredTasks.map((task, index) => (
