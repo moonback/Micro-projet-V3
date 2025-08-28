@@ -15,7 +15,10 @@ import {
   Eye,
   Star,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  ArrowLeft,
+  BarChart3,
+  History
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { TaskHistoryItem } from '../types/task'
@@ -25,9 +28,11 @@ import { useConfirmationModal } from './ConfirmationModal'
 interface TaskHistoryProps {
   onTaskPress?: (task: TaskHistoryItem) => void
   showApplications?: boolean
+  onBack?: () => void
+  title?: string
 }
 
-export default function TaskHistory({ onTaskPress, showApplications = false }: TaskHistoryProps) {
+export default function TaskHistory({ onTaskPress, showApplications = false, onBack, title = "Historique des Tâches" }: TaskHistoryProps) {
   const { user } = useAuth()
   const { showModal, ModalComponent } = useConfirmationModal()
   
@@ -103,10 +108,26 @@ export default function TaskHistory({ onTaskPress, showApplications = false }: T
           orderBy = 'created_at'
       }
 
-      const { data, error: queryError } = await query
+      let { data, error: queryError } = await query
         .order(orderBy, { ascending: sortOrder === 'asc' })
 
       if (queryError) throw queryError
+
+      // Appliquer un tri personnalisé pour prioriser les tâches acceptées
+      if (data) {
+        data = data.sort((a, b) => {
+          // Priorité 1: Tâches acceptées (assigned, in_progress, pending_approval)
+          const aPriority = getStatusPriority(a.status)
+          const bPriority = getStatusPriority(b.status)
+          
+          if (aPriority !== bPriority) {
+            return aPriority - bPriority
+          }
+          
+          // Si même priorité, trier par date de création (plus récent en premier)
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        })
+      }
 
       setTasks(data || [])
     } catch (err) {
@@ -221,6 +242,25 @@ export default function TaskHistory({ onTaskPress, showApplications = false }: T
 
   const stats = getTaskStats()
 
+  // Fonction pour déterminer la priorité des statuts
+  const getStatusPriority = (status: string): number => {
+    switch (status) {
+      case 'assigned':
+      case 'in_progress':
+      case 'pending_approval':
+        return 1 // Priorité la plus haute - tâches acceptées
+      case 'completed':
+        return 2 // Tâches terminées
+      case 'open':
+        return 3 // Tâches ouvertes
+      case 'cancelled':
+      case 'expired':
+        return 4 // Tâches annulées/expirées
+      default:
+        return 5
+    }
+  }
+
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -237,11 +277,69 @@ export default function TaskHistory({ onTaskPress, showApplications = false }: T
 
   return (
     <div className="space-y-6">
+      {/* Header avec navigation */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            {/* Navigation et titre */}
+            <div className="flex items-center gap-4">
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  aria-label="Retour"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              )}
+              
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                  <History className="w-6 h-6" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+                  <p className="text-sm text-gray-600">
+                    Consultez l'historique de vos tâches et de votre activité
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions rapides */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={loadTaskHistory}
+                className="btn-secondary flex items-center gap-2"
+                disabled={loading}
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                Actualiser
+              </button>
+              
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                Filtres
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Header avec statistiques */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          Historique des Tâches
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Vue d'ensemble
+          </h2>
+          <div className="flex items-center gap-2 text-blue-600">
+            <BarChart3 className="w-5 h-5" />
+            <span className="text-sm font-medium">Statistiques</span>
+          </div>
+        </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
@@ -297,6 +395,7 @@ export default function TaskHistory({ onTaskPress, showApplications = false }: T
               className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">Tous les statuts</option>
+              <option value="accepted">Acceptées</option>
               <option value="open">Ouvertes</option>
               <option value="pending_approval">En attente</option>
               <option value="assigned">Assignées</option>
@@ -334,26 +433,6 @@ export default function TaskHistory({ onTaskPress, showApplications = false }: T
               <option value="year">12 derniers mois</option>
               <option value="all">Tout</option>
             </select>
-          </div>
-
-          {/* Boutons d'action */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <Filter className="w-4 h-4" />
-              Filtres
-            </button>
-            
-            <button
-              onClick={loadTaskHistory}
-              className="btn-secondary flex items-center gap-2"
-              disabled={loading}
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Actualiser
-            </button>
           </div>
         </div>
 
