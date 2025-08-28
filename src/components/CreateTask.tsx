@@ -235,6 +235,7 @@ export default function CreateTask() {
         showFilters={false}
         showViewToggle={false}
         showRefresh={false}
+        onBack={() => window.history.back()}
         className="bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white"
       />
 

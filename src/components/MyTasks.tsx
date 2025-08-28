@@ -123,6 +123,7 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
         showFilters={false}
         showViewToggle={false}
         showRefresh={false}
+        onBack={() => window.history.back()}
         rightButtons={[
           {
             icon: Plus,
