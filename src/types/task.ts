@@ -212,6 +212,13 @@ export interface Conversation {
   lastActivity: string
 }
 
+// Type simplifié pour les profils dans les conversations
+export interface ConversationProfile {
+  id: string
+  name?: string
+  avatar_url?: string
+}
+
 // Type simplifié pour la liste des conversations
 export interface ConversationListItem {
   taskId: string
@@ -221,7 +228,7 @@ export interface ConversationListItem {
   lastMessageTime: string
   lastMessageSender: string | null
   unreadCount: number
-  otherParticipant: UserProfile | null
+  otherParticipant: ConversationProfile | null
   isAuthor: boolean
   isHelper: boolean
 }

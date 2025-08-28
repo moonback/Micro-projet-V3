@@ -108,6 +108,13 @@ FOR SELECT USING (
   -- Permettre si l'utilisateur est l'aideur assigné
   auth.uid() IN (SELECT helper FROM tasks WHERE id = task_id)
   OR
+  -- Permettre si l'utilisateur a participé à la conversation (a envoyé au moins un message)
+  EXISTS (
+    SELECT 1 FROM messages m2
+    WHERE m2.task_id = messages.task_id 
+      AND m2.sender = auth.uid()
+  )
+  OR
   -- Permettre si la tâche est ouverte (pour voir les messages publics)
   EXISTS (
     SELECT 1 FROM tasks 

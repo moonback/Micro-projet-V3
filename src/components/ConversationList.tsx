@@ -13,6 +13,13 @@ export default function ConversationList({ onSelectConversation, selectedTaskId 
   const { conversations, loading, error, refreshConversations } = useConversations()
   const [searchTerm, setSearchTerm] = useState('')
 
+  console.log('🔍 ConversationList - État:', { 
+    conversationsCount: conversations.length, 
+    loading, 
+    error,
+    conversations: conversations.slice(0, 3) // Afficher les 3 premières
+  })
+
   const filteredConversations = conversations.filter(conv => {
     const matchesSearch = conv.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          conv.otherParticipant?.name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -21,6 +28,8 @@ export default function ConversationList({ onSelectConversation, selectedTaskId 
     const hasMessages = conv.lastMessage !== 'Aucun message'
     return matchesSearch && hasMessages
   })
+
+  console.log('🔍 Conversations filtrées:', filteredConversations.length)
 
   const getStatusIcon = (status: string) => {
     switch (status) {
