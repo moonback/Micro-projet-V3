@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, Clock, Euro, Star, User, CheckCircle, AlertTriangle, TrendingUp, Zap, Tag, Calendar, MessageCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -109,9 +109,40 @@ export default function TaskCard({ task, onPress, onTaskAccepted, isDesktop = fa
     return categoryIcons[category] || '🏷️'
   }
 
+  const [hasApplied, setHasApplied] = useState(false)
+  const [checkingApplication, setCheckingApplication] = useState(false)
+
+  // Vérifier si l'utilisateur a déjà candidaté à cette tâche
+  useEffect(() => {
+    const checkApplication = async () => {
+      if (!user || task.status !== 'open') return
+      
+      setCheckingApplication(true)
+      try {
+        const { data, error } = await supabase
+          .from('task_applications')
+          .select('id, status')
+          .eq('task_id', task.id)
+          .eq('helper_id', user.id)
+          .single()
+
+        if (!error && data) {
+          setHasApplied(true)
+        }
+      } catch (error) {
+        // Pas de candidature existante
+        setHasApplied(false)
+      } finally {
+        setCheckingApplication(false)
+      }
+    }
+
+    checkApplication()
+  }, [user, task.id, task.status])
+
   const handleAcceptTask = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!user || !onTaskAccepted) return
+    if (!user || !onTaskAccepted || hasApplied) return
 
     setAccepting(true)
     try {
@@ -126,10 +157,16 @@ export default function TaskCard({ task, onPress, onTaskAccepted, isDesktop = fa
         })
 
       if (error) throw error
+      
+      setHasApplied(true)
       onTaskAccepted(task.id)
     } catch (error) {
       console.error('Error applying for task:', error)
-      alert('Erreur lors de la candidature à la tâche')
+      if (error.code === '23505') {
+        alert('Vous avez déjà candidaté à cette tâche')
+      } else {
+        alert('Erreur lors de la candidature à la tâche')
+      }
     } finally {
       setAccepting(false)
     }
@@ -138,6 +175,7 @@ export default function TaskCard({ task, onPress, onTaskAccepted, isDesktop = fa
   const canAcceptTask = user && 
                        task.status === 'open' && 
                        task.author !== user.id && 
+                       !hasApplied &&
                        onTaskAccepted
 
   // Design adaptatif selon la taille d'écran
@@ -253,7 +291,17 @@ export default function TaskCard({ task, onPress, onTaskAccepted, isDesktop = fa
 
       {/* Actions */}
       <div className={actionClasses}>
-        {canAcceptTask ? (
+        {checkingApplication ? (
+          <div className="w-full flex items-center justify-center py-3 px-4 text-gray-500">
+            <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mr-2" />
+            <span>Vérification...</span>
+          </div>
+        ) : hasApplied ? (
+          <div className="w-full bg-blue-50 border border-blue-200 text-blue-700 py-3 px-4 rounded-xl font-medium flex items-center justify-center space-x-2">
+            <CheckCircle className="w-4 h-4" />
+            <span>Candidature Envoyée</span>
+          </div>
+        ) : canAcceptTask ? (
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -266,12 +314,12 @@ export default function TaskCard({ task, onPress, onTaskAccepted, isDesktop = fa
             {accepting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Acceptation...</span>
+                <span>Envoi de la candidature...</span>
               </>
             ) : (
               <>
                 <CheckCircle className="w-4 h-4" />
-                <span>Accepter la Tâche</span>
+                <span>Postuler à la Tâche</span>
               </>
             )}
           </motion.button>

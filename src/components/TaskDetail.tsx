@@ -45,6 +45,8 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
   const [actionLoading, setActionLoading] = useState(false)
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null)
   const [isLoadingAddress, setIsLoadingAddress] = useState(false)
+  const [hasApplied, setHasApplied] = useState(false)
+  const [checkingApplication, setCheckingApplication] = useState(false)
   const [address, setAddress] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -59,6 +61,34 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
     window.addEventListener('resize', checkScreenSize)
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
+
+  // Vérifier si l'utilisateur a déjà candidaté à cette tâche
+  useEffect(() => {
+    const checkApplication = async () => {
+      if (!user || task.status !== 'open') return
+      
+      setCheckingApplication(true)
+      try {
+        const { data, error } = await supabase
+          .from('task_applications')
+          .select('id, status')
+          .eq('task_id', task.id)
+          .eq('helper_id', user.id)
+          .single()
+
+        if (!error && data) {
+          setHasApplied(true)
+        }
+      } catch (error) {
+        // Pas de candidature existante
+        setHasApplied(false)
+      } finally {
+        setCheckingApplication(false)
+      }
+    }
+
+    checkApplication()
+  }, [user, task.id, task.status])
 
   const isAuthor = user?.id === task.author
   const isHelper = user?.id === task.helper
@@ -99,7 +129,7 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
   }, [task.address, task.location])
 
   const handleAcceptTask = async () => {
-    if (!user) return
+    if (!user || hasApplied) return
 
     setActionLoading(true)
     try {
@@ -115,11 +145,17 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
 
       if (error) throw error
 
-      // Recharger la page ou mettre à jour l'état
+      setHasApplied(true)
+      // Optionnel : recharger la page ou mettre à jour l'état
       window.location.reload()
     } catch (error) {
       console.error('Error applying for task:', error)
-      alert('Erreur lors de la candidature à la tâche')
+      if (error.code === '23505') {
+        alert('Vous avez déjà candidaté à cette tâche')
+        setHasApplied(true)
+      } else {
+        alert('Erreur lors de la candidature à la tâche')
+      }
     } finally {
       setActionLoading(false)
     }
@@ -389,7 +425,17 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  {canAccept && (
+                  {checkingApplication ? (
+                    <div className="flex-1 flex items-center justify-center py-4 px-6 text-gray-500 bg-gray-100 rounded-xl">
+                      <div className="w-5 h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mr-3" />
+                      <span>Vérification...</span>
+                    </div>
+                  ) : hasApplied ? (
+                    <div className="flex-1 bg-blue-50 border border-blue-200 text-blue-700 py-4 px-6 rounded-xl font-semibold flex items-center justify-center space-x-3">
+                      <CheckCircle className="w-5 h-5" />
+                      <span>Candidature Envoyée</span>
+                    </div>
+                  ) : canAccept ? (
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -398,9 +444,9 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
                       className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center space-x-3"
                     >
                       <CheckCircle className="w-5 h-5" />
-                      <span>Accepter cette Tâche</span>
+                      <span>Postuler à cette Tâche</span>
                     </motion.button>
-                  )}
+                  ) : null}
                   
                   {isHelper && task.status === 'assigned' && (
                     <motion.button
