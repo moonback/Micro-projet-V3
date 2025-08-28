@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { Database } from '../lib/supabase'
 import Header from './Header'
+import SimpleLocationManager from './SimpleLocationManager'
+import { useLocationContext } from '../contexts/LocationContext'
 
 interface ProfileProps {
   onSignOut: () => void
@@ -20,7 +22,8 @@ interface UserStats {
 }
 
 export default function Profile({ onSignOut }: ProfileProps) {
-  const { user, profile: authProfile, loading: authLoading } = useAuth()
+  const { user, profile: authProfile, loading: authLoading, updateProfile } = useAuth()
+  const { refreshLocation } = useLocationContext()
   const [profile, setProfile] = useState<Database['public']['Tables']['profiles']['Row'] | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -36,6 +39,7 @@ export default function Profile({ onSignOut }: ProfileProps) {
     name: '',
     phone: ''
   })
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     if (user) {
@@ -185,6 +189,11 @@ export default function Profile({ onSignOut }: ProfileProps) {
     // Utiliser directement la fonction onSignOut passée en props
     // qui gère la déconnexion et la redirection
     onSignOut()
+  }
+
+  const handleLocationUpdate = () => {
+    // Utiliser le contexte pour rafraîchir la localisation dans toute l'application
+    refreshLocation()
   }
 
   // Afficher le chargement si l'authentification ou le profil est en cours de chargement
@@ -484,6 +493,9 @@ export default function Profile({ onSignOut }: ProfileProps) {
             </div>
           </motion.div>
         )}
+
+        {/* Gestion de la Localisation */}
+        <SimpleLocationManager onLocationUpdate={handleLocationUpdate} />
 
         {/* Informations du Compte */}
         <motion.div 

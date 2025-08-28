@@ -33,6 +33,15 @@ export type Database = {
           rating: number
           rating_count: number
           created_at: string
+          // Champs de localisation
+          location: any | null
+          latitude: number | null
+          longitude: number | null
+          address: string | null
+          city: string | null
+          postal_code: string | null
+          country: string | null
+          location_updated_at: string | null
         }
         Insert: {
           id: string
@@ -42,6 +51,15 @@ export type Database = {
           is_verified?: boolean
           rating?: number
           rating_count?: number
+          // Champs de localisation
+          location?: any | null
+          latitude?: number | null
+          longitude?: number | null
+          address?: string | null
+          city?: string | null
+          postal_code?: string | null
+          country?: string | null
+          location_updated_at?: string | null
         }
         Update: {
           name?: string | null
@@ -50,6 +68,15 @@ export type Database = {
           is_verified?: boolean
           rating?: number
           rating_count?: number
+          // Champs de localisation
+          location?: any | null
+          latitude?: number | null
+          longitude?: number | null
+          address?: string | null
+          city?: string | null
+          postal_code?: string | null
+          country?: string | null
+          location_updated_at?: string | null
         }
       }
       tasks: {

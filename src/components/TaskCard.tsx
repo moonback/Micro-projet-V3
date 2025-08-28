@@ -4,6 +4,8 @@ import { MapPin, Clock, Euro, Star, User, CheckCircle, AlertTriangle, TrendingUp
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { TaskWithProfiles } from '../types/task'
+import UserLocationBadge from './UserLocationBadge'
+import DistanceBadge from './DistanceBadge'
 
 interface TaskCardProps {
   task: TaskWithProfiles
@@ -17,12 +19,6 @@ export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask,
   const { user } = useAuth()
   const [accepting, setAccepting] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
-
-  const formatDistance = (location: any) => {
-    if (!location || !location.coordinates) return 'Distance inconnue'
-    // Calcul simple de distance (à améliorer avec une vraie API)
-    return 'À proximité'
-  }
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
@@ -285,9 +281,19 @@ export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask,
                 <div className="w-4 h-4 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full flex items-center justify-center">
                   <User className="w-2 h-2 text-white" />
                 </div>
-                <p className="text-xs text-gray-600 font-medium">
-                  {task.author_profile?.name || 'Utilisateur'}
-                </p>
+                <div className="flex flex-col">
+                  <p className="text-xs text-gray-600 font-medium">
+                    {task.author_profile?.name || 'Utilisateur'}
+                  </p>
+                  <UserLocationBadge
+                    city={task.author_profile?.city}
+                    postal_code={task.author_profile?.postal_code}
+                    country={task.author_profile?.country}
+                    compact={true}
+                    showIcon={false}
+                    className="text-xs text-gray-500"
+                  />
+                </div>
                 {task.author_profile?.rating && (
                   <div className="flex items-center gap-1">
                     <Star className="w-2 h-2 fill-yellow-400 text-yellow-400" />
@@ -351,8 +357,13 @@ export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask,
             <MapPin className="w-3 h-3 text-white" />
           </div>
           <div>
-            <span className="text-xs font-medium text-blue-700">{formatDistance(task.location)}</span>
-            <p className="text-xs text-blue-600">Localisation</p>
+            <DistanceBadge 
+              task={task} 
+              variant="compact" 
+              showIcon={false}
+              className="text-xs font-medium text-blue-700"
+            />
+            <p className="text-xs text-blue-600">Distance</p>
           </div>
         </motion.div>
         
