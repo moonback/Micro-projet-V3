@@ -237,48 +237,58 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
         </div>
       </motion.div>
 
-      {/* Onglets modernes avec design amélioré */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.8 }}
-        className="px-4 pb-4"
-      >
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-2 shadow-lg border border-white/20">
-          <div className="flex rounded-2xl bg-gray-100/50 p-1">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setActiveTab('created')}
-              className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'created'
-                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/80'
-              }`}
-            >
-              <div className="flex items-center justify-center space-x-2">
-                <ListTodo className="w-4 h-4" />
-                <span>Créées ({stats.created})</span>
-              </div>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setActiveTab('accepted')}
-              className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                activeTab === 'accepted'
-                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/80'
-              }`}
-            >
-              <div className="flex items-center justify-center space-x-2">
-                <CheckCircle className="w-4 h-4" />
-                <span>Acceptées ({stats.accepted})</span>
-              </div>
-            </motion.button>
-          </div>
-        </div>
-      </motion.div>
+             {/* Onglets compacts avec slide vers la gauche */}
+       <motion.div 
+         initial={{ opacity: 0, y: 20 }}
+         animate={{ opacity: 1, y: 0 }}
+         transition={{ delay: 0.4, duration: 0.8 }}
+         className="px-4 pb-3"
+       >
+         <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-1.5 shadow-sm border border-gray-100">
+           <div className="flex rounded-xl bg-gray-50/80 p-1 relative">
+             {/* Indicateur de sélection qui glisse */}
+             <motion.div
+               layoutId="activeTab"
+               className="absolute inset-1 bg-white rounded-lg shadow-sm z-0"
+               transition={{ type: "spring", stiffness: 300, damping: 30 }}
+             />
+             
+             <motion.button
+               whileHover={{ scale: 1.02 }}
+               whileTap={{ scale: 0.98 }}
+               onClick={() => setActiveTab('created')}
+               className={`relative z-10 flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                 activeTab === 'created'
+                   ? 'text-blue-700'
+                   : 'text-gray-500 hover:text-gray-700'
+               }`}
+             >
+               <div className="flex items-center justify-center space-x-1.5">
+                 <ListTodo className="w-3.5 h-3.5" />
+                 <span className="font-semibold">Créées</span>
+                 <span className="text-xs opacity-75">({stats.created})</span>
+               </div>
+             </motion.button>
+             
+             <motion.button
+               whileHover={{ scale: 1.02 }}
+               whileTap={{ scale: 0.98 }}
+               onClick={() => setActiveTab('accepted')}
+               className={`relative z-10 flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                 activeTab === 'accepted'
+                   ? 'text-blue-700'
+                   : 'text-gray-500 hover:text-gray-700'
+               }`}
+             >
+               <div className="flex items-center justify-center space-x-1.5">
+                 <CheckCircle className="w-3.5 h-3.5" />
+                 <span className="font-semibold">Acceptées</span>
+                 <span className="text-xs opacity-75">({stats.accepted})</span>
+               </div>
+             </motion.button>
+           </div>
+         </div>
+       </motion.div>
 
       {/* Contenu des tâches avec design amélioré */}
       <div className="flex-1 overflow-y-auto px-4 pb-6">

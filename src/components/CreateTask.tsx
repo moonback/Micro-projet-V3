@@ -227,7 +227,7 @@ export default function CreateTask() {
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 relative">
-      {/* Header compact avec indicateur de progression */}
+      {/* Header moderne avec fond blanc */}
       <Header
         title="Créer une Tâche"
         subtitle={`Étape ${currentStep}/4`}
@@ -236,24 +236,24 @@ export default function CreateTask() {
         showViewToggle={false}
         showRefresh={false}
         onBack={() => window.history.back()}
-        className="bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white"
+        className="bg-white text-gray-900 shadow-sm border-b border-gray-200"
       />
 
-      {/* Indicateur de progression compact */}
-      <div className="px-4 py-3 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-        <div className="flex items-center justify-between text-xs text-gray-600">
+      {/* Indicateur de progression moderne et compact */}
+      <div className="px-4 py-3 bg-white/60 backdrop-blur-sm border-b border-gray-100">
+        <div className="flex items-center justify-between">
           {steps.map((step, index) => (
             <div key={step.id} className="flex items-center">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
                 currentStep >= step.id 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-500'
+                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md' 
+                  : 'bg-gray-100 text-gray-400'
               }`}>
-                {currentStep > step.id ? <Check className="w-3 h-3" /> : step.id}
+                {currentStep > step.id ? <Check className="w-4 h-4" /> : step.id}
               </div>
               {index < steps.length - 1 && (
-                <div className={`w-8 h-0.5 mx-2 ${
-                  currentStep > step.id ? 'bg-blue-500' : 'bg-gray-200'
+                <div className={`w-12 h-0.5 mx-3 rounded-full transition-all ${
+                  currentStep > step.id ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-gray-200'
                 }`} />
               )}
             </div>
@@ -273,18 +273,18 @@ export default function CreateTask() {
               transition={{ duration: 0.3 }}
               className="space-y-4"
             >
-              {/* Titre et Description dans une seule carte */}
+              {/* Titre et Description dans une seule carte moderne */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.6 }}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"
+                className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-gray-100/50"
               >
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                      <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-2">
-                        <Type className="w-3 h-3 text-white" />
+                      <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-3 shadow-sm">
+                        <Type className="w-4 h-4 text-white" />
                       </div>
                       Titre de la Tâche
                     </label>
@@ -292,7 +292,7 @@ export default function CreateTask() {
                       type="text"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base transition-all"
+                      className="w-full px-4 py-3 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base transition-all shadow-sm hover:shadow-md"
                       placeholder="De quoi avez-vous besoin ?"
                       required
                     />
@@ -300,8 +300,8 @@ export default function CreateTask() {
                   
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                      <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mr-2">
-                        <FileText className="w-3 h-3 text-white" />
+                      <div className="w-7 h-7 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mr-3 shadow-sm">
+                        <FileText className="w-4 h-4 text-white" />
                       </div>
                       Description
                     </label>
@@ -309,7 +309,7 @@ export default function CreateTask() {
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       rows={3}
-                      className="w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-base transition-all"
+                      className="w-full px-4 py-3 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-base transition-all shadow-sm hover:shadow-md"
                       placeholder="Donnez plus de détails sur votre tâche..."
                       required
                     />
@@ -317,20 +317,20 @@ export default function CreateTask() {
                 </div>
               </motion.div>
 
-              {/* Catégorie compacte */}
+              {/* Catégorie moderne et compacte */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.6 }}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"
+                className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-gray-100/50"
               >
                 <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-2">
-                    <TrendingUp className="w-3 h-3 text-white" />
+                  <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-3 shadow-sm">
+                    <TrendingUp className="w-4 h-4 text-white" />
                   </div>
                   Catégorie
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-3">
                   {categories.map((cat, index) => (
                     <motion.button
                       key={cat.name}
@@ -343,27 +343,27 @@ export default function CreateTask() {
                       onClick={() => setCategory(cat.name)}
                       className={`p-3 rounded-xl border-2 transition-all ${
                         category === cat.name
-                          ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-sm'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-md'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/80'
                       }`}
                     >
-                      <div className="text-xl mb-1">{cat.icon}</div>
+                      <div className="text-2xl mb-1">{cat.icon}</div>
                       <div className="text-xs font-medium text-gray-700 leading-tight">{cat.name}</div>
                     </motion.button>
                   ))}
                 </div>
               </motion.div>
 
-              {/* Tags compacts */}
+              {/* Tags modernes et compacts */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"
+                className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-gray-100/50"
               >
                 <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  <div className="w-6 h-6 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center mr-2">
-                    <Tag className="w-3 h-3 text-white" />
+                  <div className="w-7 h-7 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center mr-3 shadow-sm">
+                    <Tag className="w-4 h-4 text-white" />
                   </div>
                   Tags (Optionnel)
                 </label>
@@ -374,10 +374,10 @@ export default function CreateTask() {
                         key={tag}
                         type="button"
                         onClick={() => addTag(tag)}
-                        className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                           tags.includes(tag)
-                            ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-blue-100 text-blue-700 border border-blue-200 shadow-sm'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow-sm'
                         }`}
                       >
                         {tag}
@@ -387,12 +387,12 @@ export default function CreateTask() {
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {tags.map((tag) => (
-                        <div key={tag} className="flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded-lg">
+                        <div key={tag} className="flex items-center bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg shadow-sm">
                           <span className="text-xs font-medium">{tag}</span>
                           <button
                             type="button"
                             onClick={() => removeTag(tag)}
-                            className="ml-1 text-blue-500 hover:text-blue-700"
+                            className="ml-2 text-blue-500 hover:text-blue-700 p-0.5 rounded-full hover:bg-blue-200 transition-colors"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -414,22 +414,22 @@ export default function CreateTask() {
               transition={{ duration: 0.3 }}
               className="space-y-4"
             >
-              {/* Priorité et Durée dans une carte */}
+              {/* Priorité et Durée dans une carte moderne */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.6 }}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"
+                className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-gray-100/50"
               >
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                      <div className="w-6 h-6 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mr-2">
-                        <AlertTriangle className="w-3 h-3 text-white" />
+                      <div className="w-7 h-7 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mr-3 shadow-sm">
+                        <AlertTriangle className="w-4 h-4 text-white" />
                       </div>
                       Niveau de Priorité
                     </label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-3">
                       {priorities.map((priorityItem) => (
                         <button
                           key={priorityItem.value}
@@ -437,11 +437,11 @@ export default function CreateTask() {
                           onClick={() => setPriority(priorityItem.value as any)}
                           className={`p-3 rounded-xl border-2 transition-all ${
                             priority === priorityItem.value
-                              ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100'
-                              : 'border-gray-200 hover:border-gray-300'
+                              ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-md'
+                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/80'
                           }`}
                         >
-                          <div className="text-xl mb-1">{priorityItem.icon}</div>
+                          <div className="text-2xl mb-1">{priorityItem.icon}</div>
                           <div className="text-xs font-medium text-gray-700">{priorityItem.label}</div>
                         </button>
                       ))}
@@ -450,8 +450,8 @@ export default function CreateTask() {
                   
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                      <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mr-2">
-                        <Clock className="w-3 h-3 text-white" />
+                      <div className="w-7 h-7 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mr-3 shadow-sm">
+                        <Clock className="w-4 h-4 text-white" />
                       </div>
                       Durée Estimée (Optionnel)
                     </label>
@@ -459,42 +459,42 @@ export default function CreateTask() {
                       type="text"
                       value={estimatedDuration}
                       onChange={(e) => setEstimatedDuration(e.target.value)}
-                      className="w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base transition-all"
+                      className="w-full px-4 py-3 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base transition-all shadow-sm hover:shadow-md"
                       placeholder="ex: 2 heures, 1 jour, 30 minutes..."
                     />
                   </div>
                 </div>
               </motion.div>
 
-              {/* Options spéciales compactes */}
+              {/* Options spéciales modernes et compactes */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.6 }}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"
+                className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-gray-100/50"
               >
                 <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-2">
-                    <Crown className="w-3 h-3 text-white" />
+                  <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-3 shadow-sm">
+                    <Crown className="w-4 h-4 text-white" />
                   </div>
                   Options Spéciales
                 </label>
                 <div className="space-y-3">
-                  <label className="flex items-center space-x-3">
+                  <label className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50/80 transition-colors">
                     <input
                       type="checkbox"
                       checked={isUrgent}
                       onChange={(e) => setIsUrgent(e.target.checked)}
-                      className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                      className="w-5 h-5 text-red-600 rounded focus:ring-red-500 focus:ring-2"
                     />
                     <span className="text-sm text-gray-700 font-medium">Marquer comme urgente</span>
                   </label>
-                  <label className="flex items-center space-x-3">
+                  <label className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50/80 transition-colors">
                     <input
                       type="checkbox"
                       checked={isFeatured}
                       onChange={(e) => setIsFeatured(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                      className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 focus:ring-2"
                     />
                     <span className="text-sm text-gray-700 font-medium">Mettre en avant</span>
                   </label>
@@ -516,9 +516,9 @@ export default function CreateTask() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.6 }}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center"
+                className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-100/50 text-center"
               >
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
                   <MapPin className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Sélectionner l'Emplacement</h3>
@@ -529,7 +529,7 @@ export default function CreateTask() {
                   whileTap={{ scale: 0.98 }}
                   type="button"
                   onClick={() => setShowLocationPicker(true)}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-xl font-semibold text-base transition-all shadow-sm hover:shadow-md"
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-xl font-semibold text-base transition-all shadow-md hover:shadow-lg"
                 >
                   Choisir sur la Carte
                 </motion.button>
@@ -543,7 +543,7 @@ export default function CreateTask() {
                 >
                   <div className="space-y-3">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-sm">
                         <Check className="w-5 h-5 text-white" />
                       </div>
                       <div>
@@ -560,7 +560,7 @@ export default function CreateTask() {
                           type="text"
                           value={city}
                           onChange={(e) => setCity(e.target.value)}
-                          className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                          className="w-full px-3 py-2 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm transition-all"
                           placeholder="Ville"
                         />
                       </div>
@@ -570,7 +570,7 @@ export default function CreateTask() {
                           type="text"
                           value={postalCode}
                           onChange={(e) => setPostalCode(e.target.value)}
-                          className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                          className="w-full px-3 py-2 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm transition-all"
                           placeholder="Code postal"
                         />
                       </div>
@@ -590,18 +590,18 @@ export default function CreateTask() {
               transition={{ duration: 0.3 }}
               className="space-y-4"
             >
-              {/* Budget et Date limite dans une carte */}
+              {/* Budget et Date limite dans une carte moderne */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.6 }}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"
+                className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-gray-100/50"
               >
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                      <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mr-2">
-                        <Euro className="w-3 h-3 text-white" />
+                      <div className="w-7 h-7 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mr-3 shadow-sm">
+                        <Euro className="w-4 h-4 text-white" />
                       </div>
                       Budget (EUR)
                     </label>
@@ -611,7 +611,7 @@ export default function CreateTask() {
                       onChange={(e) => setBudget(e.target.value)}
                       step="0.01"
                       min="1"
-                      className="w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base transition-all"
+                      className="w-full px-4 py-3 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base transition-all shadow-sm hover:shadow-md"
                       placeholder="Combien êtes-vous prêt à payer ?"
                       required
                     />
@@ -619,8 +619,8 @@ export default function CreateTask() {
                   
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                      <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-2">
-                        <Calendar className="w-3 h-3 text-white" />
+                      <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-3 shadow-sm">
+                        <Calendar className="w-4 h-4 text-white" />
                       </div>
                       Date Limite (Optionnel)
                     </label>
@@ -628,22 +628,22 @@ export default function CreateTask() {
                       type="datetime-local"
                       value={deadline}
                       onChange={(e) => setDeadline(e.target.value)}
-                      className="w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm hover:shadow-md"
                     />
                   </div>
                 </div>
               </motion.div>
 
-              {/* Photos compactes */}
+              {/* Photos modernes et compactes */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.6 }}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"
+                className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-gray-100/50"
               >
                 <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-2">
-                    <Camera className="w-3 h-3 text-white" />
+                  <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-3 shadow-sm">
+                    <Camera className="w-4 h-4 text-white" />
                   </div>
                   Ajouter des Photos (Optionnel)
                 </label>
@@ -660,7 +660,7 @@ export default function CreateTask() {
                   whileTap={{ scale: 0.99 }}
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full p-6 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-400 hover:bg-blue-50 transition-all hover:shadow-sm"
+                  className="w-full p-6 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-400 hover:bg-blue-50/80 transition-all hover:shadow-md"
                 >
                   <Camera className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                   <p className="font-medium text-base">Appuyez pour ajouter des photos</p>
@@ -674,12 +674,12 @@ export default function CreateTask() {
                         <img
                           src={URL.createObjectURL(photo)}
                           alt={`Photo ${index + 1}`}
-                          className="w-full h-16 object-cover rounded-lg"
+                          className="w-full h-16 object-cover rounded-lg shadow-sm"
                         />
                         <button
                           type="button"
                           onClick={() => removePhoto(index)}
-                          className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 shadow-sm"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -692,12 +692,12 @@ export default function CreateTask() {
           )}
         </AnimatePresence>
 
-        {/* Navigation entre étapes compacte */}
+        {/* Navigation entre étapes moderne et compacte */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.8 }}
-          className="flex items-center justify-between gap-3 pt-6 pb-4 border-t border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 -mx-4 px-4"
+          className="flex items-center justify-between gap-3 pt-6 pb-4 border-t border-gray-200 bg-white/60 backdrop-blur-sm -mx-4 px-4"
         >
           <motion.button
             type="button"
@@ -707,7 +707,7 @@ export default function CreateTask() {
             whileTap={{ scale: currentStep > 1 ? 0.98 : 1 }}
             className={`flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl font-medium transition-all min-h-[40px] ${
               currentStep > 1
-                ? 'bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 shadow-sm hover:shadow-md'
+                ? 'bg-white/80 backdrop-blur-sm hover:bg-white text-gray-700 shadow-sm hover:shadow-md border border-gray-200'
                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             }`}
           >
@@ -740,7 +740,7 @@ export default function CreateTask() {
               className={`flex items-center justify-center space-x-2 px-5 py-2.5 rounded-xl font-semibold transition-all min-h-[40px] ${
                 loading || !canGoToNext()
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md hover:shadow-lg'
+                  : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white shadow-md hover:shadow-lg'
               }`}
             >
               {loading ? (
