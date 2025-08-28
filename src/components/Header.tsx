@@ -377,7 +377,7 @@ export default function Header({
           {/* Section droite - Actions améliorées */}
           <div className="flex items-center space-x-2">
             {/* Groupe de boutons principaux avec design moderne */}
-            <div className="hidden lg:flex items-center space-x-1 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-2xl p-1 shadow-sm">
+            <div className="flex items-center space-x-1 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-2xl p-1 shadow-sm">
               {/* Recherche avancée */}
               {showFilters && (
                 <motion.button

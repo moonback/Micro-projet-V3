@@ -23,21 +23,50 @@ export default function TaskMap({ tasks, onTaskPress }: TaskMapProps) {
   useEffect(() => {
     if (!mapContainerRef.current) return
 
-    // Initialize map
-    mapRef.current = L.map(mapContainerRef.current).setView([48.8566, 2.3522], 13) // Paris
+    // Initialize map with better mobile support
+    mapRef.current = L.map(mapContainerRef.current, {
+      zoomControl: true,
+      scrollWheelZoom: true,
+      doubleClickZoom: true,
+      boxZoom: true,
+      keyboard: true,
+      dragging: true,
+      touchZoom: true,
+      tap: true,
+      tapTolerance: 15,
+      preferCanvas: false
+    }).setView([48.8566, 2.3522], 13) // Paris
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+      minZoom: 3
     }).addTo(mapRef.current)
 
-    // Force a resize to ensure the map renders properly
-    setTimeout(() => {
+    // Force a resize to ensure the map renders properly on mobile
+    const resizeMap = () => {
       if (mapRef.current) {
         mapRef.current.invalidateSize()
       }
-    }, 100)
+    }
+
+    // Initial resize with delay
+    setTimeout(resizeMap, 100)
+    
+    // Additional resize after a longer delay for mobile
+    setTimeout(resizeMap, 500)
+    
+    // Resize on window resize
+    window.addEventListener('resize', resizeMap)
+    
+    // Resize on orientation change (mobile)
+    window.addEventListener('orientationchange', () => {
+      setTimeout(resizeMap, 100)
+    })
 
     return () => {
+      window.removeEventListener('resize', resizeMap)
+      window.removeEventListener('orientationchange', resizeMap)
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
@@ -99,7 +128,14 @@ export default function TaskMap({ tasks, onTaskPress }: TaskMapProps) {
   return (
     <div 
       ref={mapContainerRef} 
-      className="map-container"
+      className="w-full h-full min-h-[400px] md:min-h-[600px]"
+      style={{
+        height: '100%',
+        minHeight: '400px',
+        width: '100%',
+        position: 'relative',
+        zIndex: 1
+      }}
     />
   )
 }
