@@ -20,12 +20,6 @@ export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask,
   const [accepting, setAccepting] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
 
-  const formatDistance = (location: any) => {
-    if (!location || !location.coordinates) return 'Distance inconnue'
-    // Calcul simple de distance (à améliorer avec une vraie API)
-    return 'À proximité'
-  }
-
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()

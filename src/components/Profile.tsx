@@ -5,7 +5,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { Database } from '../lib/supabase'
 import Header from './Header'
-import UserLocationManager from './UserLocationManager'
+import SimpleLocationManager from './SimpleLocationManager'
+import { useLocationContext } from '../contexts/LocationContext'
 
 interface ProfileProps {
   onSignOut: () => void
@@ -21,7 +22,8 @@ interface UserStats {
 }
 
 export default function Profile({ onSignOut }: ProfileProps) {
-  const { user, profile: authProfile, loading: authLoading } = useAuth()
+  const { user, profile: authProfile, loading: authLoading, updateProfile } = useAuth()
+  const { refreshLocation } = useLocationContext()
   const [profile, setProfile] = useState<Database['public']['Tables']['profiles']['Row'] | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -37,6 +39,7 @@ export default function Profile({ onSignOut }: ProfileProps) {
     name: '',
     phone: ''
   })
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     if (user) {
@@ -186,6 +189,11 @@ export default function Profile({ onSignOut }: ProfileProps) {
     // Utiliser directement la fonction onSignOut passée en props
     // qui gère la déconnexion et la redirection
     onSignOut()
+  }
+
+  const handleLocationUpdate = () => {
+    // Utiliser le contexte pour rafraîchir la localisation dans toute l'application
+    refreshLocation()
   }
 
   // Afficher le chargement si l'authentification ou le profil est en cours de chargement
@@ -487,19 +495,7 @@ export default function Profile({ onSignOut }: ProfileProps) {
         )}
 
         {/* Gestion de la Localisation */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9, duration: 0.8 }}
-          className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
-        >
-          <UserLocationManager 
-            onLocationUpdate={(location) => {
-              console.log('Localisation mise à jour:', location)
-              // Optionnel : recharger le profil ou mettre à jour l'état local
-            }}
-          />
-        </motion.div>
+        <SimpleLocationManager onLocationUpdate={handleLocationUpdate} />
 
         {/* Informations du Compte */}
         <motion.div 

@@ -1,56 +1,55 @@
 import React from 'react'
-import { MapPin, Navigation } from 'lucide-react'
 import { useDistanceCalculation } from '../hooks/useDistanceCalculation'
 import type { TaskWithProfiles } from '../types/task'
 
 interface DistanceBadgeProps {
   task: TaskWithProfiles
-  className?: string
-  showIcon?: boolean
   variant?: 'default' | 'compact' | 'highlighted'
+  showIcon?: boolean
+  className?: string
 }
 
 export default function DistanceBadge({ 
   task, 
-  className = '',
+  variant = 'default', 
   showIcon = true,
-  variant = 'default'
+  className = '' 
 }: DistanceBadgeProps) {
-  const { getDistanceToTask, hasUserLocation } = useDistanceCalculation()
-  
-  const distance = getDistanceToTask(task)
+  const { calculateDistance, hasUserLocation } = useDistanceCalculation()
 
-  if (!hasUserLocation || !distance) {
-    return null
+  // Utiliser la localisation de la tâche elle-même, pas celle de l'auteur
+  const taskLocation = {
+    city: task.city,
+    postal_code: task.postal_code,
+    country: task.country,
+    latitude: task.latitude,
+    longitude: task.longitude
+  }
+
+  const distance = calculateDistance(taskLocation)
+
+  if (!hasUserLocation) {
+    return (
+      <span className={`text-xs text-gray-500 ${className}`}>
+        {taskLocation.city || taskLocation.postal_code || 'Localisation inconnue'}
+      </span>
+    )
   }
 
   const getVariantClasses = () => {
     switch (variant) {
       case 'compact':
-        return 'text-xs text-gray-500 flex items-center space-x-1'
+        return 'text-xs font-medium'
       case 'highlighted':
-        return 'px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium flex items-center space-x-1'
+        return 'text-sm font-semibold text-blue-700'
       default:
-        return 'px-2 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs flex items-center space-x-1'
+        return 'text-sm font-medium'
     }
   }
 
-  const getDistanceColor = () => {
-    const distanceValue = parseFloat(distance.replace(' km', '').replace('< ', ''))
-    if (distanceValue < 1) return 'text-green-600'
-    if (distanceValue < 5) return 'text-blue-600'
-    if (distanceValue < 10) return 'text-orange-600'
-    return 'text-gray-600'
-  }
-
   return (
-    <div className={`${getVariantClasses()} ${className}`}>
-      {showIcon && (
-        <Navigation className="w-3 h-3" />
-      )}
-      <span className={getDistanceColor()}>
-        {distance}
-      </span>
-    </div>
+    <span className={`${getVariantClasses()} ${className}`}>
+      {distance}
+    </span>
   )
 }

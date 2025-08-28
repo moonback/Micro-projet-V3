@@ -2,24 +2,28 @@ import React from 'react'
 import { MapPin } from 'lucide-react'
 
 interface UserLocationBadgeProps {
-  city?: string | null
-  postal_code?: string | null
-  country?: string | null
-  className?: string
-  showIcon?: boolean
+  city?: string
+  postal_code?: string
+  country?: string
   compact?: boolean
+  showIcon?: boolean
+  className?: string
 }
 
 export default function UserLocationBadge({ 
   city, 
   postal_code, 
   country, 
-  className = '',
+  compact = false,
   showIcon = true,
-  compact = false
+  className = '' 
 }: UserLocationBadgeProps) {
   if (!city && !postal_code && !country) {
-    return null
+    return (
+      <span className={`text-xs text-gray-400 ${className}`}>
+        Localisation inconnue
+      </span>
+    )
   }
 
   const formatLocation = () => {
@@ -38,19 +42,17 @@ export default function UserLocationBadge({
     return 'Localisation inconnue'
   }
 
-  if (compact) {
-    return (
-      <div className={`flex items-center space-x-1 text-xs text-gray-500 ${className}`}>
-        {showIcon && <MapPin className="w-3 h-3" />}
-        <span className="truncate">{formatLocation()}</span>
-      </div>
-    )
+  const getSizeClasses = () => {
+    if (compact) {
+      return 'text-xs'
+    }
+    return 'text-sm'
   }
 
   return (
-    <div className={`flex items-center space-x-2 px-2 py-1 bg-gray-100 rounded-lg text-xs text-gray-600 ${className}`}>
-      {showIcon && <MapPin className="w-3 h-3" />}
-      <span>{formatLocation()}</span>
+    <div className={`flex items-center space-x-1 ${getSizeClasses()} ${className}`}>
+      {showIcon && <MapPin className="w-3 h-3 text-gray-400" />}
+      <span className="text-gray-600">{formatLocation()}</span>
     </div>
   )
 }

@@ -375,6 +375,70 @@ const LocationValidationButton = () => {
   )
 }
 
+// Composant d'affichage de la localisation
+const LocationDisplay = () => {
+  const { userLocation, currentLocation, loading, error, updateLocationWithCurrent } = useUserLocation()
+  
+  const displayLocation = userLocation || currentLocation
+  
+  if (loading) {
+    return (
+      <motion.div 
+        className="flex items-center space-x-2 px-2 py-1.5 lg:px-3 lg:py-2 bg-gray-50 border border-gray-200 rounded-full"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 bg-gray-400 rounded-full animate-pulse" />
+        <span className="text-xs text-gray-500 hidden sm:inline">Chargement...</span>
+        <span className="text-xs text-gray-500 sm:hidden">...</span>
+      </motion.div>
+    )
+  }
+  
+  if (error || !displayLocation) {
+    return (
+      <motion.button
+        onClick={updateLocationWithCurrent}
+        className="flex items-center space-x-1.5 lg:space-x-2 px-2 py-1.5 lg:px-3 lg:py-2 bg-red-50 border border-red-200 rounded-full hover:bg-red-100 transition-colors"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        title="Cliquer pour définir votre position"
+      >
+        <Crosshair className="w-2.5 h-2.5 lg:w-3 lg:h-3 text-red-500" />
+        <span className="text-xs text-red-600 font-medium hidden sm:inline">Définir position</span>
+        <span className="text-xs text-red-600 font-medium sm:hidden">Position</span>
+      </motion.button>
+    )
+  }
+  
+  return (
+    <motion.div 
+      className="flex items-center space-x-1.5 lg:space-x-2 px-2 py-1.5 lg:px-3 lg:py-2 bg-blue-50 border border-blue-200 rounded-full"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      title={`Votre position: ${displayLocation.city || displayLocation.address || 'Position GPS'}`}
+    >
+      <MapPin className="w-2.5 h-2.5 lg:w-3 lg:h-3 text-blue-500" />
+      <span className="text-xs text-blue-700 font-medium hidden sm:inline">
+        {displayLocation.city || displayLocation.postal_code || 'Position GPS'}
+      </span>
+      <span className="text-xs text-blue-700 font-medium sm:hidden">
+        {displayLocation.city ? displayLocation.city.substring(0, 8) + '...' : 
+         displayLocation.postal_code || 'GPS'}
+      </span>
+      <motion.button
+        onClick={updateLocationWithCurrent}
+        className="p-0.5 lg:p-1 hover:bg-blue-100 rounded-full transition-colors"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        title="Actualiser la position"
+      >
+        <RefreshCw className="w-2 h-2 lg:w-2.5 lg:h-2.5 text-blue-500" />
+      </motion.button>
+    </motion.div>
+  )
+}
+
 export default function Header({
   title = "MicroTask",
   subtitle = "Trouvez votre prochaine opportunité",
@@ -462,6 +526,9 @@ export default function Header({
             
             {/* Logo personnalisé avec image PNG */}
             <Logo size="lg" />
+            
+            {/* Affichage de la localisation */}
+            <LocationDisplay />
             
             {/* Badge de catégorie si sélectionnée */}
             {filters?.category && (
