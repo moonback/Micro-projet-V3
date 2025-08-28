@@ -61,17 +61,17 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
   })
 
   // État pour la navigation latérale desktop
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
   // Détecter la taille de l'écran
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 1024)
-      if (window.innerWidth < 1024) {
+      const isMobileView = window.innerWidth < 1024
+      setIsMobile(isMobileView)
+      // Sur desktop, on n'a plus de sidebar, donc on la ferme toujours
+      if (!isMobileView) {
         setIsSidebarOpen(false)
-      } else {
-        setIsSidebarOpen(true)
       }
     }
 
