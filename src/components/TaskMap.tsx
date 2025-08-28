@@ -32,8 +32,6 @@ export default function TaskMap({ tasks, onTaskPress }: TaskMapProps) {
       keyboard: true,
       dragging: true,
       touchZoom: true,
-      tap: true,
-      tapTolerance: 15,
       preferCanvas: false
     }).setView([48.8566, 2.3522], 13) // Paris
 
@@ -114,7 +112,7 @@ export default function TaskMap({ tasks, onTaskPress }: TaskMapProps) {
         tasks
           .filter(task => task.location)
           .map(task => {
-            const coords = task.location.coordinates || task.location
+            const coords = task.location!.coordinates || task.location!
             return L.marker([coords[1], coords[0]])
           })
       )
