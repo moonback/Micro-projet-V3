@@ -12,16 +12,12 @@ export function useConversations() {
       setLoading(true)
       setError(null)
 
-      console.log('🔄 Début du chargement des conversations...')
-
       // Récupérer l'utilisateur actuel
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         setError('Utilisateur non connecté')
         return
       }
-
-      console.log('👤 Utilisateur connecté:', user.id)
 
       // Récupérer toutes les tâches où l'utilisateur est impliqué
       const { data: tasks, error: tasksError } = await supabase
@@ -49,8 +45,6 @@ export function useConversations() {
 
       if (tasksError) throw tasksError
 
-      console.log('📋 Tâches récupérées:', tasks?.length || 0)
-
       // Récupérer les IDs des tâches qui ont des messages
       const { data: taskIdsWithMessages, error: messagesError } = await supabase
         .from('messages')
@@ -58,8 +52,6 @@ export function useConversations() {
         .not('task_id', 'is', null)
 
       if (messagesError) throw messagesError
-
-      console.log('💬 Tâches avec messages:', taskIdsWithMessages?.length || 0)
 
       // Récupérer les tâches avec messages (soit impliquées, soit ouvertes)
       const { data: allTasksWithMessages, error: allTasksError } = await supabase
@@ -86,8 +78,6 @@ export function useConversations() {
         .order('created_at', { ascending: false })
 
       if (allTasksError) throw allTasksError
-
-      console.log('🔍 Toutes les tâches avec messages:', allTasksWithMessages?.length || 0)
 
       // Récupérer le dernier message et le nombre de messages non lus pour chaque tâche
       const conversationsWithMessages = await Promise.all(
@@ -128,12 +118,9 @@ export function useConversations() {
         })
       )
 
-      console.log('✅ Conversations finales:', conversationsWithMessages.length)
-      console.log('📝 Détail des conversations:', conversationsWithMessages)
-
       setConversations(conversationsWithMessages)
     } catch (err) {
-      console.error('❌ Error loading conversations:', err)
+      console.error('Error loading conversations:', err)
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement des conversations')
     } finally {
       setLoading(false)
