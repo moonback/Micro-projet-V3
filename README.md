@@ -32,6 +32,8 @@ Une application web React mobile-first moderne pour déléguer et compléter des
 - **Historique Complet** : Conservation de tous les échanges
 - **Interface Intuitive** : Design mobile-first avec indicateurs visuels
 - **Gestion des Pièces Jointes** : Support des fichiers dans les conversations
+- **Notifications Push** : Alertes en temps réel pour nouveaux messages
+- **Marquage de Lecture** : Suivi des messages lus/non lus
 
 ### 🔍 **Recherche et Filtrage Avancés**
 - **Recherche Textuelle** : Par titre, description, catégorie et tags
@@ -55,12 +57,21 @@ Une application web React mobile-first moderne pour déléguer et compléter des
 - **Navigation Intuitive** : Bottom bar colorée avec indicateurs visuels
 - **Thème Cohérent** : Palette de couleurs moderne avec gradients
 - **Composants Réutilisables** : Architecture modulaire et maintenable
+- **Logo Personnalisé** : Composant Logo dédié avec support PNG
+- **Header Centralisé** : Gestion unifiée des modales et filtres
 
 ### 🔔 **Système de Notifications**
 - **React Hot Toast** : Notifications toast modernes et animées
 - **Types Variés** : Succès, erreur, avertissement, information
 - **Auto-dismiss** : Disparition automatique configurable
 - **Gestion Centralisée** : Hook personnalisé pour toute l'application
+- **Notifications Temps Réel** : Alertes instantanées pour les messages
+
+### 📱 **Navigation Adaptative**
+- **Mobile** : Bottom navigation avec onglets colorés
+- **Desktop** : Sidebar latérale avec navigation rapide
+- **Responsive** : Adaptation automatique selon la taille d'écran
+- **Animations** : Transitions fluides entre les vues
 
 ## 🛠️ Stack Technologique
 
@@ -139,10 +150,12 @@ npm run preview
 ### **Configuration Supabase**
 1. Créer un nouveau projet Supabase
 2. Exécuter les migrations SQL dans l'ordre :
-   - `20250827090530_nameless_meadow.sql`
-   - `20250827090600_add_task_fields.sql`
-   - `20250827090700_add_task_policies.sql`
-   - `20250827090800_remove_available_hours.sql`
+   - `20250827090530_nameless_meadow.sql` (structure de base)
+   - `20250827090600_add_task_fields.sql` (champs des tâches)
+   - `20250827090700_add_task_policies.sql` (politiques de sécurité)
+   - `20250827090800_remove_available_hours.sql` (nettoyage)
+   - `20250827090900_add_message_fields.sql` (système de messages)
+   - `20250827091300_final_fix_recursion.sql` (correction RLS)
 3. Configurer les variables d'environnement
 4. Activer les extensions PostGIS et Realtime
 5. Configurer les politiques RLS pour la sécurité
@@ -151,7 +164,7 @@ npm run preview
 
 ```
 src/
-├── components/          # Composants React modulaires
+├── components/          # Composants React modulaires (25+ composants)
 │   ├── AuthForm.tsx        # Authentification avec validation
 │   ├── BottomNavigation.tsx # Navigation principale mobile-first
 │   ├── TaskCard.tsx        # Carte de tâche avec actions
@@ -170,12 +183,20 @@ src/
 │   ├── ConfirmationModal.tsx # Modales de confirmation
 │   ├── SkeletonLoader.tsx  # États de chargement
 │   ├── SplashScreen.tsx    # Écran de démarrage
-│   └── Header.tsx          # En-tête de l'application
-├── hooks/               # Hooks personnalisés
+│   ├── Header.tsx          # En-tête centralisé avec modales
+│   ├── Logo.tsx            # Composant logo personnalisé
+│   ├── ConversationList.tsx # Liste des conversations
+│   ├── MessageStats.tsx    # Statistiques des messages
+│   ├── MessageNotificationBadge.tsx # Badge de notifications
+│   └── HomePage.tsx        # Page d'accueil
+├── hooks/               # Hooks personnalisés (7 hooks)
 │   ├── useAuth.ts          # Gestion de l'authentification
 │   ├── useTasks.ts         # Gestion complète des tâches
 │   ├── useNotifications.ts # Système de notifications
-│   └── useRealtimeSync.ts  # Synchronisation temps réel
+│   ├── useRealtimeSync.ts  # Synchronisation temps réel
+│   ├── useMessages.ts      # Gestion des messages
+│   ├── useConversations.ts # Gestion des conversations
+│   └── useMessageNotifications.ts # Notifications de messages
 ├── lib/                 # Configuration et utilitaires
 │   ├── config.ts           # Configuration de l'application
 │   └── supabase.ts         # Client Supabase configuré
@@ -275,8 +296,7 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 
 ### **Ressources Disponibles**
 - **README Principal** : Ce fichier avec vue d'ensemble
-- **TASK_FEATURES_README.md** : Détails des fonctionnalités des tâches
-- **UI_UX_IMPROVEMENTS.md** : Guide des améliorations d'interface
+- **NEXT_STEPS.md** : Guide des prochaines étapes et améliorations
 - **Commentaires de Code** : Documentation inline dans le code source
 
 ### **Obtenir de l'Aide**
@@ -298,6 +318,8 @@ MicroTask est une plateforme moderne et complète qui révolutionne la gestion d
 ✅ **Tableau de bord** avec analytics détaillés  
 ✅ **Architecture modulaire** et extensible  
 ✅ **Sécurité renforcée** avec Supabase et RLS  
+✅ **Logo personnalisé** avec composant dédié  
+✅ **Navigation adaptative** mobile/desktop  
 
 **Prêt à révolutionner la gestion des micro-tâches ! 🚀✨**
 
