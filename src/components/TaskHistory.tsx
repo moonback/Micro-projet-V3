@@ -32,7 +32,7 @@ interface TaskHistoryProps {
   title?: string
 }
 
-export default function TaskHistory({ onTaskPress, showApplications = false, onBack, title = "Historique des Tâches" }: TaskHistoryProps) {
+export default function TaskHistory({ onTaskPress, showApplications = false, onBack, title = "Tâches validées" }: TaskHistoryProps) {
   const { user } = useAuth()
   const { showModal, ModalComponent } = useConfirmationModal()
   

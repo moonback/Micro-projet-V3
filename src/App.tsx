@@ -275,7 +275,7 @@ function App() {
                         { id: 'my-tasks', label: 'Mes Tâches', icon: '📋' },
                         { id: 'create', label: 'Créer', icon: '➕' },
                         { id: 'messages', label: 'Messages', icon: '💬' },
-                        { id: 'task-history', label: 'Historique', icon: '📚' },
+                        { id: 'task-history', label: 'Tâche validees', icon: '📚' },
                         { id: 'profile', label: 'Profil', icon: '👤' }
                       ].map((item) => (
                         <button
