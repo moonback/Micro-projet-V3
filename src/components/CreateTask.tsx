@@ -239,28 +239,6 @@ export default function CreateTask() {
         className="bg-white text-gray-900 shadow-sm border-b border-gray-200"
       />
 
-      {/* Indicateur de progression moderne et compact */}
-      <div className="px-4 py-3 bg-white/60 backdrop-blur-sm border-b border-gray-100">
-        <div className="flex items-center justify-between">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                currentStep >= step.id 
-                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md' 
-                  : 'bg-gray-100 text-gray-400'
-              }`}>
-                {currentStep > step.id ? <Check className="w-4 h-4" /> : step.id}
-              </div>
-              {index < steps.length - 1 && (
-                <div className={`w-12 h-0.5 mx-3 rounded-full transition-all ${
-                  currentStep > step.id ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-gray-200'
-                }`} />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Contenu du formulaire compact */}
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 pb-20">
         <AnimatePresence mode="wait">
