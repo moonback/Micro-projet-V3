@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { TaskWithProfiles } from '../types/task'
 import Header from './Header'
+import TaskApplications from './TaskApplications'
 
 // Fonction pour récupérer l'adresse à partir des coordonnées GPS
 const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
@@ -102,22 +103,23 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
 
     setActionLoading(true)
     try {
+      // Créer une candidature au lieu d'accepter directement
       const { error } = await supabase
-        .from('tasks')
-        .update({ 
-          status: 'assigned',
-          helper: user.id,
-          assigned_at: new Date().toISOString()
+        .from('task_applications')
+        .insert({
+          task_id: task.id,
+          helper_id: user.id,
+          message: 'Je suis intéressé par cette tâche et disponible pour l\'accomplir.',
+          status: 'pending'
         })
-        .eq('id', task.id)
 
       if (error) throw error
 
       // Recharger la page ou mettre à jour l'état
       window.location.reload()
     } catch (error) {
-      console.error('Error accepting task:', error)
-      alert('Erreur lors de l\'acceptation de la tâche')
+      console.error('Error applying for task:', error)
+      alert('Erreur lors de la candidature à la tâche')
     } finally {
       setActionLoading(false)
     }
@@ -449,11 +451,23 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
                     <MessageCircle className="w-5 h-5" />
                     <span>Ouvrir le Chat</span>
                   </motion.button>
-                </div>
-              </div>
+                              </div>
             </div>
+          </div>
 
-            {/* Colonne latérale - Informations complémentaires */}
+          {/* Section des candidatures */}
+          <TaskApplications
+            taskId={task.id}
+            taskTitle={task.title}
+            taskStatus={task.status}
+            isAuthor={isAuthor}
+            onStatusChange={() => {
+              // Optionnel : recharger la tâche ou mettre à jour l'état
+              console.log('Task status changed')
+            }}
+          />
+
+          {/* Colonne latérale - Informations complémentaires */}
             {!isMobile && (
               <div className="space-y-6">
                 {/* Profil de l'auteur */}

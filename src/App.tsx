@@ -12,12 +12,13 @@ import MyTasks from './components/MyTasks'
 import Messages from './components/Messages'
 import Profile from './components/Profile'
 import TaskDetail from './components/TaskDetail'
+import TaskHistory from './components/TaskHistory'
 import ChatView from './components/ChatView'
 import NotificationToast from './components/NotificationToast'
 import Logo from './components/Logo'
 import type { TaskWithProfiles } from './types/task'
 
-type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
+type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat' | 'task-history'
 
 function App() {
   const { user, loading, profile } = useAuth() // Récupérer aussi le profile
@@ -131,6 +132,14 @@ function App() {
       
       case 'profile':
         return <Profile onSignOut={handleSignOut} />
+      
+      case 'task-history':
+        return (
+          <TaskHistory
+            onTaskPress={handleTaskPress}
+            showApplications={true}
+          />
+        )
       
       case 'task-detail':
         return selectedTask ? (

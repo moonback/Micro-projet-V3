@@ -115,20 +115,21 @@ export default function TaskCard({ task, onPress, onTaskAccepted, isDesktop = fa
 
     setAccepting(true)
     try {
+      // Créer une candidature au lieu d'accepter directement
       const { error } = await supabase
-        .from('tasks')
-        .update({ 
-          helper: user.id, 
-          status: 'accepted',
-          accepted_at: new Date().toISOString()
+        .from('task_applications')
+        .insert({
+          task_id: task.id,
+          helper_id: user.id,
+          message: 'Je suis intéressé par cette tâche et disponible pour l\'accomplir.',
+          status: 'pending'
         })
-        .eq('id', task.id)
 
       if (error) throw error
       onTaskAccepted(task.id)
     } catch (error) {
-      console.error('Error accepting task:', error)
-      alert('Erreur lors de l\'acceptation de la tâche')
+      console.error('Error applying for task:', error)
+      alert('Erreur lors de la candidature à la tâche')
     } finally {
       setAccepting(false)
     }
