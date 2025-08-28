@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Clock, CheckCircle, XCircle, AlertTriangle, Star, Euro, MapPin, Calendar, Tag, Zap, TrendingUp, ChevronRight, ListTodo, Filter, Search, MoreHorizontal } from 'lucide-react'
+import { Plus, Clock, CheckCircle, XCircle, AlertTriangle, Star, Euro, MapPin, Calendar, Tag, Zap, TrendingUp, ChevronRight, ListTodo, Filter, Search, MoreHorizontal, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { TaskWithProfiles } from '../types/task'
@@ -20,6 +20,7 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -64,6 +65,72 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
 
   const getTaskCount = (status: string) => {
     return tasks.filter(task => task.status === status).length
+  }
+
+  // Composant Modal pour les filtres de statut
+  const StatusModal = ({ isOpen, onClose, onSelect, selectedStatus }: {
+    isOpen: boolean
+    onClose: () => void
+    onSelect: (status: string) => void
+    selectedStatus: string
+  }) => {
+    if (!isOpen) return null
+
+    return (
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+            className="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-gray-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Filtres de statut</h2>
+              <button
+                onClick={onClose}
+                className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="space-y-2">
+              {statusOptions.map((option) => {
+                const Icon = option.icon
+                const isActive = selectedStatus === option.value
+                return (
+                  <motion.button
+                    key={option.value}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      onSelect(option.value)
+                      onClose()
+                    }}
+                    className={`w-full p-3 rounded-2xl text-sm font-medium transition-all flex items-center space-x-3 ${
+                      isActive
+                        ? `bg-gradient-to-r ${option.color} text-white shadow-lg`
+                        : 'bg-gray-50 hover:bg-gray-100 text-gray-700 hover:text-gray-900'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{option.label}</span>
+                  </motion.button>
+                )
+              })}
+            </div>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+    )
   }
 
   const getStatusStats = () => {
@@ -131,9 +198,8 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
             tooltip: 'Créer une nouvelle tâche'
           }
         ]}
-        showStats={true}
-        stats={stats}
-        className="bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white shadow-lg"
+
+        className="bg-white text-gray-900 shadow-sm border-b border-gray-200"
       />
 
       {/* Barre de recherche et filtres modernes */}
@@ -143,42 +209,31 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
         transition={{ delay: 0.2, duration: 0.8 }}
         className="p-4 space-y-4"
       >
-        {/* Barre de recherche élégante */}
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+        {/* Barre de recherche et bouton de filtres sur la même ligne */}
+        <div className="flex items-center space-x-3">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Rechercher dans vos tâches..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm hover:shadow-md"
+            />
           </div>
-          <input
-            type="text"
-            placeholder="Rechercher dans vos tâches..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm hover:shadow-md"
-          />
-        </div>
 
-        {/* Filtres de statut avec design moderne */}
-        <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-          {statusOptions.map((option) => {
-            const Icon = option.icon
-            const isActive = selectedStatus === option.value
-            return (
-              <motion.button
-                key={option.value}
-                whileHover={{ scale: 1.02, y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setSelectedStatus(option.value)}
-                className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-medium transition-all whitespace-nowrap ${
-                  isActive
-                    ? `bg-gradient-to-r ${option.color} text-white shadow-lg`
-                    : 'bg-white/80 backdrop-blur-sm text-gray-600 hover:text-gray-900 hover:bg-white shadow-sm hover:shadow-md'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span className="text-sm">{option.label}</span>
-              </motion.button>
-            )
-          })}
+          {/* Bouton pour ouvrir la modale des filtres */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsStatusModalOpen(true)}
+            className="p-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl transition-colors border border-blue-200 flex-shrink-0"
+            title="Ouvrir tous les filtres"
+          >
+            <Filter className="w-4 h-4" />
+          </motion.button>
         </div>
       </motion.div>
 
@@ -403,9 +458,17 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
           onClick={onCreateTask}
           className="w-16 h-16 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full shadow-2xl hover:shadow-blue-500/50 transition-all flex items-center justify-center"
         >
-          <Plus className="w-8 h-8" />
-        </motion.button>
-      </motion.div>
+                  <Plus className="w-8 h-8" />
+      </motion.button>
+    </motion.div>
+
+      {/* Modale des filtres de statut */}
+      <StatusModal
+        isOpen={isStatusModalOpen}
+        onClose={() => setIsStatusModalOpen(false)}
+        onSelect={setSelectedStatus}
+        selectedStatus={selectedStatus}
+      />
     </div>
   )
 }
