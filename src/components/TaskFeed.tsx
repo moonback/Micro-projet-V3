@@ -397,6 +397,184 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
 
       {/* Layout principal avec sidebar et contenu */}
       <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar mobile - Overlay */}
+        {isMobile && isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar mobile - Panel */}
+        {isMobile && (
+          <motion.aside
+            initial={{ x: -320 }}
+            animate={{ x: isSidebarOpen ? 0 : -320 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="fixed left-0 top-0 h-full w-80 bg-white border-r border-gray-200 shadow-xl z-50 lg:hidden overflow-y-auto"
+          >
+            <div className="p-6 space-y-6">
+              {/* En-tête de la sidebar mobile */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Filtres</h3>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+
+              {/* Filtres avancés mobile */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Filter className="w-5 h-5 mr-2 text-blue-600" />
+                  Filtres Avancés
+                </h3>
+                
+                {/* Catégorie */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+                  <select
+                    value={filters.category}
+                    onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Toutes les catégories</option>
+                    <option value="Livraison">Livraison</option>
+                    <option value="Nettoyage">Nettoyage</option>
+                    <option value="Courses">Courses</option>
+                    <option value="Déménagement">Déménagement</option>
+                    <option value="Montage">Montage</option>
+                    <option value="Garde d'Animaux">Garde d'Animaux</option>
+                    <option value="Jardinage">Jardinage</option>
+                    <option value="Aide Informatique">Aide Informatique</option>
+                    <option value="Cours Particuliers">Cours Particuliers</option>
+                  </select>
+                </div>
+
+                {/* Priorité */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
+                  <select
+                    value={filters.priority}
+                    onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Toutes les priorités</option>
+                    <option value="urgent">Urgente</option>
+                    <option value="high">Élevée</option>
+                    <option value="medium">Moyenne</option>
+                    <option value="low">Faible</option>
+                  </select>
+                </div>
+
+                {/* Budget */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Budget</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="number"
+                      placeholder="Min €"
+                      value={filters.budgetMin}
+                      onChange={(e) => setFilters({ ...filters, budgetMin: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max €"
+                      value={filters.budgetMax}
+                      onChange={(e) => setFilters({ ...filters, budgetMax: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Options spéciales */}
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={filters.isUrgent}
+                      onChange={(e) => setFilters({ ...filters, isUrgent: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Tâches urgentes uniquement</span>
+                  </label>
+                  
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={filters.isFeatured}
+                      onChange={(e) => setFilters({ ...filters, isFeatured: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Tâches mises en avant</span>
+                  </label>
+                </div>
+
+                {/* Tri */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Trier par</label>
+                  <select
+                    value={filters.sortBy}
+                    onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="created_at">Date de création</option>
+                    <option value="budget">Budget croissant</option>
+                    <option value="budget_desc">Budget décroissant</option>
+                    <option value="deadline">Échéance</option>
+                    <option value="priority">Priorité</option>
+                  </select>
+                </div>
+
+                {/* Boutons d'action */}
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      applyFilters()
+                      setIsSidebarOpen(false) // Fermer la sidebar après application
+                    }}
+                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all"
+                  >
+                    Appliquer les Filtres
+                  </button>
+                  <button
+                    onClick={() => {
+                      clearFilters()
+                      setIsSidebarOpen(false) // Fermer la sidebar après reset
+                    }}
+                    className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-xl font-medium hover:bg-gray-200 transition-all"
+                  >
+                    Réinitialiser
+                  </button>
+                </div>
+              </div>
+
+              {/* Statistiques rapides */}
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Statistiques</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-blue-50 rounded-xl p-3 text-center">
+                    <div className="text-2xl font-bold text-blue-700">{filteredTasks.length}</div>
+                    <div className="text-xs text-blue-600">Tâches trouvées</div>
+                  </div>
+                  <div className="bg-green-50 rounded-xl p-3 text-center">
+                    <div className="text-2xl font-bold text-green-700">
+                      {filteredTasks.filter(t => t.status === 'open').length}
+                    </div>
+                    <div className="text-xs text-green-600">Disponibles</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.aside>
+        )}
+
         {/* Sidebar desktop */}
         {!isMobile && (
           <motion.aside
