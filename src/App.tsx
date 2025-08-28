@@ -173,7 +173,24 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Chargement de MicroTask...</p>
+          <p className="text-gray-600 font-medium">Vérification de la connexion...</p>
+          <p className="text-sm text-gray-500 mt-2">Récupération de votre session</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Si on est en train de charger après le splash, afficher un indicateur plus discret
+  if (loading && hasSeenSplash) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-md mx-auto bg-white shadow-lg min-h-screen flex flex-col">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3"></div>
+              <p className="text-gray-600 text-sm">Connexion en cours...</p>
+            </div>
+          </div>
         </div>
       </div>
     )

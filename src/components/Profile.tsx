@@ -532,6 +532,204 @@ export default function Profile({ onSignOut }: ProfileProps) {
           <LogOut className="w-5 h-5 mr-2" />
           Se Déconnecter
         </motion.button>
+
+        {/* Bouton de débogage pour tester la persistance */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={async () => {
+            console.log('=== DEBUG AUTH STATE ===')
+            console.log('User:', user)
+            console.log('Profile:', profile)
+            console.log('Loading:', loading)
+            
+            // Vérifier la session Supabase
+            const { data: { session } } = await supabase.auth.getSession()
+            console.log('Supabase Session:', session)
+            
+            // Vérifier le stockage local
+            const authKey = localStorage.getItem('microtask-auth')
+            console.log('Local Storage Auth Key:', authKey ? 'Present' : 'Missing')
+            
+            // Forcer le rechargement du profil
+            if (user) {
+              console.log('Refreshing profile...')
+              await loadUserStats()
+            }
+          }}
+          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-colors mb-4"
+        >
+          🔍 Déboguer l'Authentification
+        </motion.button>
+
+        {/* Bouton pour forcer la déconnexion et nettoyer le cache */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={async () => {
+            console.log('=== FORCE CLEANUP ===')
+            
+            // Vider le stockage local
+            localStorage.removeItem('microtask-auth')
+            sessionStorage.removeItem('microtask-auth')
+            
+            // Vider le cache des profils
+            console.log('Cache cleared, signing out...')
+            
+            // Se déconnecter
+            await onSignOut()
+          }}
+          className="w-full bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 px-4 rounded-xl transition-colors mb-4"
+        >
+          🧹 Nettoyer et Se Déconnecter
+        </motion.button>
+
+        {/* Bouton pour tester la connexion Supabase */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={async () => {
+            console.log('=== TESTING SUPABASE CONNECTION ===')
+            
+            try {
+              // Test de connexion à la base
+              console.log('Testing connection to profiles table...')
+              const { data, error } = await supabase
+                .from('profiles')
+                .select('count')
+                .limit(1)
+              
+              console.log('Connection test result:', { data, error })
+              
+              // Test de lecture d'un profil spécifique
+              if (user) {
+                console.log('Testing profile read for user:', user.id)
+                const { data: profileData, error: profileError } = await supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('id', user.id)
+                  .single()
+                
+                console.log('Profile read test:', { data: profileData, error: profileError })
+              }
+              
+            } catch (error) {
+              console.error('Supabase test error:', error)
+            }
+          }}
+          className="w-full bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-3 px-4 rounded-xl transition-colors mb-4"
+        >
+          🔌 Tester la Connexion Supabase
+        </motion.button>
+
+        {/* Bouton pour tester les permissions RLS */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={async () => {
+            console.log('=== TESTING RLS POLICIES ===')
+            
+            try {
+              if (user) {
+                // Test 1: Lecture de son propre profil
+                console.log('Test 1: Reading own profile...')
+                const { data: ownProfile, error: ownError } = await supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('id', user.id)
+                  .single()
+                
+                console.log('Own profile read:', { data: ownProfile, error: ownError })
+                
+                // Test 2: Lecture d'un autre profil (devrait échouer)
+                console.log('Test 2: Reading another profile (should fail)...')
+                const { data: otherProfile, error: otherError } = await supabase
+                  .from('profiles')
+                  .select('*')
+                  .neq('id', user.id)
+                  .limit(1)
+                  .single()
+                
+                console.log('Other profile read:', { data: otherProfile, error: otherError })
+                
+                // Test 3: Insertion d'un profil
+                console.log('Test 3: Testing profile insertion...')
+                const testProfile = {
+                  id: user.id + '_test',
+                  name: 'Test Profile',
+                  rating: 0,
+                  rating_count: 0,
+                  is_verified: false
+                }
+                
+                const { data: insertData, error: insertError } = await supabase
+                  .from('profiles')
+                  .insert(testProfile)
+                  .select()
+                
+                console.log('Profile insertion test:', { data: insertData, error: insertError })
+                
+                // Nettoyer le profil de test
+                if (insertData) {
+                  await supabase
+                    .from('profiles')
+                    .delete()
+                    .eq('id', testProfile.id)
+                }
+              }
+              
+            } catch (error) {
+              console.error('RLS test error:', error)
+            }
+          }}
+          className="w-full bg-green-100 hover:bg-green-200 text-green-700 font-medium py-3 px-4 rounded-xl transition-colors mb-4"
+        >
+          🛡️ Tester les Permissions RLS
+        </motion.button>
+
+        {/* Bouton pour forcer la création du profil */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={async () => {
+            console.log('=== FORCING PROFILE CREATION ===')
+            
+            try {
+              if (user) {
+                console.log('Attempting to create profile for user:', user.id)
+                
+                const { data: newProfile, error: createError } = await supabase
+                  .from('profiles')
+                  .insert({
+                    id: user.id,
+                    name: user.user_metadata?.name || user.email?.split('@')[0] || 'Nouvel Utilisateur',
+                    rating: 0,
+                    rating_count: 0,
+                    is_verified: false
+                  })
+                  .select()
+                  .single()
+
+                if (createError) {
+                  console.error('Profile creation failed:', createError)
+                  alert('Erreur lors de la création du profil: ' + createError.message)
+                } else {
+                  console.log('Profile created successfully:', newProfile)
+                  alert('Profil créé avec succès !')
+                  // Recharger la page pour voir le profil
+                  window.location.reload()
+                }
+              }
+              
+            } catch (error) {
+              console.error('Profile creation error:', error)
+              alert('Erreur lors de la création du profil')
+            }
+          }}
+          className="w-full bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-medium py-3 px-4 rounded-xl transition-colors mb-4"
+        >
+          🆕 Forcer la Création du Profil
+        </motion.button>
       </div>
     </div>
   )

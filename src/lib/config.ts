@@ -1,81 +1,63 @@
-// Configuration de l'application
-export const APP_CONFIG = {
+import { supabase } from './supabase'
+
+export const SITE_CONFIG = {
+  baseUrl: import.meta.env.VITE_SITE_URL || 
+           (import.meta.env.DEV ? 'http://localhost:5173' : window.location.origin),
   name: 'MicroTask',
-  version: '1.0.0',
-  description: 'Plateforme locale de délégation de tâches',
-  
-  // Configuration des cartes
-  map: {
-    defaultCenter: {
-      lat: 48.8566, // Paris
-      lng: 2.3522
-    },
-    defaultZoom: 13,
-    tileLayer: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '© OpenStreetMap contributors'
-  },
-  
-  // Configuration des tâches
-  tasks: {
-    categories: [
-      'Livraison',
-      'Nettoyage', 
-      'Courses',
-      'Déménagement',
-      'Montage',
-      'Garde d\'Animaux',
-      'Jardinage',
-      'Aide Informatique',
-      'Cours Particuliers',
-      'Autre'
-    ],
-    statuses: {
-      open: 'Ouverte',
-      accepted: 'Acceptée',
-      'in-progress': 'En Cours',
-      completed: 'Terminée',
-      cancelled: 'Annulée'
-    },
-    defaultRadius: 5, // km
-    radiusOptions: [1, 5, 10, 25, 50]
-  },
-  
-  // Configuration des notifications
-  notifications: {
-    defaultDuration: 5000, // ms
-    maxVisible: 3
-  },
-  
-  // Configuration de l'interface
-  ui: {
-    minTouchTarget: 44, // px
-    maxWidth: 'md', // Tailwind max-width
-    borderRadius: 'lg',
-    transitionDuration: 200 // ms
-  }
+  description: 'Plateforme Locale de Délégation de Tâches',
+  version: '1.0.0'
 }
 
-// Validation des variables d'environnement
-export const validateEnvironment = () => {
-  const requiredVars = [
-    'VITE_SUPABASE_URL',
-    'VITE_SUPABASE_ANON_KEY'
-  ]
-  
-  const missing = requiredVars.filter(varName => !import.meta.env[varName])
-  
-  if (missing.length > 0) {
-    throw new Error(
-      `Variables d'environnement manquantes: ${missing.join(', ')}\n` +
-      'Vérifiez votre fichier .env'
-    )
-  }
-}
-
-// Configuration Supabase
 export const SUPABASE_CONFIG = {
   url: import.meta.env.VITE_SUPABASE_URL,
-  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY
+  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+  storageKey: 'microtask-auth'
+}
+
+export const validateEnvironment = () => {
+  const errors: string[] = []
+  
+  if (!SUPABASE_CONFIG.url) {
+    errors.push('VITE_SUPABASE_URL is missing')
+  }
+  
+  if (!SUPABASE_CONFIG.anonKey) {
+    errors.push('VITE_SUPABASE_ANON_KEY is missing')
+  }
+  
+  if (errors.length > 0) {
+    console.error('Environment validation failed:', errors)
+    throw new Error(`Missing environment variables: ${errors.join(', ')}`)
+  }
+  
+  console.log('Environment validation passed')
+  console.log('Supabase URL:', SUPABASE_CONFIG.url)
+  console.log('Supabase Anon Key:', SUPABASE_CONFIG.anonKey ? 'Present' : 'Missing')
+  
+  return true
+}
+
+export const getRedirectUrl = (path: string = '') => {
+  const baseUrl = SITE_CONFIG.baseUrl
+  return `${baseUrl}${path}`
+}
+
+export const debugAuthState = async () => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    console.log('=== AUTH DEBUG ===')
+    console.log('Session:', session)
+    console.log('User:', user)
+    console.log('Local Storage Auth:', localStorage.getItem('microtask-auth'))
+    console.log('Session Storage Auth:', sessionStorage.getItem('microtask-auth'))
+    
+    return { session, user }
+  } catch (error) {
+    console.error('Auth debug error:', error)
+    return { session: null, user: null }
+  }
 }
 
 // Configuration des messages d'erreur
