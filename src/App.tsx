@@ -18,7 +18,7 @@ import type { TaskWithProfiles } from './types/task'
 type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
 
 function App() {
-  const { user, loading } = useAuth()
+  const { user, loading, profile } = useAuth() // Récupérer aussi le profile
   const { notifications, removeNotification } = useNotifications()
   const [currentView, setCurrentView] = useState<View>('splash')
   const [activeTab, setActiveTab] = useState<View>('feed')
@@ -26,27 +26,16 @@ function App() {
   const [chatTaskId, setChatTaskId] = useState<string | null>(null)
   const [hasSeenSplash, setHasSeenSplash] = useState(false)
 
-  // Gérer la navigation après le splash
+  // Gérer la navigation après le splash et l'état d'authentification
   useEffect(() => {
-    if (hasSeenSplash) {
-      if (user) {
+    if (!loading) { // Attendre que useAuth ait terminé son chargement initial
+      if (user && profile) { // S'assurer que l'utilisateur ET le profil sont chargés
         setCurrentView('feed')
-      } else {
+      } else if (!user) {
         setCurrentView('home')
       }
     }
-  }, [hasSeenSplash, user])
-
-  // Gérer le changement d'état d'authentification
-  useEffect(() => {
-    if (hasSeenSplash && !loading) {
-      if (user) {
-        setCurrentView('feed')
-      } else {
-        setCurrentView('home')
-      }
-    }
-  }, [user, loading, hasSeenSplash])
+  }, [loading, user, profile]) // Dépendances claires
 
   const handleSplashComplete = () => {
     setHasSeenSplash(true)
@@ -168,7 +157,8 @@ function App() {
   // Ne pas afficher la navigation pour les vues spéciales
   const showBottomNavigation = !['splash', 'home', 'auth', 'task-detail', 'chat'].includes(currentView)
 
-  if (loading && !hasSeenSplash) {
+  // Afficher un écran de chargement si useAuth est toujours en cours de chargement
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
@@ -177,6 +167,11 @@ function App() {
         </div>
       </div>
     )
+  }
+
+  // Si la splash n'a pas été vue et que le chargement est terminé, afficher la splash
+  if (!hasSeenSplash && currentView === 'splash') {
+    return <SplashScreen onComplete={handleSplashComplete} />
   }
 
   return (

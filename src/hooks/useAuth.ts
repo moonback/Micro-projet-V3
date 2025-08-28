@@ -97,15 +97,30 @@ export function useAuth() {
     loadingProfiles.add(userId)
 
     try {
-      console.log('Loading profile for user:', userId)
+      // Charger le profil depuis Supabase
+      console.log('📡 Chargement du profil depuis Supabase...')
+      console.log(`🔍 Requête: SELECT * FROM profiles WHERE id = '${userId}'`)
       
-      const { data, error } = await supabase
+      // Ajouter un timeout pour éviter le blocage
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout: Requête Supabase bloquée')), 1000)
+      })
+      
+      const supabasePromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single()
 
-      if (error && error.code === 'PGRST116') {
+      // Exécuter avec timeout
+      const { data: profileData, error: profileError } = await Promise.race([
+        supabasePromise,
+        timeoutPromise
+      ]) as any
+
+      console.log('📊 Réponse Supabase reçue:', { profileData, profileError })
+
+      if (profileError && profileError.code === 'PGRST116') {
         // Profil non trouvé, le créer automatiquement
         console.log('Profile not found, creating new profile...')
         
@@ -134,17 +149,17 @@ export function useAuth() {
         if (mountedRef.current) {
           setProfile(newProfile)
         }
-      } else if (error) {
-        console.error('Error loading profile:', error)
-        throw error
+      } else if (profileError) {
+        console.error('Error loading profile:', profileError)
+        throw profileError
       } else {
-        console.log('Profile loaded:', data)
+        console.log('Profile loaded:', profileData)
         
         // Mettre en cache
-        profileCache.set(userId, data)
+        profileCache.set(userId, profileData)
         
         if (mountedRef.current) {
-          setProfile(data)
+          setProfile(profileData)
         }
       }
     } catch (error) {
