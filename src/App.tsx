@@ -114,7 +114,7 @@ function App() {
         return <TaskFeed onTaskPress={handleTaskPress} onTaskAccepted={handleTaskAccepted} />
       
       case 'create':
-        return <CreateTask />
+        return <CreateTask onBack={handleBackToFeed} />
       
       case 'my-tasks':
         return (
@@ -122,6 +122,7 @@ function App() {
             onTaskPress={handleTaskPress}
             onCreateTask={() => setCurrentView('create')}
             onTaskAccepted={handleTaskAccepted}
+            onBack={handleBackToFeed}
           />
         )
       

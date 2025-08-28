@@ -13,7 +13,7 @@ interface MyTasksProps {
   onTaskAccepted?: (taskId: string) => void
 }
 
-export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: MyTasksProps) {
+export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted, onBack }: MyTasksProps & { onBack: () => void }) {
   const { user } = useAuth()
   const [tasks, setTasks] = useState<TaskWithProfiles[]>([])
   const [activeTab, setActiveTab] = useState<'created' | 'accepted'>('created')
@@ -190,7 +190,7 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
         showFilters={false}
         showViewToggle={false}
         showRefresh={false}
-        onBack={() => window.history.back()}
+        onBack={onBack}
         rightButtons={[
           {
             icon: Plus,

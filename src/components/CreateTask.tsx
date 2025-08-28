@@ -6,7 +6,11 @@ import { useAuth } from '../hooks/useAuth'
 import LocationPicker from './LocationPicker'
 import Header from './Header'
 
-export default function CreateTask() {
+interface CreateTaskProps {
+  onBack: () => void
+}
+
+export default function CreateTask({ onBack }: CreateTaskProps) {
   const { user } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const [title, setTitle] = useState('')
@@ -235,7 +239,7 @@ export default function CreateTask() {
         showFilters={false}
         showViewToggle={false}
         showRefresh={false}
-        onBack={() => window.history.back()}
+        onBack={onBack}
         className="bg-white text-gray-900 shadow-sm border-b border-gray-200"
       />
 
