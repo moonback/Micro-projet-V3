@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { Search, RefreshCw, MapPin, List, Tag, Filter, ArrowLeft, Sparkles, TrendingUp, Bell, Settings, User, ChevronDown, ChevronUp, X } from 'lucide-react'
+import { Search, RefreshCw, MapPin, List, Tag, Filter, ArrowLeft, Sparkles, TrendingUp, Bell, Settings, User, ChevronDown, ChevronUp, X, Crosshair } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Logo from './Logo'
+import { useUserLocation } from '../hooks/useUserLocation'
 
 interface HeaderButton {
   icon: React.ComponentType<{ className?: string; size?: number | string }>
@@ -273,6 +274,107 @@ const FiltersModal = ({ isOpen, onClose, filters, onFiltersChange, onReset }: {
   )
 }
 
+// Composant pour la validation de position
+const LocationValidationButton = () => {
+  const { getCurrentLocation, userLocation, loading, error } = useUserLocation()
+  const [isValidating, setIsValidating] = useState(false)
+  const [showNotification, setShowNotification] = useState(false)
+  const [notificationMessage, setNotificationMessage] = useState('')
+
+  const handleValidateLocation = async () => {
+    setIsValidating(true)
+    try {
+      const currentLocation = await getCurrentLocation()
+      if (currentLocation) {
+        setNotificationMessage(`Position validée ! ${currentLocation.city ? `Vous êtes à ${currentLocation.city}` : 'Coordonnées GPS mises à jour'}`)
+        setShowNotification(true)
+        setTimeout(() => setShowNotification(false), 3000)
+        console.log('Position validée:', currentLocation)
+      }
+    } catch (error) {
+      setNotificationMessage('Erreur lors de la validation de la position')
+      setShowNotification(true)
+      setTimeout(() => setShowNotification(false), 3000)
+      console.error('Erreur lors de la validation de la position:', error)
+    } finally {
+      setIsValidating(false)
+    }
+  }
+
+  const getButtonState = () => {
+    if (isValidating) {
+      return {
+        className: 'p-2.5 bg-blue-100 border border-blue-300 text-blue-600 rounded-xl transition-all duration-300',
+        icon: RefreshCw,
+        title: 'Validation en cours...',
+        disabled: true
+      }
+    }
+    
+    if (userLocation) {
+      return {
+        className: 'p-2.5 bg-gradient-to-r from-green-500 to-emerald-600 border border-green-300 text-white rounded-xl shadow-lg shadow-green-200 transition-all duration-300',
+        icon: MapPin,
+        title: `Position validée: ${userLocation.city || 'GPS'}`,
+        disabled: false
+      }
+    }
+    
+    return {
+      className: 'p-2.5 bg-white border border-gray-200 text-gray-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-100 hover:border-blue-200 hover:text-blue-600 hover:shadow-md rounded-xl transition-all duration-300',
+      icon: Crosshair,
+      title: 'Valider ma position',
+      disabled: false
+    }
+  }
+
+  const buttonState = getButtonState()
+  const Icon = buttonState.icon
+
+  return (
+    <>
+      <motion.button
+        whileHover={{ scale: 1.05, y: -1 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={handleValidateLocation}
+        disabled={buttonState.disabled}
+        className={buttonState.className}
+        title={buttonState.title}
+      >
+        <Icon className={`w-4 h-4 ${isValidating ? 'animate-spin' : ''}`} />
+      </motion.button>
+
+      {/* Notification de validation de position */}
+      <AnimatePresence>
+        {showNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            className="fixed top-20 right-4 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-4 max-w-sm"
+          >
+            <div className="flex items-start space-x-3">
+              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-3 h-3 text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 mb-1">Localisation</p>
+                <p className="text-sm text-gray-600">{notificationMessage}</p>
+              </div>
+              <button
+                onClick={() => setShowNotification(false)}
+                className="p-1 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+              >
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+
 export default function Header({
   title = "MicroTask",
   subtitle = "Trouvez votre prochaine opportunité",
@@ -416,6 +518,9 @@ export default function Header({
               >
                 <Tag className="w-4 h-4" />
               </motion.button>
+
+              {/* Validation de position */}
+              <LocationValidationButton />
 
               {/* Vue liste/carte */}
               {showViewToggle && onViewToggle && (

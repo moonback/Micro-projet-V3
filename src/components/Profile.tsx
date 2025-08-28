@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { Database } from '../lib/supabase'
 import Header from './Header'
+import UserLocationManager from './UserLocationManager'
 
 interface ProfileProps {
   onSignOut: () => void
@@ -484,6 +485,21 @@ export default function Profile({ onSignOut }: ProfileProps) {
             </div>
           </motion.div>
         )}
+
+        {/* Gestion de la Localisation */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9, duration: 0.8 }}
+          className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
+        >
+          <UserLocationManager 
+            onLocationUpdate={(location) => {
+              console.log('Localisation mise à jour:', location)
+              // Optionnel : recharger le profil ou mettre à jour l'état local
+            }}
+          />
+        </motion.div>
 
         {/* Informations du Compte */}
         <motion.div 

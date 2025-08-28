@@ -103,6 +103,15 @@ export interface UserProfile {
   rating: number
   rating_count: number
   created_at: string
+  // Champs de localisation
+  location?: TaskLocation
+  latitude?: number
+  longitude?: number
+  address?: string
+  city?: string
+  postal_code?: string
+  country?: string
+  location_updated_at?: string
 }
 
 // Types pour les filtres
