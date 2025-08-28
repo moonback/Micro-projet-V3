@@ -334,7 +334,7 @@ export interface TaskApplication {
   status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
   message?: string
   proposed_budget?: number
-  proposed_duration?: string
+  proposed_duration?: string | null // null dans la DB, string pour l'affichage
   created_at: string
   updated_at: string
   accepted_at?: string
@@ -367,7 +367,7 @@ export interface TaskHistoryItem extends TaskWithProfiles {
 export interface ApplicationFormData {
   message: string
   proposed_budget?: number
-  proposed_duration?: string
+  proposed_duration?: string // Format français pour l'interface utilisateur
 }
 
 export interface TaskApplicationFilters {

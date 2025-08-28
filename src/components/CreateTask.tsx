@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import LocationPicker from './LocationPicker'
 import Header from './Header'
+import { convertDurationToInterval } from '../utils/durationUtils'
+import DurationInput from './DurationInput'
 
 interface CreateTaskProps {
   onBack: () => void
@@ -33,6 +35,9 @@ export default function CreateTask({ onBack }: CreateTaskProps) {
   const [loading, setLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedPhotos, setSelectedPhotos] = useState<File[]>([])
+
+  // État pour la validation de la durée
+  const [isDurationValid, setIsDurationValid] = useState<boolean>(true)
 
   const categories = [
     { name: 'Livraison', icon: '🚚', color: 'from-blue-500 to-blue-600', bgColor: 'bg-blue-50', textColor: 'text-blue-700' },
@@ -146,7 +151,7 @@ export default function CreateTask({ onBack }: CreateTaskProps) {
         tags: tags.length > 0 ? tags : null,
         priority,
         budget: parseFloat(budget),
-        estimated_duration: estimatedDuration || null,
+        estimated_duration: estimatedDuration ? convertDurationToInterval(estimatedDuration) : null,
         deadline: deadline ? new Date(deadline).toISOString() : null,
         location: {
           type: 'Point',
@@ -218,7 +223,7 @@ export default function CreateTask({ onBack }: CreateTaskProps) {
   const canGoToNext = () => {
     switch (currentStep) {
       case 1: return title.trim() && description.trim() && category
-      case 2: return priority && (estimatedDuration || true) // Durée optionnelle
+      case 2: return priority && (estimatedDuration === '' || isDurationValid) // Durée optionnelle ou valide
       case 3: return location && address
       case 4: return budget && parseFloat(budget) > 0
       default: return false
@@ -432,16 +437,15 @@ export default function CreateTask({ onBack }: CreateTaskProps) {
                   
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                      <div className="w-7 h-7 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mr-3 shadow-sm">
+                      <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-3 shadow-sm">
                         <Clock className="w-4 h-4 text-white" />
                       </div>
                       Durée Estimée (Optionnel)
                     </label>
-                    <input
-                      type="text"
+                    <DurationInput
                       value={estimatedDuration}
-                      onChange={(e) => setEstimatedDuration(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base transition-all shadow-sm hover:shadow-md"
+                      onChange={setEstimatedDuration}
+                      onValidationChange={setIsDurationValid}
                       placeholder="ex: 2 heures, 1 jour, 30 minutes..."
                     />
                   </div>

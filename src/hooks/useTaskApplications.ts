@@ -6,6 +6,7 @@ import {
   ApplicationFormData,
   TaskApplicationFilters 
 } from '../types/task'
+import { convertDurationToInterval } from '../utils/durationUtils'
 
 export function useTaskApplications(taskId?: string) {
   const [applications, setApplications] = useState<TaskApplicationWithProfiles[]>([])
@@ -70,6 +71,10 @@ export function useTaskApplications(taskId?: string) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Utilisateur non authentifié')
 
+      // Convertir la durée proposée en format PostgreSQL interval
+      const convertedDuration = applicationData.proposed_duration ? 
+        convertDurationToInterval(applicationData.proposed_duration) : null
+
       const { data, error: insertError } = await supabase
         .from('task_applications')
         .insert({
@@ -77,7 +82,7 @@ export function useTaskApplications(taskId?: string) {
           helper_id: user.id,
           message: applicationData.message,
           proposed_budget: applicationData.proposed_budget,
-          proposed_duration: applicationData.proposed_duration
+          proposed_duration: convertedDuration
         })
         .select()
         .single()

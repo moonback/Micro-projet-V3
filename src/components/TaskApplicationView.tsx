@@ -20,6 +20,7 @@ import {
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { TaskWithProfiles, TaskApplication } from '../types/task'
+import { convertDurationToInterval } from '../utils/durationUtils'
 
 interface TaskApplicationViewProps {
   task: TaskWithProfiles
@@ -80,6 +81,10 @@ export default function TaskApplicationView({ task, onBack, onChatOpen }: TaskAp
 
     setLoading(true)
     try {
+      // Convertir la durée proposée en format PostgreSQL interval
+      const convertedDuration = proposedDuration ? 
+        convertDurationToInterval(proposedDuration) : null
+
       const { error } = await supabase
         .from('task_applications')
         .insert({
@@ -87,7 +92,7 @@ export default function TaskApplicationView({ task, onBack, onChatOpen }: TaskAp
           helper_id: user.id,
           message: message.trim(),
           proposed_budget: proposedBudget,
-          proposed_duration: proposedDuration || undefined,
+          proposed_duration: convertedDuration,
           status: 'pending'
         })
 
@@ -118,12 +123,16 @@ export default function TaskApplicationView({ task, onBack, onChatOpen }: TaskAp
 
     setLoading(true)
     try {
+      // Convertir la durée proposée en format PostgreSQL interval
+      const convertedDuration = proposedDuration ? 
+        convertDurationToInterval(proposedDuration) : null
+
       const { error } = await supabase
         .from('task_applications')
         .update({
           message: message.trim(),
           proposed_budget: proposedBudget,
-          proposed_duration: proposedDuration || undefined,
+          proposed_duration: convertedDuration,
           updated_at: new Date().toISOString()
         })
         .eq('id', application.id)
@@ -131,7 +140,7 @@ export default function TaskApplicationView({ task, onBack, onChatOpen }: TaskAp
       if (error) throw error
 
       setIsEditing(false)
-      setApplication(prev => prev ? { ...prev, message: message.trim(), proposed_budget: proposedBudget, proposed_duration: proposedDuration } : null)
+      setApplication(prev => prev ? { ...prev, message: message.trim(), proposed_budget: proposedBudget, proposed_duration: convertedDuration || undefined } : null)
     } catch (error) {
       console.error('Error updating application:', error)
       alert('Erreur lors de la mise à jour de la candidature')

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { TaskWithProfiles } from '../types/task'
+import { formatDurationForDisplay } from '../utils/durationUtils'
 
 interface TaskMapProps {
   tasks: TaskWithProfiles[]
@@ -155,9 +156,9 @@ export default function TaskMap({ tasks, onTaskPress, userLocation }: TaskMapPro
                         'bg-gray-100 text-gray-800'
                       }">${task.priority}</span>
                     </div>
-                    <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
                       <span>📅 ${task.deadline ? new Date(task.deadline).toLocaleDateString('fr-FR') : 'Non définie'}</span>
-                      <span>⏱️ ${task.estimated_duration || 'Non définie'}h</span>
+                      <span>⏱️ ${formatDurationForDisplay(task.estimated_duration || null)}</span>
                     </div>
                     <button class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
                       Voir les détails

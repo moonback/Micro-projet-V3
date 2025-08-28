@@ -18,6 +18,8 @@ import { TaskApplicationWithProfiles, ApplicationFormData } from '../types/task'
 import { useAuth } from '../hooks/useAuth'
 import { useConfirmationModal } from './ConfirmationModal'
 import { showNotification } from './NotificationToast'
+import { convertDurationToInterval } from '../utils/durationUtils'
+import DurationInput from './DurationInput'
 
 interface TaskApplicationsProps {
   taskId: string
@@ -87,7 +89,15 @@ export default function TaskApplications({
       return
     }
 
-    const success = await createApplication(taskId, formData)
+    // Convertir la durée proposée en format PostgreSQL interval
+    const convertedDuration = formData.proposed_duration ? 
+      convertDurationToInterval(formData.proposed_duration) : null
+
+    const success = await createApplication(taskId, {
+      ...formData,
+      proposed_duration: convertedDuration
+    })
+    
     if (success) {
       showNotification('success', 'Candidature envoyée avec succès !')
       setShowApplicationForm(false)
@@ -377,12 +387,11 @@ export default function TaskApplications({
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Durée proposée (optionnel)
                   </label>
-                  <input
-                    type="text"
+                  <DurationInput
                     value={formData.proposed_duration}
-                    onChange={(e) => setFormData(prev => ({ ...prev, proposed_duration: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    onChange={(value) => setFormData(prev => ({ ...prev, proposed_duration: value }))}
                     placeholder="ex: 2 heures, 1 jour..."
+                    showSuggestions={true}
                   />
                 </div>
               </div>
