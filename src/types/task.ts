@@ -186,7 +186,61 @@ export interface TaskMessage {
   task_id: string
   sender: string
   content: string
-  attachments?: any[]
+  attachments?: MessageAttachment[]
+  is_read: boolean
+  read_at?: string
+  created_at: string
+}
+
+// Types pour les pièces jointes des messages
+export interface MessageAttachment {
+  id: string
+  filename: string
+  url: string
+  file_type: string
+  file_size: number
+  thumbnail_url?: string
+  uploaded_at: string
+}
+
+// Types pour les conversations
+export interface Conversation {
+  task: TaskWithProfiles
+  latestMessage: TaskMessage
+  otherParticipant: UserProfile
+  unreadCount: number
+  lastActivity: string
+}
+
+// Type simplifié pour les profils dans les conversations
+export interface ConversationProfile {
+  id: string
+  name?: string
+  avatar_url?: string
+}
+
+// Type simplifié pour la liste des conversations
+export interface ConversationListItem {
+  taskId: string
+  title: string
+  status: string
+  lastMessage: string
+  lastMessageTime: string
+  lastMessageSender: string | null
+  unreadCount: number
+  otherParticipant: ConversationProfile | null
+  isAuthor: boolean
+  isHelper: boolean
+}
+
+// Types pour les notifications de messages
+export interface MessageNotification {
+  id: string
+  task_id: string
+  sender_id: string
+  message_id: string
+  content: string
+  is_read: boolean
   created_at: string
 }
 

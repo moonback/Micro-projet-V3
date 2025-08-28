@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { MapPin, Users, Clock, Euro, Shield, Star, ArrowRight, CheckCircle, TrendingUp, Zap, Heart, Award } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
@@ -9,6 +9,18 @@ interface HomePageProps {
 
 export default function HomePage({ onGetStarted }: HomePageProps) {
   const { user } = useAuth()
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  // Détecter la taille de l'écran
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 1024)
+    }
+
+    checkScreenSize()
+    window.addEventListener('resize', checkScreenSize)
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [])
 
   const features = [
     {
@@ -100,7 +112,7 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
       {/* Hero Section avec gradient moderne */}
       <div className="bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
+        <div className={`relative ${isDesktop ? 'max-w-7xl' : 'max-w-6xl'} mx-auto px-4 py-16 md:py-24 lg:py-32`}>
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -111,16 +123,16 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm border border-white/30"
+              className={`${isDesktop ? 'w-32 h-32' : 'w-20 h-20'} bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm border border-white/30`}
             >
-              <MapPin className="w-10 h-10 text-white" />
+              <MapPin className={`${isDesktop ? 'w-12 h-12' : 'w-10 h-10'} text-white`} />
             </motion.div>
             
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.8 }}
-              className="text-4xl md:text-6xl font-bold mb-6"
+              className={`${isDesktop ? 'text-5xl lg:text-7xl' : 'text-4xl md:text-6xl'} font-bold mb-6 leading-tight`}
             >
               Rendez Service à Votre<br />
               <span className="text-blue-200">Communauté Locale</span>
@@ -130,7 +142,7 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.8 }}
-              className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto"
+              className={`${isDesktop ? 'text-2xl lg:text-3xl' : 'text-xl md:text-2xl'} text-blue-100 mb-8 max-w-4xl mx-auto leading-relaxed`}
             >
               MicroTask connecte les personnes qui ont besoin d'aide avec celles qui peuvent en apporter. 
               Créez des tâches, trouvez de l'aide, et construisez une communauté plus forte.
@@ -143,10 +155,10 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onGetStarted}
-              className="bg-gradient-to-r from-white to-blue-50 text-blue-600 px-8 py-4 rounded-2xl font-semibold text-lg hover:shadow-xl transition-all flex items-center justify-center mx-auto space-x-2 shadow-lg"
+              className={`${isDesktop ? 'px-12 py-5 text-xl' : 'px-8 py-4 text-lg'} bg-gradient-to-r from-white to-blue-50 text-blue-600 rounded-2xl font-semibold hover:shadow-xl transition-all flex items-center justify-center mx-auto space-x-2 shadow-lg`}
             >
               <span>Commencer Maintenant</span>
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className={`${isDesktop ? 'w-6 h-6' : 'w-5 h-5'}`} />
             </motion.button>
           </motion.div>
         </div>
@@ -158,10 +170,10 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
-        className="py-16 bg-white"
+        className={`py-16 ${isDesktop ? 'lg:py-24' : ''} bg-white`}
       >
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className={`${isDesktop ? 'max-w-7xl' : 'max-w-6xl'} mx-auto px-4`}>
+          <div className={`grid ${isDesktop ? 'grid-cols-4 gap-8' : 'grid-cols-2 md:grid-cols-4 gap-6'}`}>
             {stats.map((stat, index) => (
               <motion.div 
                 key={index}
@@ -171,13 +183,13 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
                 viewport={{ once: true }}
                 className="text-center group"
               >
-                <div className={`w-16 h-16 bg-gradient-to-br ${stat.color} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all`}>
-                  <stat.icon className="w-8 h-8 text-white" />
+                <div className={`${isDesktop ? 'w-20 h-20' : 'w-16 h-16'} bg-gradient-to-br ${stat.color} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all`}>
+                  <stat.icon className={`${isDesktop ? 'w-10 h-10' : 'w-8 h-8'} text-white`} />
                 </div>
-                <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                <div className={`${isDesktop ? 'text-4xl lg:text-5xl' : 'text-3xl md:text-4xl'} font-bold text-gray-900 mb-2`}>
                   {stat.number}
                 </div>
-                <div className="text-gray-600 font-medium">
+                <div className={`${isDesktop ? 'text-lg' : 'text-base'} text-gray-600 font-medium`}>
                   {stat.label}
                 </div>
               </motion.div>
@@ -192,9 +204,9 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
-        className="py-16 bg-gray-50"
+        className={`py-16 ${isDesktop ? 'lg:py-24' : ''} bg-gray-50`}
       >
-        <div className="max-w-6xl mx-auto px-4">
+        <div className={`${isDesktop ? 'max-w-7xl' : 'max-w-6xl'} mx-auto px-4`}>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -202,15 +214,15 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className={`${isDesktop ? 'text-4xl lg:text-5xl' : 'text-3xl md:text-4xl'} font-bold text-gray-900 mb-4`}>
               Pourquoi Choisir MicroTask ?
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className={`${isDesktop ? 'text-2xl lg:text-3xl' : 'text-xl'} text-gray-600 max-w-3xl mx-auto leading-relaxed`}>
               Une plateforme complète et sécurisée pour tous vos besoins locaux
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className={`grid ${isDesktop ? 'grid-cols-1 lg:grid-cols-3 gap-10' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'}`}>
             {features.map((feature, index) => (
               <motion.div 
                 key={index}
@@ -218,16 +230,16 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
                 viewport={{ once: true }}
-                whileHover={{ y: -5 }}
-                className="bg-white p-6 rounded-3xl shadow-lg hover:shadow-xl transition-all border border-gray-100"
+                whileHover={{ y: isDesktop ? -8 : -5 }}
+                className={`bg-white ${isDesktop ? 'p-8' : 'p-6'} rounded-3xl shadow-lg hover:shadow-xl transition-all border border-gray-100`}
               >
-                <div className={`w-14 h-14 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-4 shadow-lg`}>
-                  <feature.icon className="w-7 h-7 text-white" />
+                <div className={`${isDesktop ? 'w-16 h-16' : 'w-14 h-14'} bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-4 shadow-lg`}>
+                  <feature.icon className={`${isDesktop ? 'w-8 h-8' : 'w-7 h-7'} text-white`} />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                <h3 className={`${isDesktop ? 'text-2xl' : 'text-xl'} font-semibold text-gray-900 mb-3`}>
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className={`${isDesktop ? 'text-lg' : 'text-base'} text-gray-600 leading-relaxed`}>
                   {feature.description}
                 </p>
               </motion.div>
@@ -242,9 +254,9 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
-        className="py-16 bg-white"
+        className={`py-16 ${isDesktop ? 'lg:py-24' : ''} bg-white`}
       >
-        <div className="max-w-6xl mx-auto px-4">
+        <div className={`${isDesktop ? 'max-w-7xl' : 'max-w-6xl'} mx-auto px-4`}>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -252,15 +264,15 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className={`${isDesktop ? 'text-4xl lg:text-5xl' : 'text-3xl md:text-4xl'} font-bold text-gray-900 mb-4`}>
               Comment ça Marche ?
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className={`${isDesktop ? 'text-2xl lg:text-3xl' : 'text-xl'} text-gray-600 max-w-3xl mx-auto leading-relaxed`}>
               En 4 étapes simples, obtenez l'aide dont vous avez besoin
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className={`grid ${isDesktop ? 'grid-cols-4 gap-10' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8'}`}>
             {howItWorks.map((step, index) => (
               <motion.div 
                 key={index}
@@ -271,17 +283,17 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
                 className="text-center group"
               >
                 <div className="relative">
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg group-hover:shadow-xl transition-all">
+                  <div className={`${isDesktop ? 'w-24 h-24' : 'w-20 h-20'} bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 ${isDesktop ? 'text-3xl' : 'text-2xl'} font-bold shadow-lg group-hover:shadow-xl transition-all`}>
                     {step.step}
                   </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
-                    <step.icon className="w-4 h-4 text-white" />
+                  <div className="absolute -top-2 -right-2 w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
+                    <step.icon className={`${isDesktop ? 'w-5 h-5' : 'w-4 h-4'} text-white`} />
                   </div>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                <h3 className={`${isDesktop ? 'text-2xl' : 'text-xl'} font-semibold text-gray-900 mb-3`}>
                   {step.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className={`${isDesktop ? 'text-lg' : 'text-base'} text-gray-600 leading-relaxed`}>
                   {step.description}
                 </p>
               </motion.div>
@@ -296,15 +308,15 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
-        className="py-16 bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600"
+        className={`py-16 ${isDesktop ? 'lg:py-24' : ''} bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600`}
       >
-        <div className="max-w-4xl mx-auto px-4 text-center">
+        <div className={`${isDesktop ? 'max-w-5xl' : 'max-w-4xl'} mx-auto px-4 text-center`}>
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
             viewport={{ once: true }}
-            className="text-3xl md:text-4xl font-bold text-white mb-4"
+            className={`${isDesktop ? 'text-4xl lg:text-5xl' : 'text-3xl md:text-4xl'} font-bold text-white mb-4`}
           >
             Prêt à Commencer ?
           </motion.h2>
@@ -313,7 +325,7 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}
             viewport={{ once: true }}
-            className="text-xl text-blue-100 mb-8"
+            className={`${isDesktop ? 'text-2xl' : 'text-xl'} text-blue-100 mb-8 leading-relaxed`}
           >
             Rejoignez des milliers d'utilisateurs qui font déjà partie de la communauté MicroTask
           </motion.p>
@@ -323,23 +335,23 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
             viewport={{ once: true }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
+            className={`flex ${isDesktop ? 'flex-row gap-6' : 'flex-col sm:flex-row gap-4'} justify-center`}
           >
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onGetStarted}
-              className="bg-gradient-to-r from-white to-blue-50 text-blue-600 px-8 py-3 rounded-2xl font-semibold hover:shadow-xl transition-all flex items-center justify-center space-x-2 shadow-lg"
+              className={`${isDesktop ? 'px-12 py-4 text-xl' : 'px-8 py-3 text-lg'} bg-gradient-to-r from-white to-blue-50 text-blue-600 rounded-2xl font-semibold hover:shadow-xl transition-all flex items-center justify-center space-x-2 shadow-lg`}
             >
               <span>Commencer Maintenant</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className={`${isDesktop ? 'w-5 h-5' : 'w-4 h-4'}`} />
             </motion.button>
             
             {!user && (
               <motion.button 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="border-2 border-white text-white px-8 py-3 rounded-2xl font-semibold hover:bg-white hover:text-blue-600 transition-all backdrop-blur-sm"
+                className={`${isDesktop ? 'px-12 py-4 text-xl' : 'px-8 py-3 text-lg'} border-2 border-white text-white rounded-2xl font-semibold hover:bg-white hover:text-blue-600 transition-all backdrop-blur-sm`}
               >
                 En Savoir Plus
               </motion.button>
@@ -354,16 +366,16 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
-        className="py-8 bg-gradient-to-r from-gray-900 to-gray-800 text-gray-400"
+        className={`py-8 ${isDesktop ? 'lg:py-12' : ''} bg-gradient-to-r from-gray-900 to-gray-800 text-gray-400`}
       >
-        <div className="max-w-6xl mx-auto px-4 text-center">
+        <div className={`${isDesktop ? 'max-w-7xl' : 'max-w-6xl'} mx-auto px-4 text-center`}>
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <Heart className="w-5 h-5 text-red-500" />
-            <span className="text-sm font-medium">
+            <Heart className={`${isDesktop ? 'w-6 h-6' : 'w-5 h-5'} text-red-500`} />
+            <span className={`${isDesktop ? 'text-base' : 'text-sm'} font-medium`}>
               © 2024 MicroTask. Tous droits réservés.
             </span>
           </div>
-          <p className="text-sm text-gray-500">
+          <p className={`${isDesktop ? 'text-base' : 'text-sm'} text-gray-500`}>
             Rendez service à votre communauté locale
           </p>
         </div>

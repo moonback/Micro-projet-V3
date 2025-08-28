@@ -1,6 +1,7 @@
 import React from 'react'
-import { Home, Plus, ListTodo, MessageCircle, User, MapPin } from 'lucide-react'
+import { Home, Plus, ListTodo, User, MapPin } from 'lucide-react'
 import { motion } from 'framer-motion'
+import MessageNotificationBadge from './MessageNotificationBadge'
 
 type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
 
@@ -14,7 +15,7 @@ export default function BottomNavigation({ activeTab, onTabChange }: BottomNavig
     { id: 'feed' as View, label: 'Accueil', icon: Home, color: 'blue' },
     { id: 'my-tasks' as View, label: 'Tâches', icon: ListTodo, color: 'purple' },
     { id: 'create' as View, label: 'Ajouter', icon: Plus, color: 'green' },
-    { id: 'messages' as View, label: 'Messages', icon: MessageCircle, color: 'orange' },
+    { id: 'messages' as View, label: 'Messages', icon: null, color: 'orange' },
     { id: 'profile' as View, label: 'Profil', icon: User, color: 'indigo' },
   ]
 
@@ -27,7 +28,7 @@ export default function BottomNavigation({ activeTab, onTabChange }: BottomNavig
       className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-area-pb z-50 shadow-lg"
     >
       <div className="flex justify-between items-center py-1 px-1">
-        {tabs.map(({ id, label, icon: Icon, color }) => {
+        {tabs.map(({ id, label, icon, color }) => {
           const isActive = activeTab === id;
           
           if (id === 'create') {
@@ -46,7 +47,7 @@ export default function BottomNavigation({ activeTab, onTabChange }: BottomNavig
                       : 'bg-gradient-to-br from-gray-400 to-gray-500 shadow-gray-400/25 ring-1 ring-gray-200'
                   }`}
                 >
-                  <Icon size={24} className="text-white" />
+                  {icon && React.createElement(icon, { size: 24, className: "text-white" })}
                 </motion.button>
               </motion.div>
             );
@@ -66,6 +67,38 @@ export default function BottomNavigation({ activeTab, onTabChange }: BottomNavig
             indigo: 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50/50'
           };
 
+          // Gestion spéciale pour l'onglet messages
+          if (id === 'messages') {
+            return (
+              <motion.button
+                key={id}
+                onClick={() => onTabChange(id)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`relative flex flex-col items-center justify-center p-1.5 rounded-lg transition-all duration-200 ease-in-out w-full max-w-[60px] group ${
+                  isActive ? activeColorClasses[color as keyof typeof activeColorClasses] : inactiveColorClasses[color as keyof typeof activeColorClasses]
+                }`}
+              >
+                <div className="relative z-10 p-1.5 rounded-lg transition-all duration-200">
+                  <MessageNotificationBadge className="text-current" />
+                </div>
+                <span 
+                  className={`text-xs font-medium mt-0.5 transition-all duration-200 text-current`}
+                >
+                  {label}
+                </span>
+                
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 inset-x-0 mx-auto w-8 h-0.5 rounded-full bg-current"
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </motion.button>
+            )
+          }
+
           return (
             <motion.button
               key={id}
@@ -73,14 +106,14 @@ export default function BottomNavigation({ activeTab, onTabChange }: BottomNavig
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={`relative flex flex-col items-center justify-center p-1.5 rounded-lg transition-all duration-200 ease-in-out w-full max-w-[60px] group ${
-                isActive ? activeColorClasses[color as keyof typeof activeColorClasses] : inactiveColorClasses[color as keyof typeof inactiveColorClasses]
+                isActive ? activeColorClasses[color as keyof typeof activeColorClasses] : inactiveColorClasses[color as keyof typeof activeColorClasses]
               }`}
             >
               <div className="relative z-10 p-1.5 rounded-lg transition-all duration-200">
-                                  <Icon 
-                    size={20} 
-                    className="text-current"
-                  />
+                {icon && React.createElement(icon, { 
+                  size: 20, 
+                  className: "text-current"
+                })}
               </div>
               <span 
                 className={`text-xs font-medium mt-0.5 transition-all duration-200 text-current`}
