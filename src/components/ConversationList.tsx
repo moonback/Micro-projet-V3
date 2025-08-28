@@ -13,10 +13,14 @@ export default function ConversationList({ onSelectConversation, selectedTaskId 
   const { conversations, loading, error, refreshConversations } = useConversations()
   const [searchTerm, setSearchTerm] = useState('')
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conv.otherParticipant?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredConversations = conversations.filter(conv => {
+    const matchesSearch = conv.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         conv.otherParticipant?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    // Toujours filtrer pour ne montrer que les conversations avec des messages
+    const hasMessages = conv.lastMessage !== 'Aucun message'
+    return matchesSearch && hasMessages
+  })
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -90,8 +94,10 @@ export default function ConversationList({ onSelectConversation, selectedTaskId 
     return (
       <div className="text-center py-8">
         <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500">Aucune conversation trouvée</p>
-        <p className="text-sm text-gray-400">Commencez par créer ou rejoindre une tâche</p>
+        <p className="text-gray-500">Aucune conversation avec messages trouvée</p>
+        <p className="text-sm text-gray-400">
+          Vous n'avez pas encore de conversations avec des messages
+        </p>
       </div>
     )
   }
@@ -119,67 +125,79 @@ export default function ConversationList({ onSelectConversation, selectedTaskId 
         </button>
       </div>
 
+
+
       {/* Liste des conversations */}
-      <div className="space-y-2">
-        <AnimatePresence>
-          {filteredConversations.map((conversation, index) => (
-            <motion.div
-              key={conversation.taskId}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05, duration: 0.3 }}
-              onClick={() => onSelectConversation(conversation.taskId)}
-              className={`
-                p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md
-                ${selectedTaskId === conversation.taskId 
-                  ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-200 bg-white hover:border-gray-300'
-                }
-              `}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  {/* En-tête avec titre et statut */}
-                  <div className="flex items-center space-x-2 mb-2">
-                    <h3 className="font-medium text-gray-900 truncate">
-                      {conversation.title}
-                    </h3>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(conversation.status)}`}>
-                      {conversation.status === 'open' && 'Ouverte'}
-                      {conversation.status === 'in_progress' && 'En cours'}
-                      {conversation.status === 'completed' && 'Terminée'}
-                    </span>
-                  </div>
-
-                  {/* Dernier message */}
-                  <p className="text-sm text-gray-600 truncate mb-2">
-                    {conversation.lastMessage}
-                  </p>
-
-                  {/* Informations de la conversation */}
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex items-center space-x-1">
-                        <User className="w-3 h-3" />
-                        <span>{conversation.otherParticipant?.name || 'Utilisateur'}</span>
-                      </div>
-                      <span>•</span>
-                      <span>{formatTime(conversation.lastMessageTime)}</span>
-                    </div>
-                    
-                    {/* Badge de messages non lus */}
-                    {conversation.unreadCount > 0 && (
-                      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                        {conversation.unreadCount}
+      {filteredConversations.length === 0 ? (
+        <div className="text-center py-8">
+          <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">Aucun résultat trouvé</p>
+          <p className="text-sm text-gray-400">
+            Essayez de modifier vos critères de recherche
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <AnimatePresence>
+            {filteredConversations.map((conversation, index) => (
+              <motion.div
+                key={conversation.taskId}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.3 }}
+                onClick={() => onSelectConversation(conversation.taskId)}
+                className={`
+                  p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md
+                  ${selectedTaskId === conversation.taskId 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+                  }
+                `}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    {/* En-tête avec titre et statut */}
+                    <div className="flex items-center space-x-2 mb-2">
+                      <h3 className="font-medium text-gray-900 truncate">
+                        {conversation.title}
+                      </h3>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(conversation.status)}`}>
+                        {conversation.status === 'open' && 'Ouverte'}
+                        {conversation.status === 'in_progress' && 'En cours'}
+                        {conversation.status === 'completed' && 'Terminée'}
                       </span>
-                    )}
+                    </div>
+
+                    {/* Dernier message */}
+                    <p className="text-sm text-gray-600 truncate mb-2">
+                      {conversation.lastMessage}
+                    </p>
+
+                    {/* Informations de la conversation */}
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-1">
+                          <User className="w-3 h-3" />
+                          <span>{conversation.otherParticipant?.name || 'Utilisateur'}</span>
+                        </div>
+                        <span>•</span>
+                        <span>{formatTime(conversation.lastMessageTime)}</span>
+                      </div>
+                      
+                      {/* Badge de messages non lus */}
+                      {conversation.unreadCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                          {conversation.unreadCount}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   )
 }

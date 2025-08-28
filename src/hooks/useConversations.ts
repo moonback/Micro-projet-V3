@@ -45,9 +45,21 @@ export function useConversations() {
 
       if (tasksError) throw tasksError
 
+      // Récupérer les IDs des tâches qui ont des messages
+      const { data: taskIdsWithMessages, error: messagesError } = await supabase
+        .from('messages')
+        .select('task_id')
+        .not('task_id', 'is', null)
+
+      if (messagesError) throw messagesError
+
+      // Filtrer les tâches pour ne garder que celles avec des messages
+      const taskIdsSet = new Set(taskIdsWithMessages?.map(m => m.task_id) || [])
+      const tasksWithMessages = tasks?.filter(task => taskIdsSet.has(task.id)) || []
+
       // Récupérer le dernier message et le nombre de messages non lus pour chaque tâche
       const conversationsWithMessages = await Promise.all(
-        tasks.map(async (task) => {
+        tasksWithMessages.map(async (task) => {
           // Dernier message
           const { data: lastMessage } = await supabase
             .from('messages')
