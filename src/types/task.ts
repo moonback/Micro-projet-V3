@@ -29,7 +29,7 @@ export interface TaskMetadata {
 }
 
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
-export type TaskStatus = 'open' | 'assigned' | 'in_progress' | 'completed' | 'cancelled' | 'expired'
+export type TaskStatus = 'open' | 'pending_approval' | 'assigned' | 'in_progress' | 'completed' | 'cancelled' | 'expired'
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 
 export interface Task {
@@ -82,6 +82,11 @@ export interface Task {
   view_count: number
   application_count: number
   metadata?: TaskMetadata
+  
+  // Nouvelles colonnes pour le système d'acceptation
+  application_deadline?: string
+  min_applications?: number
+  auto_approve?: boolean
 }
 
 export interface TaskWithProfiles extends Task {
@@ -310,4 +315,56 @@ export interface TaskAnalytics {
     tasks_over_time: Array<{ date: string; count: number }>
     budget_over_time: Array<{ date: string; amount: number }>
   }
+}
+
+// Nouveaux types pour le système d'acceptation
+export interface TaskApplication {
+  id: string
+  task_id: string
+  helper_id: string
+  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+  message?: string
+  proposed_budget?: number
+  proposed_duration?: string
+  created_at: string
+  updated_at: string
+  accepted_at?: string
+  rejected_at?: string
+  withdrawn_at?: string
+}
+
+export interface TaskApplicationWithProfiles extends TaskApplication {
+  helper_profile?: UserProfile
+  task_title?: string
+  task_status?: string
+  task_budget?: number
+  task_currency?: string
+  task_deadline?: string
+}
+
+export interface TaskWithApplications extends TaskWithProfiles {
+  applications?: TaskApplicationWithProfiles[]
+  total_applications?: number
+  accepted_applications?: number
+  pending_applications?: number
+}
+
+export interface TaskHistoryItem extends TaskWithProfiles {
+  total_applications: number
+  accepted_applications: number
+  pending_applications: number
+}
+
+export interface ApplicationFormData {
+  message: string
+  proposed_budget?: number
+  proposed_duration?: string
+}
+
+export interface TaskApplicationFilters {
+  status?: string
+  dateFrom?: string
+  dateTo?: string
+  hasMessage?: boolean
+  hasProposal?: boolean
 }

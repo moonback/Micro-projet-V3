@@ -26,6 +26,7 @@ interface TaskFilters {
 interface TaskFeedProps {
   onTaskPress: (task: TaskWithProfiles) => void
   onTaskAccepted?: (taskId: string) => void
+  onApplyToTask?: (task: TaskWithProfiles) => void
 }
 
 // Cache global pour les tâches
@@ -39,7 +40,7 @@ const CACHE_DURATION = 3 * 60 * 1000 // 3 minutes
 
 
 
-export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps) {
+export default function TaskFeed({ onTaskPress, onTaskAccepted, onApplyToTask }: TaskFeedProps) {
   const { user } = useAuth()
   const [tasks, setTasks] = useState<TaskWithProfiles[]>([])
   const [filteredTasks, setFilteredTasks] = useState<TaskWithProfiles[]>([])
@@ -749,11 +750,11 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className="flex-1 overflow-y-auto p-4 lg:p-6"
               >
-                {/* Grille desktop vs liste mobile */}
+                {/* Grille desktop vs liste mobile - optimisée pour 4 cartes par ligne */}
                 <div className={`${
                   isMobile 
                     ? 'space-y-4' 
-                    : 'grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6'
+                    : 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4'
                 }`}>
                   <AnimatePresence>
                     {filteredTasks.map((task, index) => (
@@ -769,6 +770,7 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
                           task={task}
                           onPress={onTaskPress}
                           onTaskAccepted={onTaskAccepted}
+                          onApplyToTask={onApplyToTask}
                           isDesktop={!isMobile}
                         />
                       </motion.div>

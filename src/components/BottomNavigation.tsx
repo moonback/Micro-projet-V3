@@ -3,7 +3,7 @@ import { Home, Plus, ListTodo, User, MapPin } from 'lucide-react'
 import { motion } from 'framer-motion'
 import MessageNotificationBadge from './MessageNotificationBadge'
 
-type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
+type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat' | 'task-history' | 'task-application'
 
 interface BottomNavigationProps {
   activeTab: View
@@ -16,6 +16,7 @@ export default function BottomNavigation({ activeTab, onTabChange }: BottomNavig
     { id: 'my-tasks' as View, label: 'Tâches', icon: ListTodo, color: 'purple' },
     { id: 'create' as View, label: 'Ajouter', icon: Plus, color: 'green' },
     { id: 'messages' as View, label: 'Messages', icon: null, color: 'orange' },
+    { id: 'task-history' as View, label: 'Historique', icon: MapPin, color: 'teal' },
     { id: 'profile' as View, label: 'Profil', icon: User, color: 'indigo' },
   ]
 
@@ -57,14 +58,16 @@ export default function BottomNavigation({ activeTab, onTabChange }: BottomNavig
             blue: 'text-blue-600 bg-blue-50',
             purple: 'text-purple-600 bg-purple-50',
             orange: 'text-orange-600 bg-orange-50',
-            indigo: 'text-indigo-600 bg-indigo-50'
+            indigo: 'text-indigo-600 bg-indigo-50',
+            teal: 'text-teal-600 bg-teal-50'
           };
 
           const inactiveColorClasses = {
             blue: 'text-gray-500 hover:text-blue-600 hover:bg-blue-50/50',
             purple: 'text-gray-500 hover:text-purple-600 hover:bg-purple-50/50',
             orange: 'text-gray-500 hover:text-orange-600 hover:bg-orange-50/50',
-            indigo: 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50/50'
+            indigo: 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50/50',
+            teal: 'text-gray-500 hover:text-teal-600 hover:bg-teal-50/50'
           };
 
           // Gestion spéciale pour l'onglet messages

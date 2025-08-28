@@ -12,15 +12,17 @@ import MyTasks from './components/MyTasks'
 import Messages from './components/Messages'
 import Profile from './components/Profile'
 import TaskDetail from './components/TaskDetail'
+import TaskHistory from './components/TaskHistory'
+import TaskApplicationView from './components/TaskApplicationView'
 import ChatView from './components/ChatView'
 import NotificationToast from './components/NotificationToast'
 import Logo from './components/Logo'
 import type { TaskWithProfiles } from './types/task'
 
-type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat'
+type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messages' | 'profile' | 'task-detail' | 'chat' | 'task-history' | 'task-application'
 
 function App() {
-  const { user, loading, profile } = useAuth() // Récupérer aussi le profile
+  const { user, loading, profile, signOut } = useAuth() // Récupérer aussi le profile et signOut
   const { notifications, removeNotification } = useNotifications()
   const { hasPermission: hasNotificationPermission } = useMessageNotifications()
   const [currentView, setCurrentView] = useState<View>('splash')
@@ -28,6 +30,7 @@ function App() {
   const [selectedTask, setSelectedTask] = useState<TaskWithProfiles | null>(null)
   const [chatTaskId, setChatTaskId] = useState<string | null>(null)
   const [hasSeenSplash, setHasSeenSplash] = useState(false)
+  const [taskForApplication, setTaskForApplication] = useState<TaskWithProfiles | null>(null)
 
   // Gérer la navigation après le splash et l'état d'authentification
   useEffect(() => {
@@ -86,17 +89,47 @@ function App() {
     setCurrentView(tab)
   }
 
-  const handleSignOut = () => {
-    setCurrentView('home')
-    setActiveTab('feed')
-    setSelectedTask(null)
-    setChatTaskId(null)
+  const handleSignOut = async () => {
+    try {
+      // Déconnecter l'utilisateur de Supabase
+      const { error } = await signOut()
+      if (error) {
+        console.error('Erreur lors de la déconnexion:', error)
+        // Même en cas d'erreur, on peut rediriger vers la page d'accueil
+      }
+      
+      // Réinitialiser l'état local
+      setCurrentView('home')
+      setActiveTab('feed')
+      setSelectedTask(null)
+      setChatTaskId(null)
+      setTaskForApplication(null)
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error)
+      // En cas d'erreur, rediriger quand même
+      setCurrentView('home')
+      setActiveTab('feed')
+      setSelectedTask(null)
+      setChatTaskId(null)
+      setTaskForApplication(null)
+    }
   }
 
   const handleTaskAccepted = (taskId: string) => {
     // Optionnel : recharger les tâches ou mettre à jour l'état
     console.log('Task accepted:', taskId)
     // Ici vous pourriez mettre à jour l'état local ou recharger les tâches
+  }
+
+  const handleApplyToTask = (task: TaskWithProfiles) => {
+    setTaskForApplication(task)
+    setCurrentView('task-application')
+  }
+
+  const handleBackFromApplication = () => {
+    setCurrentView('feed')
+    setActiveTab('feed')
+    setTaskForApplication(null)
   }
 
   const renderCurrentView = () => {
@@ -111,7 +144,7 @@ function App() {
         return <AuthForm />
       
       case 'feed':
-        return <TaskFeed onTaskPress={handleTaskPress} onTaskAccepted={handleTaskAccepted} />
+        return <TaskFeed onTaskPress={handleTaskPress} onTaskAccepted={handleTaskAccepted} onApplyToTask={handleApplyToTask} />
       
       case 'create':
         return <CreateTask onBack={handleBackToFeed} />
@@ -131,6 +164,25 @@ function App() {
       
       case 'profile':
         return <Profile onSignOut={handleSignOut} />
+      
+      case 'task-history':
+        return (
+          <TaskHistory
+            onTaskPress={handleTaskPress}
+            showApplications={true}
+          />
+        )
+      
+      case 'task-application':
+        return taskForApplication ? (
+          <TaskApplicationView
+            task={taskForApplication}
+            onBack={handleBackFromApplication}
+            onChatOpen={handleChatOpen}
+          />
+        ) : (
+          <div>Erreur : Tâche non trouvée</div>
+        )
       
       case 'task-detail':
         return selectedTask ? (
@@ -159,7 +211,7 @@ function App() {
   }
 
   // Ne pas afficher la navigation pour les vues spéciales
-  const showBottomNavigation = !['splash', 'home', 'auth', 'task-detail', 'chat'].includes(currentView)
+  const showBottomNavigation = !['splash', 'home', 'auth', 'task-detail', 'chat', 'task-application'].includes(currentView)
 
   // Détecter si on est sur desktop
   const [isDesktop, setIsDesktop] = useState(false)
@@ -242,6 +294,7 @@ function App() {
                         { id: 'my-tasks', label: 'Mes Tâches', icon: '📋' },
                         { id: 'create', label: 'Créer', icon: '➕' },
                         { id: 'messages', label: 'Messages', icon: '💬' },
+                        { id: 'task-history', label: 'Tâche validees', icon: '📚' },
                         { id: 'profile', label: 'Profil', icon: '👤' }
                       ].map((item) => (
                         <button

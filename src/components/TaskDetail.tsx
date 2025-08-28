@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { TaskWithProfiles } from '../types/task'
 import Header from './Header'
+import TaskApplications from './TaskApplications'
 
 // Fonction pour récupérer l'adresse à partir des coordonnées GPS
 const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
@@ -44,6 +45,8 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
   const [actionLoading, setActionLoading] = useState(false)
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null)
   const [isLoadingAddress, setIsLoadingAddress] = useState(false)
+  const [hasApplied, setHasApplied] = useState(false)
+  const [checkingApplication, setCheckingApplication] = useState(false)
   const [address, setAddress] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -58,6 +61,34 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
     window.addEventListener('resize', checkScreenSize)
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
+
+  // Vérifier si l'utilisateur a déjà candidaté à cette tâche
+  useEffect(() => {
+    const checkApplication = async () => {
+      if (!user || task.status !== 'open') return
+      
+      setCheckingApplication(true)
+      try {
+        const { data, error } = await supabase
+          .from('task_applications')
+          .select('id, status')
+          .eq('task_id', task.id)
+          .eq('helper_id', user.id)
+          .single()
+
+        if (!error && data) {
+          setHasApplied(true)
+        }
+      } catch (error) {
+        // Pas de candidature existante
+        setHasApplied(false)
+      } finally {
+        setCheckingApplication(false)
+      }
+    }
+
+    checkApplication()
+  }, [user, task.id, task.status])
 
   const isAuthor = user?.id === task.author
   const isHelper = user?.id === task.helper
@@ -98,26 +129,33 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
   }, [task.address, task.location])
 
   const handleAcceptTask = async () => {
-    if (!user) return
+    if (!user || hasApplied) return
 
     setActionLoading(true)
     try {
+      // Créer une candidature au lieu d'accepter directement
       const { error } = await supabase
-        .from('tasks')
-        .update({ 
-          status: 'assigned',
-          helper: user.id,
-          assigned_at: new Date().toISOString()
+        .from('task_applications')
+        .insert({
+          task_id: task.id,
+          helper_id: user.id,
+          message: 'Je suis intéressé par cette tâche et disponible pour l\'accomplir.',
+          status: 'pending'
         })
-        .eq('id', task.id)
 
       if (error) throw error
 
-      // Recharger la page ou mettre à jour l'état
+      setHasApplied(true)
+      // Optionnel : recharger la page ou mettre à jour l'état
       window.location.reload()
-    } catch (error) {
-      console.error('Error accepting task:', error)
-      alert('Erreur lors de l\'acceptation de la tâche')
+    } catch (error: any) {
+      console.error('Error applying for task:', error)
+      if (error.code === '23505') {
+        alert('Vous avez déjà candidaté à cette tâche')
+        setHasApplied(true)
+      } else {
+        alert('Erreur lors de la candidature à la tâche')
+      }
     } finally {
       setActionLoading(false)
     }
@@ -139,7 +177,7 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
       if (error) throw error
 
       window.location.reload()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error starting task:', error)
       alert('Erreur lors du démarrage de la tâche')
     } finally {
@@ -148,23 +186,20 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
   }
 
   const handleCompleteTask = async () => {
-    if (!user) return
+    if (!user || !confirm('Êtes-vous sûr de vouloir marquer cette tâche comme terminée ?')) return
 
     setActionLoading(true)
     try {
       const { error } = await supabase
-        .from('tasks')
-        .update({ 
-          status: 'completed',
-          completed_at: new Date().toISOString()
-        })
-        .eq('id', task.id)
+        .rpc('mark_task_completed', { task_id_param: task.id })
 
       if (error) throw error
 
+      alert('Tâche marquée comme terminée avec succès !')
+      // Recharger la tâche pour mettre à jour l'affichage
       window.location.reload()
-    } catch (error) {
-      console.error('Error completing task:', error)
+    } catch (error: any) {
+      console.error('Error marking task as completed:', error)
       alert('Erreur lors de la finalisation de la tâche')
     } finally {
       setActionLoading(false)
@@ -184,7 +219,7 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
       if (error) throw error
 
       window.location.reload()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cancelling task:', error)
       alert('Erreur lors de l\'annulation de la tâche')
     } finally {
@@ -387,7 +422,17 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  {canAccept && (
+                  {checkingApplication ? (
+                    <div className="flex-1 flex items-center justify-center py-4 px-6 text-gray-500 bg-gray-100 rounded-xl">
+                      <div className="w-5 h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mr-3" />
+                      <span>Vérification...</span>
+                    </div>
+                  ) : hasApplied ? (
+                    <div className="flex-1 bg-blue-50 border border-blue-200 text-blue-700 py-4 px-6 rounded-xl font-semibold flex items-center justify-center space-x-3">
+                      <CheckCircle className="w-5 h-5" />
+                      <span>Candidature Envoyée</span>
+                    </div>
+                  ) : canAccept ? (
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -396,9 +441,9 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
                       className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center space-x-3"
                     >
                       <CheckCircle className="w-5 h-5" />
-                      <span>Accepter cette Tâche</span>
+                      <span>Postuler à cette Tâche</span>
                     </motion.button>
-                  )}
+                  ) : null}
                   
                   {isHelper && task.status === 'assigned' && (
                     <motion.button
@@ -449,11 +494,23 @@ export default function TaskDetail({ task, onBack, onChatOpen }: TaskDetailProps
                     <MessageCircle className="w-5 h-5" />
                     <span>Ouvrir le Chat</span>
                   </motion.button>
-                </div>
-              </div>
+                              </div>
             </div>
+          </div>
 
-            {/* Colonne latérale - Informations complémentaires */}
+          {/* Section des candidatures */}
+          <TaskApplications
+            taskId={task.id}
+            taskTitle={task.title}
+            taskStatus={task.status}
+            isAuthor={isAuthor}
+            onStatusChange={() => {
+              // Optionnel : recharger la tâche ou mettre à jour l'état
+              console.log('Task status changed')
+            }}
+          />
+
+          {/* Colonne latérale - Informations complémentaires */}
             {!isMobile && (
               <div className="space-y-6">
                 {/* Profil de l'auteur */}
