@@ -338,7 +338,7 @@ export default function MyTasks({ onTaskPress, onCreateTask, onTaskAccepted }: M
                     initial={{ opacity: 0, y: 20, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ delay: 0.1 + statusIndex * 0.1, duration: 0.6, type: "spring" }}
-                    className={`bg-gradient-to-br ${getStatusGradient(status)} rounded-3xl p-6 shadow-xl border border-white/50 backdrop-blur-sm`}
+                    className={`bg-gradient-to-br ${getStatusGradient(status)} rounded-3xl p-4 shadow-xl border border-white/50 backdrop-blur-sm`}
                   >
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center space-x-4">

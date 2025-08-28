@@ -1,6 +1,6 @@
-import React from 'react'
-import { Search, RefreshCw, MapPin, List, Tag, Filter, ArrowLeft, Sparkles, TrendingUp, Bell, Settings, User } from 'lucide-react'
-import { motion } from 'framer-motion'
+import React, { useState } from 'react'
+import { Search, RefreshCw, MapPin, List, Tag, Filter, ArrowLeft, Sparkles, TrendingUp, Bell, Settings, User, ChevronDown, ChevronUp } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface HeaderButton {
   icon: React.ComponentType<{ className?: string; size?: number | string }>
@@ -61,6 +61,8 @@ export default function Header({
   onBack,
   participants = []
 }: HeaderProps) {
+  // État local pour gérer l'affichage de la barre de recherche
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
   const hasActiveFilters = () => {
     if (!filters) return false
     return filters.priority || filters.budgetMin || filters.budgetMax || 
@@ -101,13 +103,10 @@ export default function Header({
             {/* Titre et sous-titre améliorés */}
             <div className="space-y-1">
               <div className="flex items-center space-x-3">
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                {/* <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                   {title}
-                </h1>
-                <div className="flex items-center space-x-1 px-2 py-1 bg-yellow-50 border border-yellow-200 rounded-full">
-                  <Sparkles className="w-3 h-3 text-yellow-600" />
-                  <span className="text-xs font-medium text-yellow-700">Pro</span>
-                </div>
+                </h1> */}
+                
               </div>
               
               <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -223,38 +222,65 @@ export default function Header({
           </div>
         </div>
 
-        {/* Barre de recherche améliorée */}
+        {/* Bouton pour déployer la recherche */}
         {showSearch && onSearchChange && (
           <div className="mb-6">
-            <div className="relative max-w-3xl">
-              <div className="relative bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
-                <div className="flex items-center">
-                  <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-l-2xl">
-                    <Search className="w-5 h-5 text-white" />
-                  </div>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    placeholder="Rechercher des tâches, projets ou opportunités..."
-                    className="flex-1 px-6 py-4 bg-transparent border-0 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0 text-base"
-                  />
-                  <div className="flex items-center space-x-2 mr-4">
-                    <motion.button 
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="p-2 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors duration-200"
-                      title="Tendances"
-                    >
-                      <TrendingUp className="w-4 h-4 text-gray-600" />
-                    </motion.button>
-                    <kbd className="px-3 py-1 text-xs font-semibold text-gray-500 bg-gray-100 border border-gray-200 rounded-lg">
-                      Ctrl K
-                    </kbd>
-                  </div>
-                </div>
-              </div>
+            <div className="flex justify-between items-center mb-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setIsSearchVisible(!isSearchVisible)}
+                className="flex items-center space-x-2 text-primary-600 font-medium"
+              >
+                <span>Recherche</span>
+                {isSearchVisible ? 
+                  <ChevronUp className="w-4 h-4" /> : 
+                  <ChevronDown className="w-4 h-4" />
+                }
+              </motion.button>
             </div>
+            
+            <AnimatePresence>
+              {isSearchVisible && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
+                >
+                  <div className="relative max-w-3xl">
+                    <div className="relative bg-white border border-primary-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+                      <div className="flex items-center">
+                        <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-l-2xl">
+                          <Search className="w-5 h-5 text-white" />
+                        </div>
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => onSearchChange(e.target.value)}
+                          placeholder="Rechercher des tâches, projets ou opportunités..."
+                          className="flex-1 px-6 py-4 bg-transparent border-0 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0 text-base"
+                        />
+                        <div className="flex items-center space-x-2 mr-4">
+                          <motion.button 
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="p-2 bg-primary-50 hover:bg-primary-100 rounded-xl transition-colors duration-200"
+                            title="Tendances"
+                          >
+                            <TrendingUp className="w-4 h-4 text-primary-600" />
+                          </motion.button>
+                          <kbd className="px-3 py-1 text-xs font-semibold text-gray-500 bg-gray-100 border border-gray-200 rounded-lg">
+                            Ctrl K
+                          </kbd>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
