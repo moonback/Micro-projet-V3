@@ -1,5 +1,5 @@
 import React from 'react'
-import { Search, RefreshCw, MapPin, List, Tag, Filter, ArrowLeft, Sparkles, TrendingUp } from 'lucide-react'
+import { Search, RefreshCw, MapPin, List, Tag, Filter, ArrowLeft, Sparkles, TrendingUp, Bell, Settings, User } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 interface HeaderButton {
@@ -69,161 +69,241 @@ export default function Header({
   }
 
   return (
-    <div className={`relative bg-white border-b border-gray-200/60 shadow-sm ${className}`}>
-      <div className="px-4 py-3">
-        <div className="flex items-center justify-between mb-3">
-          {/* Logo et titre */}
-          <div className="flex items-center space-x-3">
+    <div className={`relative bg-white border-b border-gray-100 ${className}`}>
+      {/* Gradient subtil en arrière-plan */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 via-white to-blue-50/30 pointer-events-none" />
+      
+      <div className="relative px-6 py-4">
+        {/* En-tête principal */}
+        <div className="flex items-center justify-between mb-6">
+          {/* Section gauche - Logo et navigation */}
+          <div className="flex items-center space-x-4">
             {onBack && (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={onBack}
-                className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-colors"
+                className="p-2.5 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md"
                 title="Retour"
               >
                 <ArrowLeft className="w-4 h-4 text-gray-600" />
-              </button>
+              </motion.button>
             )}
             
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-sm">
-              <span className="text-lg">🚀</span>
+            {/* Logo amélioré */}
+            <div className="relative">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/25">
+                <span className="text-xl">🚀</span>
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm animate-pulse" />
             </div>
             
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                {title}
-              </h1>
-              <div className="flex items-center space-x-2">
-                <p className="text-sm text-gray-600">{subtitle}</p>
-                <Sparkles className="w-3 h-3 text-yellow-500" />
+            {/* Titre et sous-titre améliorés */}
+            <div className="space-y-1">
+              <div className="flex items-center space-x-3">
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                  {title}
+                </h1>
+                <div className="flex items-center space-x-1 px-2 py-1 bg-yellow-50 border border-yellow-200 rounded-full">
+                  <Sparkles className="w-3 h-3 text-yellow-600" />
+                  <span className="text-xs font-medium text-yellow-700">Pro</span>
+                </div>
               </div>
-              {participants.length > 0 && (
-                <p className="text-xs text-gray-400 mt-0.5 flex items-center space-x-1">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                  <span>{participants.join(' • ')}</span>
-                </p>
-              )}
+              
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <p>{subtitle}</p>
+                {participants.length > 0 && (
+                  <>
+                    <span className="text-gray-400">•</span>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                      <span className="text-xs font-medium">{participants.join(' • ')}</span>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
           
-          {/* Actions principales */}
+          {/* Section droite - Actions */}
           <div className="flex items-center space-x-2">
-            {/* Bouton de recherche avancée */}
-            {showFilters && onFiltersOpen && (
-              <button
-                onClick={onFiltersOpen}
-                className="relative p-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg border border-gray-200 transition-colors"
-                title="Recherche avancée"
-              >
-                <Search className="w-4 h-4" />
-                {hasActiveFilters() && (
-                  <div className="absolute -top-1 -right-1">
-                    <div className="w-2 h-2 bg-red-500 rounded-full border border-white"></div>
-                  </div>
-                )}
-              </button>
-            )}
+            {/* Groupe de boutons principaux */}
+            <div className="flex items-center space-x-1 bg-gray-50/80 backdrop-blur-sm border border-gray-200/80 rounded-xl p-1">
+              {/* Recherche avancée */}
+              {showFilters && onFiltersOpen && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onFiltersOpen}
+                  className={`relative p-2.5 rounded-lg border transition-all duration-200 ${
+                    hasActiveFilters() 
+                      ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm' 
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-blue-600'
+                  }`}
+                  title="Recherche avancée"
+                >
+                  <Search className="w-4 h-4" />
+                  {hasActiveFilters() && (
+                    <div className="absolute -top-1 -right-1">
+                      <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-sm">
+                        <div className="w-full h-full bg-red-400 rounded-full animate-ping" />
+                      </div>
+                    </div>
+                  )}
+                </motion.button>
+              )}
 
-            {/* Bouton catégories */}
-            {onCategoriesOpen && (
-              <button
-                onClick={onCategoriesOpen}
-                className="p-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg border border-gray-200 transition-colors"
-                title={filters?.category || 'Catégories'}
-              >
-                <Tag className="w-4 h-4" />
-              </button>
-            )}
+              {/* Catégories */}
+              {onCategoriesOpen && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onCategoriesOpen}
+                  className="p-2.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-indigo-600 rounded-lg transition-all duration-200"
+                  title={filters?.category || 'Catégories'}
+                >
+                  <Tag className="w-4 h-4" />
+                </motion.button>
+              )}
 
-            {/* Bouton rafraîchir */}
-            {showRefresh && onRefresh && (
-              <button
-                onClick={onRefresh}
-                disabled={refreshing}
-                className="p-2 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-blue-600 rounded-lg border border-gray-200 transition-colors"
-                title="Actualiser"
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              </button>
-            )}
-            
-            {/* Bouton vue liste/carte */}
-            {showViewToggle && onViewToggle && (
-              <button
-                onClick={onViewToggle}
-                className="p-2 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-indigo-600 rounded-lg border border-gray-200 transition-colors"
-                title={viewMode === 'list' ? 'Voir la carte' : 'Voir la liste'}
-              >
-                {viewMode === 'list' ? 
-                  <MapPin className="w-4 h-4" /> : 
-                  <List className="w-4 h-4" />
-                }
-              </button>
-            )}
+              {/* Vue liste/carte */}
+              {showViewToggle && onViewToggle && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onViewToggle}
+                  className="p-2.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-purple-600 rounded-lg transition-all duration-200"
+                  title={viewMode === 'list' ? 'Voir la carte' : 'Voir la liste'}
+                >
+                  {viewMode === 'list' ? 
+                    <MapPin className="w-4 h-4" /> : 
+                    <List className="w-4 h-4" />
+                  }
+                </motion.button>
+              )}
+
+              {/* Actualiser */}
+              {showRefresh && onRefresh && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onRefresh}
+                  disabled={refreshing}
+                  className="p-2.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-green-600 rounded-lg transition-all duration-200 disabled:opacity-50"
+                  title="Actualiser"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                </motion.button>
+              )}
+            </div>
 
             {/* Boutons personnalisés */}
             {rightButtons.map((button, index) => {
               const Icon = button.icon
               return (
-                <button
+                <motion.button
                   key={index}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={button.onClick}
-                  className={`p-2 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-800 rounded-lg border border-gray-200 transition-colors ${button.className || ''}`}
+                  className={`p-2.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md ${button.className || ''}`}
                   title={button.tooltip}
                 >
                   <Icon className="w-4 h-4" />
-                </button>
+                </motion.button>
               )
             })}
+
+            {/* Profil utilisateur (exemple) */}
+            <div className="flex items-center space-x-2 ml-3 pl-3 border-l border-gray-200">
+              <div className="w-8 h-8 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
+                <User className="w-4 h-4 text-gray-600" />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Barre de recherche */}
+        {/* Barre de recherche améliorée */}
         {showSearch && onSearchChange && (
-          <div className="mb-3">
-            <div className="relative max-w-2xl">
-              <div className="relative bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+          <div className="mb-6">
+            <div className="relative max-w-3xl">
+              <div className="relative bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
                 <div className="flex items-center">
-                  <div className="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-l-lg">
-                    <Search className="w-4 h-4 text-white" />
+                  <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-l-2xl">
+                    <Search className="w-5 h-5 text-white" />
                   </div>
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
-                    placeholder="Rechercher des tâches..."
-                    className="flex-1 px-4 py-2 bg-transparent border-0 text-gray-800 placeholder-gray-500 text-sm focus:outline-none focus:ring-0"
+                    placeholder="Rechercher des tâches, projets ou opportunités..."
+                    className="flex-1 px-6 py-4 bg-transparent border-0 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0 text-base"
                   />
-                  <button className="mr-2 p-2 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors">
-                    <TrendingUp className="w-4 h-4 text-gray-600" />
-                  </button>
+                  <div className="flex items-center space-x-2 mr-4">
+                    <motion.button 
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="p-2 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors duration-200"
+                      title="Tendances"
+                    >
+                      <TrendingUp className="w-4 h-4 text-gray-600" />
+                    </motion.button>
+                    <kbd className="px-3 py-1 text-xs font-semibold text-gray-500 bg-gray-100 border border-gray-200 rounded-lg">
+                      Ctrl K
+                    </kbd>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Statistiques */}
+        {/* Statistiques améliorées */}
         {showStats && stats && (
-          <div className="grid grid-cols-4 gap-3">
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-              <div className="text-lg font-bold text-blue-700 mb-1">{stats.created || 0}</div>
-              <div className="text-xs font-medium text-blue-600 uppercase tracking-wider">Créées</div>
-            </div>
+          <div className="grid grid-cols-4 gap-4">
+            <motion.div 
+              whileHover={{ scale: 1.02, y: -2 }}
+              className="bg-white border border-blue-100 rounded-2xl p-4 text-center shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              <div className="text-2xl font-bold text-blue-700 mb-2">{stats.created || 0}</div>
+              <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Créées</div>
+              <div className="mt-1 w-full bg-blue-100 rounded-full h-1">
+                <div className="bg-blue-600 h-1 rounded-full" style={{ width: '75%' }} />
+              </div>
+            </motion.div>
             
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-              <div className="text-lg font-bold text-green-700 mb-1">{stats.accepted || 0}</div>
-              <div className="text-xs font-medium text-green-600 uppercase tracking-wider">Acceptées</div>
-            </div>
+            <motion.div 
+              whileHover={{ scale: 1.02, y: -2 }}
+              className="bg-white border border-emerald-100 rounded-2xl p-4 text-center shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              <div className="text-2xl font-bold text-emerald-700 mb-2">{stats.accepted || 0}</div>
+              <div className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Acceptées</div>
+              <div className="mt-1 w-full bg-emerald-100 rounded-full h-1">
+                <div className="bg-emerald-600 h-1 rounded-full" style={{ width: '60%' }} />
+              </div>
+            </motion.div>
             
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-              <div className="text-lg font-bold text-orange-700 mb-1">{stats.open || 0}</div>
-              <div className="text-xs font-medium text-orange-600 uppercase tracking-wider">Ouvertes</div>
-            </div>
+            <motion.div 
+              whileHover={{ scale: 1.02, y: -2 }}
+              className="bg-white border border-amber-100 rounded-2xl p-4 text-center shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              <div className="text-2xl font-bold text-amber-700 mb-2">{stats.open || 0}</div>
+              <div className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Ouvertes</div>
+              <div className="mt-1 w-full bg-amber-100 rounded-full h-1">
+                <div className="bg-amber-600 h-1 rounded-full" style={{ width: '45%' }} />
+              </div>
+            </motion.div>
             
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-              <div className="text-lg font-bold text-purple-700 mb-1">{stats.completed || 0}</div>
-              <div className="text-xs font-medium text-purple-600 uppercase tracking-wider">Terminées</div>
-            </div>
+            <motion.div 
+              whileHover={{ scale: 1.02, y: -2 }}
+              className="bg-white border border-violet-100 rounded-2xl p-4 text-center shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              <div className="text-2xl font-bold text-violet-700 mb-2">{stats.completed || 0}</div>
+              <div className="text-xs font-semibold text-violet-600 uppercase tracking-wider">Terminées</div>
+              <div className="mt-1 w-full bg-violet-100 rounded-full h-1">
+                <div className="bg-violet-600 h-1 rounded-full" style={{ width: '90%' }} />
+              </div>
+            </motion.div>
           </div>
         )}
       </div>
