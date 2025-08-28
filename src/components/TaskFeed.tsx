@@ -1,12 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { MapPin, List, Filter, RefreshCw, Search, Grid3X3, Zap, Clock, Star, TrendingUp, ChevronRight, X, Tag, SlidersHorizontal } from 'lucide-react'
+import { MapPin, List, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import TaskCard from './TaskCard'
 import TaskMap from './TaskMap'
-import TaskFilters, { TaskFilters as TaskFiltersType } from './TaskFilters'
 import Header from './Header'
 import type { TaskWithProfiles } from '../types/task'
+
+// Type simple pour les filtres
+interface TaskFilters {
+  search: string
+  category: string
+  priority: string
+  budgetMin: string
+  budgetMax: string
+  location: string
+  tags: string[]
+  isUrgent: boolean
+  isFeatured: boolean
+  status: string
+  sortBy: string
+}
 
 interface TaskFeedProps {
   onTaskPress: (task: TaskWithProfiles) => void
@@ -18,155 +32,11 @@ let tasksCache: TaskWithProfiles[] = []
 let lastFetchTime = 0
 const CACHE_DURATION = 3 * 60 * 1000 // 3 minutes
 
-const categories = [
-  { name: 'Livraison', icon: '🚚', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { name: 'Transport', icon: '📦', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  { name: 'Animaux', icon: '🐕', color: 'bg-purple-50 text-purple-700 border-purple-200' },
-  { name: 'Ménage', icon: '🧹', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  { name: 'Jardinage', icon: '🌱', color: 'bg-green-50 text-green-700 border-green-200' }
-]
 
-// Composant Modal pour les catégories - Design compact
-const CategoryModal = ({ isOpen, onClose, onSelect, selectedCategory }: { 
-  isOpen: boolean, 
-  onClose: () => void, 
-  onSelect: (category: string) => void, 
-  selectedCategory: string 
-}) => {
-  if (!isOpen) return null
 
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 10 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 10 }}
-          className="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-gray-100"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Catégories</h2>
-            <button
-              onClick={onClose}
-              className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <X className="w-4 h-4 text-gray-500" />
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-2.5">
-            {categories.map((category) => (
-              <motion.button
-                key={category.name}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  onSelect(category.name)
-                  onClose()
-                }}
-                className={`${category.color} p-3 rounded-2xl text-xs font-medium flex flex-col items-center gap-1.5 border transition-all ${
-                  selectedCategory === category.name 
-                    ? 'ring-2 ring-blue-500 ring-offset-1 shadow-lg scale-105' 
-                    : 'hover:shadow-md'
-                }`}
-              >
-                <span className="text-xl">{category.icon}</span>
-                <span>{category.name}</span>
-              </motion.button>
-            ))}
-          </div>
-          
-          <div className="mt-4 pt-3 border-t border-gray-100">
-            <button
-              onClick={() => {
-                onSelect('')
-                onClose()
-              }}
-              className="w-full py-2.5 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl font-medium transition-colors text-sm"
-            >
-              Voir toutes
-            </button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  )
-}
 
-// Composant Modal pour les filtres - Design compact
-const FiltersModal = ({ isOpen, onClose, filters, onFiltersChange, onReset }: {
-  isOpen: boolean
-  onClose: () => void
-  filters: TaskFiltersType
-  onFiltersChange: (filters: TaskFiltersType) => void
-  onReset: () => void
-}) => {
-  if (!isOpen) return null
 
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 10 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 10 }}
-          className="bg-white rounded-3xl p-5 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl border border-gray-100"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Filtres</h2>
-            <button
-              onClick={onClose}
-              className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <X className="w-4 h-4 text-gray-500" />
-            </button>
-          </div>
-          
-          <TaskFilters
-            filters={filters}
-            onFiltersChange={onFiltersChange}
-            onReset={() => {
-              onReset()
-              onClose()
-            }}
-          />
-          
-          <div className="mt-4 pt-3 border-t border-gray-100 flex gap-2">
-            <button
-              onClick={onClose}
-              className="flex-1 py-2.5 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl font-medium transition-colors text-sm"
-            >
-              Fermer
-            </button>
-            <button
-              onClick={() => {
-                onReset()
-                onClose()
-              }}
-              className="flex-1 py-2.5 px-4 bg-red-50 hover:bg-red-100 text-red-700 rounded-2xl font-medium transition-colors text-sm"
-            >
-              Reset
-            </button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  )
-}
+
 
 export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps) {
   const [tasks, setTasks] = useState<TaskWithProfiles[]>([])
@@ -174,8 +44,7 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filters, setFilters] = useState<TaskFiltersType>({
+  const [filters, setFilters] = useState<TaskFilters>({
     search: '',
     category: '',
     priority: '',
@@ -189,9 +58,7 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
     sortBy: 'created_at'
   })
   
-  // États pour les modales
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
-  const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false)
+
   
   const mountedRef = useRef(true)
 
@@ -337,17 +204,17 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
 
   useEffect(() => {
     applyFilters()
-  }, [tasks, searchQuery, filters])
+  }, [tasks, filters])
 
   const applyFilters = () => {
     let filtered = [...tasks]
 
     // Search filter
-    if (searchQuery.trim()) {
+    if (filters.search.trim()) {
       filtered = filtered.filter(task =>
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.category?.toLowerCase().includes(searchQuery.toLowerCase())
+        task.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+        task.description?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        task.category?.toLowerCase().includes(filters.search.toLowerCase())
       )
     }
 
@@ -435,24 +302,17 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
     setFilteredTasks(filtered)
   }
 
-  const handleFiltersChange = (newFilters: TaskFiltersType) => {
+  const handleFiltersChange = (newFilters: TaskFilters) => {
     setFilters(newFilters)
   }
 
   const handleSearchChange = (query: string) => {
-    setSearchQuery(query)
+    setFilters(prev => ({ ...prev, search: query }))
   }
 
-  const handleCategorySelect = (category: string) => {
-    if (filters.category === category) {
-      setFilters(prev => ({ ...prev, category: '' }))
-    } else {
-      setFilters(prev => ({ ...prev, category }))
-    }
-  }
+
 
   const clearFilters = () => {
-    setSearchQuery('')
     setFilters({
       search: '',
       category: '',
@@ -483,19 +343,25 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header compact et moderne */}
+      {/* Header avec toutes les fonctionnalités */}
       <Header
-        title="MicroTask"
-        subtitle="Trouvez votre prochaine opportunité"
-        searchQuery={searchQuery}
+        
         onSearchChange={handleSearchChange}
-        onFiltersOpen={() => setIsFiltersModalOpen(true)}
-        onCategoriesOpen={() => setIsCategoryModalOpen(true)}
+        onFiltersOpen={() => {
+          // Les modales sont maintenant gérées directement dans le Header
+        }}
+        onCategoriesOpen={() => {
+          // Les modales sont maintenant gérées directement dans le Header
+        }}
         onRefresh={handleRefresh}
         refreshing={refreshing}
         viewMode={viewMode}
         onViewToggle={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
         filters={filters}
+        showSearch={true}
+        showFilters={true}
+        showViewToggle={true}
+        showRefresh={true}
       />
 
 
@@ -529,7 +395,7 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
                 className="flex flex-col items-center justify-center h-full text-center p-6"
               >
                 <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
-                  <Search className="w-10 h-10 text-gray-400" />
+                  <div className="w-10 h-10 text-gray-400">🔍</div>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Aucune tâche trouvée
@@ -587,21 +453,6 @@ export default function TaskFeed({ onTaskPress, onTaskAccepted }: TaskFeedProps)
         )}
       </AnimatePresence>
 
-      {/* Modales */}
-      <CategoryModal
-        isOpen={isCategoryModalOpen}
-        onClose={() => setIsCategoryModalOpen(false)}
-        onSelect={handleCategorySelect}
-        selectedCategory={filters.category}
-      />
-      
-      <FiltersModal
-        isOpen={isFiltersModalOpen}
-        onClose={() => setIsFiltersModalOpen(false)}
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        onReset={clearFilters}
-      />
     </div>
   )
 }
