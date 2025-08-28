@@ -36,8 +36,14 @@ export default function ChatView({ taskId, onBack }: ChatViewProps) {
 
   useEffect(() => {
     loadTask()
-    loadMessages(taskId, true)
   }, [taskId])
+
+  // Charger les messages séparément
+  useEffect(() => {
+    if (taskId && user) {
+      loadMessages(taskId, true)
+    }
+  }, [taskId, user, loadMessages])
 
   const loadTask = async () => {
     try {
@@ -160,10 +166,13 @@ export default function ChatView({ taskId, onBack }: ChatViewProps) {
     return <File className="w-4 h-4" />
   }
 
-  if (loading) {
+  if (loading && messages.length === 0) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Chargement des messages...</p>
+        </div>
       </div>
     )
   }
@@ -235,82 +244,90 @@ export default function ChatView({ taskId, onBack }: ChatViewProps) {
           </div>
         )}
 
-        <AnimatePresence>
-          {messages.map((message, index) => (
-            <motion.div
-              key={message.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05, duration: 0.3 }}
-              className={`flex ${message.sender === user?.id ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-sm ${
-                  message.sender === user?.id
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
-                    : 'bg-white text-gray-900 border border-gray-200'
-                }`}
+                {messages.length === 0 ? (
+          <div className="text-center py-8">
+            <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">Aucun message dans cette conversation</p>
+            <p className="text-sm text-gray-400">Soyez le premier à envoyer un message !</p>
+          </div>
+        ) : (
+          <AnimatePresence>
+            {messages.map((message, index) => (
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.3 }}
+                className={`flex ${message.sender === user?.id ? 'justify-end' : 'justify-start'}`}
               >
-                {/* Contenu du message */}
-                <p className="text-sm leading-relaxed">{message.content}</p>
-                
-                {/* Pièces jointes */}
-                {message.attachments && message.attachments.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {message.attachments.map((attachment) => (
-                      <div
-                        key={attachment.id}
-                        className={`flex items-center space-x-2 p-2 rounded-lg ${
-                          message.sender === user?.id
-                            ? 'bg-blue-500/20'
-                            : 'bg-gray-100'
-                        }`}
-                      >
-                        {getFileIcon(attachment.file_type)}
-                        <span className="text-xs truncate flex-1">{attachment.filename}</span>
-                        <button
-                          onClick={() => window.open(attachment.url, '_blank')}
-                          className="p-1 rounded hover:bg-white/20 transition-colors"
-                          title="Voir le fichier"
+                <div
+                  className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-sm ${
+                    message.sender === user?.id
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                      : 'bg-white text-gray-900 border border-gray-200'
+                  }`}
+                >
+                  {/* Contenu du message */}
+                  <p className="text-sm leading-relaxed">{message.content}</p>
+                  
+                  {/* Pièces jointes */}
+                  {message.attachments && message.attachments.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {message.attachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className={`flex items-center space-x-2 p-2 rounded-lg ${
+                            message.sender === user?.id
+                              ? 'bg-blue-500/20'
+                              : 'bg-gray-100'
+                          }`}
                         >
-                          <Eye className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            const link = document.createElement('a')
-                            link.href = attachment.url
-                            link.download = attachment.filename
-                            link.click()
-                          }}
-                          className="p-1 rounded hover:bg-white/20 transition-colors"
-                          title="Télécharger"
-                        >
-                          <Download className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {/* Métadonnées du message */}
-                <div className={`flex items-center justify-between mt-2 text-xs ${
-                  message.sender === user?.id ? 'text-blue-100' : 'text-gray-500'
-                }`}>
-                  <span>{formatTime(message.created_at)}</span>
-                  {message.sender !== user?.id && (
-                    <span className="flex items-center space-x-1">
-                      {message.is_read ? (
-                        <EyeOff className="w-3 h-3" />
-                      ) : (
-                        <Eye className="w-3 h-3" />
-                      )}
-                    </span>
+                          {getFileIcon(attachment.file_type)}
+                          <span className="text-xs truncate flex-1">{attachment.filename}</span>
+                          <button
+                            onClick={() => window.open(attachment.url, '_blank')}
+                            className="p-1 rounded hover:bg-white/20 transition-colors"
+                            title="Voir le fichier"
+                          >
+                            <Eye className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              const link = document.createElement('a')
+                              link.href = attachment.url
+                              link.download = attachment.filename
+                              link.click()
+                            }}
+                            className="p-1 rounded hover:bg-white/20 transition-colors"
+                            title="Télécharger"
+                          >
+                            <Download className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
+                  
+                  {/* Métadonnées du message */}
+                  <div className={`flex items-center justify-between mt-2 text-xs ${
+                    message.sender === user?.id ? 'text-blue-100' : 'text-gray-500'
+                  }`}>
+                    <span>{formatTime(message.created_at)}</span>
+                    {message.sender !== user?.id && (
+                      <span className="flex items-center space-x-1">
+                        {message.is_read ? (
+                          <EyeOff className="w-3 h-3" />
+                        ) : (
+                          <Eye className="w-3 h-3" />
+                        )}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        )}
         
         <div ref={messagesEndRef} />
       </div>
@@ -396,8 +413,8 @@ export default function ChatView({ taskId, onBack }: ChatViewProps) {
             )}
           </button>
         </div>
-      </div>
-      )}
+      </div>  
+        )}
     </div>
   )
 }
