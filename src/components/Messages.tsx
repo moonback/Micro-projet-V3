@@ -1,90 +1,18 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, Clock, CheckCircle, XCircle, User, MapPin, Euro, Calendar, ChevronRight, Search } from 'lucide-react'
-import { supabase } from '../lib/supabase'
-import { useAuth } from '../hooks/useAuth'
-import type { Database } from '../lib/supabase'
+import { MessageCircle, Clock, CheckCircle, XCircle, User, MapPin, Euro, Calendar, ChevronRight, Search, RefreshCw, Filter } from 'lucide-react'
+import { useMessages } from '../hooks/useMessages'
+import type { Conversation } from '../types/task'
 import Header from './Header'
-
-type Message = Database['public']['Tables']['messages']['Row'] & {
-  profiles?: Database['public']['Tables']['profiles']['Row']
-  tasks?: Database['public']['Tables']['tasks']['Row']
-}
 
 interface MessagesProps {
   onChatOpen: (taskId: string) => void
 }
 
 export default function Messages({ onChatOpen }: MessagesProps) {
-  const { user } = useAuth()
-  const [conversations, setConversations] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const { conversations, loading, refresh } = useMessages()
   const [searchQuery, setSearchQuery] = useState('')
-
-  useEffect(() => {
-    if (user) {
-      loadConversations()
-    }
-  }, [user])
-
-  const loadConversations = async () => {
-    if (!user) return
-
-    setLoading(true)
-    try {
-      // Get tasks where user is either author or helper
-      const { data: tasks, error: tasksError } = await supabase
-        .from('tasks')
-        .select(`
-          id,
-          title,
-          author,
-          helper,
-          profiles!tasks_author_fkey (
-            id,
-            name,
-            avatar_url
-          ),
-          helper_profile:profiles!tasks_helper_fkey (
-            id,
-            name,
-            avatar_url
-          )
-        `)
-        .or(`author.eq.${user.id},helper.eq.${user.id}`)
-        .not('helper', 'is', null)
-
-      if (tasksError) throw tasksError
-
-      // Get latest message for each task
-      const conversationsWithMessages = await Promise.all(
-        (tasks || []).map(async (task: any) => {
-          const { data: latestMessage } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('task_id', task.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single()
-
-          const otherParticipant = task.author === user.id ? task.helper_profile : task.author_profile
-
-          return {
-            task,
-            latestMessage,
-            otherParticipant,
-            unreadCount: 0 // TODO: Implement unread count
-          }
-        })
-      )
-
-      setConversations(conversationsWithMessages.filter(conv => conv.latestMessage))
-    } catch (error) {
-      console.error('Error loading conversations:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [filterStatus, setFilterStatus] = useState<string>('all')
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
@@ -97,91 +25,191 @@ export default function Messages({ onChatOpen }: MessagesProps) {
     return `Il y a ${Math.floor(diffInMinutes / 1440)}j`
   }
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.otherParticipant?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'open': return 'bg-blue-100 text-blue-800'
+      case 'assigned': return 'bg-yellow-100 text-yellow-800'
+      case 'in_progress': return 'bg-orange-100 text-orange-800'
+      case 'completed': return 'bg-green-100 text-green-800'
+      case 'cancelled': return 'bg-red-100 text-red-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'open': return 'Ouverte'
+      case 'assigned': return 'Assignée'
+      case 'in_progress': return 'En cours'
+      case 'completed': return 'Terminée'
+      case 'cancelled': return 'Annulée'
+      default: return status
+    }
+  }
+
+  const filteredConversations = conversations.filter(conv => {
+    const matchesSearch = conv.task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         conv.otherParticipant?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    const matchesStatus = filterStatus === 'all' || conv.task.status === filterStatus
+    
+    return matchesSearch && matchesStatus
+  })
+
+  const statusFilters = [
+    { value: 'all', label: 'Toutes', count: conversations.length },
+    { value: 'open', label: 'Ouvertes', count: conversations.filter(c => c.task.status === 'open').length },
+    { value: 'assigned', label: 'Assignées', count: conversations.filter(c => c.task.status === 'assigned').length },
+    { value: 'in_progress', label: 'En cours', count: conversations.filter(c => c.task.status === 'in_progress').length },
+    { value: 'completed', label: 'Terminées', count: conversations.filter(c => c.task.status === 'completed').length }
+  ]
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex flex-col h-full bg-white">
+        <Header
+          title="Messages"
+          subtitle="Gérez vos conversations et échanges"
+          showSearch={true}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          showFilters={false}
+          showViewToggle={false}
+          showRefresh={true}
+          onRefresh={refresh}
+        />
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="flex flex-col h-full bg-white">
-             <Header
-         title="Messages"
-         subtitle="Gérez vos conversations et échanges"
-         showSearch={true}
-         searchQuery={searchQuery}
-         onSearchChange={setSearchQuery}
-         showFilters={false}
-         showViewToggle={false}
-         showRefresh={false}
-       />
+      <Header
+        title="Messages"
+        subtitle="Gérez vos conversations et échanges"
+        showSearch={true}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        showFilters={false}
+        showViewToggle={false}
+        showRefresh={true}
+        onRefresh={refresh}
+      />
+
+      {/* Filtres de statut */}
+      <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+        <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+          {statusFilters.map((filter) => (
+            <button
+              key={filter.value}
+              onClick={() => setFilterStatus(filter.value)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                filterStatus === filter.value
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              {filter.label}
+              <span className="ml-1 text-xs opacity-75">({filter.count})</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="flex-1 overflow-y-auto">
         {filteredConversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-gray-500">
             <MessageCircle className="w-12 h-12 mb-2" />
-            <p>Aucune conversation pour le moment</p>
-            <p className="text-sm">Commencez par accepter une tâche</p>
+            <p>Aucune conversation trouvée</p>
+            <p className="text-sm">Essayez de modifier vos filtres</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
-            {filteredConversations.map((conversation) => (
-              <div
-                key={conversation.task.id}
-                onClick={() => onChatOpen(conversation.task.id)}
-                className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-              >
-                <div className="flex items-start space-x-3">
-                  <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                    {conversation.otherParticipant?.avatar_url ? (
-                      <img
-                        src={conversation.otherParticipant.avatar_url}
-                        alt={conversation.otherParticipant.name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-gray-600 font-medium">
-                        {conversation.otherParticipant?.name?.[0] || '?'}
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900 truncate">
-                        {conversation.otherParticipant?.name || 'Anonyme'}
-                      </h3>
-                      <span className="text-xs text-gray-500">
-                        {formatTimeAgo(conversation.latestMessage.created_at)}
-                      </span>
+            <AnimatePresence>
+              {filteredConversations.map((conversation, index) => (
+                <motion.div
+                  key={conversation.task.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05, duration: 0.3 }}
+                  onClick={() => onChatOpen(conversation.task.id)}
+                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors group"
+                >
+                  <div className="flex items-start space-x-3">
+                    {/* Avatar */}
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-sm">
+                        {conversation.otherParticipant?.avatar_url ? (
+                          <img
+                            src={conversation.otherParticipant.avatar_url}
+                            alt={conversation.otherParticipant.name}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <span>
+                            {conversation.otherParticipant?.name?.[0] || '?'}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Indicateur de statut */}
+                      <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+                        conversation.task.status === 'completed' ? 'bg-green-500' :
+                        conversation.task.status === 'in_progress' ? 'bg-orange-500' :
+                        conversation.task.status === 'assigned' ? 'bg-yellow-500' :
+                        'bg-blue-500'
+                      }`} />
                     </div>
                     
-                    <p className="text-sm text-gray-600 truncate mb-1">
-                      {conversation.task.title}
-                    </p>
-                    
-                    <p className="text-sm text-gray-500 truncate">
-                      {conversation.latestMessage.content || 'Média'}
-                    </p>
-                  </div>
-                  
-                  {conversation.unreadCount > 0 && (
-                    <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs font-semibold">
-                        {conversation.unreadCount}
-                      </span>
+                    {/* Contenu de la conversation */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="text-sm font-semibold text-gray-900 truncate">
+                          {conversation.otherParticipant?.name || 'Anonyme'}
+                        </h3>
+                        <span className="text-xs text-gray-500">
+                          {formatTimeAgo(conversation.latestMessage.created_at)}
+                        </span>
+                      </div>
+                      
+                      <p className="text-sm text-gray-600 truncate mb-2">
+                        {conversation.task.title}
+                      </p>
+                      
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-gray-500 truncate flex-1">
+                          {conversation.latestMessage.content || 'Média'}
+                        </p>
+                        
+                        <div className="flex items-center space-x-2 ml-2">
+                          {/* Statut de la tâche */}
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(conversation.task.status)}`}>
+                            {getStatusLabel(conversation.task.status)}
+                          </span>
+                          
+                          {/* Compteur de messages non lus */}
+                          {conversation.unreadCount > 0 && (
+                            <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                              <span className="text-white text-xs font-semibold">
+                                {conversation.unreadCount}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
-            ))}
+                    
+                    {/* Flèche */}
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </div>

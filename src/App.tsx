@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { useNotifications } from './hooks/useNotifications'
+import { useMessageNotifications } from './hooks/useMessageNotifications'
 import SplashScreen from './components/SplashScreen'
 import HomePage from './components/HomePage'
 import AuthForm from './components/AuthForm'
@@ -20,6 +21,7 @@ type View = 'splash' | 'home' | 'auth' | 'feed' | 'create' | 'my-tasks' | 'messa
 function App() {
   const { user, loading, profile } = useAuth() // Récupérer aussi le profile
   const { notifications, removeNotification } = useNotifications()
+  const { hasPermission: hasNotificationPermission } = useMessageNotifications()
   const [currentView, setCurrentView] = useState<View>('splash')
   const [activeTab, setActiveTab] = useState<View>('feed')
   const [selectedTask, setSelectedTask] = useState<TaskWithProfiles | null>(null)
