@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Camera, MapPin, Calendar, Euro, Type, FileText, ArrowLeft, ArrowRight, Check, X, Zap, TrendingUp, Star, Clock, Tag, Globe, AlertTriangle, Crown } from 'lucide-react'
+import { Camera, MapPin, Calendar, Euro, Type, FileText, ArrowLeft, ArrowRight, Check, X, TrendingUp, Clock, Tag, AlertTriangle, Crown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'

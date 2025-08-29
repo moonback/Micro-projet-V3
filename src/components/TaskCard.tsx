@@ -1,11 +1,95 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, Clock, Euro, Star, User, CheckCircle, AlertTriangle, TrendingUp, Zap, Tag, Calendar, MessageCircle, Award, Heart } from 'lucide-react'
+import { MapPin, Clock, Euro, Star, User, CheckCircle, AlertTriangle, TrendingUp, Zap, Tag, Calendar, MessageCircle, Award, Heart, Globe, Building, Camera } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { TaskWithProfiles } from '../types/task'
 import UserLocationBadge from './UserLocationBadge'
 import DistanceBadge from './DistanceBadge'
+
+// Fonctions utilitaires (pas de changement majeur)
+const formatTimeAgo = (dateString: string) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+
+  if (diffInHours < 1) return 'À l\'instant'
+  if (diffInHours < 24) return `Il y a ${Math.floor(diffInHours)}h`
+  if (diffInHours < 48) return 'Hier'
+  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+}
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'open': return 'bg-emerald-100 text-emerald-800 border-emerald-200'
+    case 'accepted': return 'bg-blue-100 text-blue-800 border-blue-200'
+    case 'in-progress': return 'bg-orange-100 text-orange-800 border-orange-200'
+    case 'completed': return 'bg-purple-100 text-purple-800 border-purple-200'
+    default: return 'bg-gray-100 text-gray-800 border-gray-200'
+  }
+}
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case 'open': return '✨ Disponible'
+    case 'accepted': return '🤝 Acceptée'
+    case 'in-progress': return '⚡ En cours'
+    case 'completed': return '🎉 Terminée'
+    default: return status
+  }
+}
+
+const getPriorityColor = (priority: string) => {
+  switch (priority) {
+    case 'urgent': return 'bg-red-100 text-red-800 border-red-200'
+    case 'high': return 'bg-orange-100 text-orange-800 border-orange-200'
+    case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    case 'low': return 'bg-gray-100 text-gray-800 border-gray-200'
+    default: return 'bg-gray-100 text-gray-800 border-gray-200'
+  }
+}
+
+const getPriorityLabel = (priority: string) => {
+  switch (priority) {
+    case 'urgent': return '🚨 Urgente'
+    case 'high': return '⚡ Élevée'
+    case 'medium': return '📋 Moyenne'
+    case 'low': return '📝 Faible'
+    default: return priority
+  }
+}
+
+const getCategoryIcon = (category: string) => {
+  const categoryIcons: Record<string, string> = {
+    'Livraison': '🚚',
+    'Nettoyage': '🧹',
+    'Courses': '🛒',
+    'Déménagement': '📦',
+    'Montage': '🔧',
+    'Garde d\'Animaux': '🐾',
+    'Jardinage': '🌱',
+    'Aide Informatique': '💻',
+    'Cours Particuliers': '📚',
+    'Autre': '✨'
+  }
+  return categoryIcons[category] || '🏷️'
+}
+
+const getCategoryGradient = (category: string) => {
+  const categoryGradients: Record<string, string> = {
+    'Livraison': 'from-blue-500 to-cyan-600',
+    'Nettoyage': 'from-teal-500 to-emerald-600',
+    'Courses': 'from-green-500 to-emerald-600',
+    'Déménagement': 'from-orange-500 to-red-600',
+    'Montage': 'from-gray-500 to-slate-600',
+    'Garde d\'Animaux': 'from-pink-500 to-rose-600',
+    'Jardinage': 'from-green-500 to-lime-600',
+    'Aide Informatique': 'from-purple-500 to-indigo-600',
+    'Cours Particuliers': 'from-indigo-500 to-blue-600',
+    'Autre': 'from-violet-500 to-pink-600'
+  }
+  return categoryGradients[category] || 'from-blue-500 to-cyan-600'
+}
 
 interface TaskCardProps {
   task: TaskWithProfiles
@@ -18,111 +102,6 @@ interface TaskCardProps {
 export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask, isDesktop = false }: TaskCardProps) {
   const { user } = useAuth()
   const [accepting, setAccepting] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-
-    if (diffInHours < 1) return 'À l\'instant'
-    if (diffInHours < 24) return `Il y a ${Math.floor(diffInHours)}h`
-    if (diffInHours < 48) return 'Hier'
-    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open':
-        return 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-800 border-emerald-200 shadow-sm'
-      case 'accepted':
-        return 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 border-blue-200 shadow-sm'
-      case 'in-progress':
-        return 'bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 border-orange-200 shadow-sm'
-      case 'completed':
-        return 'bg-gradient-to-r from-purple-100 to-violet-100 text-purple-800 border-purple-200 shadow-sm'
-      default:
-        return 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 border-gray-200 shadow-sm'
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'open':
-        return '✨ Disponible'
-      case 'accepted':
-        return '🤝 Acceptée'
-      case 'in-progress':
-        return '⚡ En cours'
-      case 'completed':
-        return '🎉 Terminée'
-      default:
-        return status
-    }
-  }
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return 'bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border-red-200 shadow-sm'
-      case 'high':
-        return 'bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 border-orange-200 shadow-sm'
-      case 'medium':
-        return 'bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800 border-yellow-200 shadow-sm'
-      case 'low':
-        return 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 border-gray-200 shadow-sm'
-      default:
-        return 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 border-gray-200 shadow-sm'
-    }
-  }
-
-  const getPriorityLabel = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return '🚨 Urgente'
-      case 'high':
-        return '⚡ Élevée'
-      case 'medium':
-        return '📋 Moyenne'
-      case 'low':
-        return '📝 Faible'
-      default:
-        return priority
-    }
-  }
-
-  const getCategoryIcon = (category: string) => {
-    const categoryIcons: Record<string, string> = {
-      'Livraison': '🚚',
-      'Nettoyage': '🧹',
-      'Courses': '🛒',
-      'Déménagement': '📦',
-      'Montage': '🔧',
-      'Garde d\'Animaux': '🐾',
-      'Jardinage': '🌱',
-      'Aide Informatique': '💻',
-      'Cours Particuliers': '📚',
-      'Autre': '✨'
-    }
-    return categoryIcons[category] || '🏷️'
-  }
-
-  const getCategoryGradient = (category: string) => {
-    const categoryGradients: Record<string, string> = {
-      'Livraison': 'from-blue-500 via-blue-600 to-cyan-600',
-      'Nettoyage': 'from-teal-500 via-teal-600 to-emerald-600',
-      'Courses': 'from-green-500 via-green-600 to-emerald-600',
-      'Déménagement': 'from-orange-500 via-orange-600 to-red-600',
-      'Montage': 'from-gray-500 via-gray-600 to-slate-600',
-      'Garde d\'Animaux': 'from-pink-500 via-pink-600 to-rose-600',
-      'Jardinage': 'from-green-500 via-lime-600 to-emerald-600',
-      'Aide Informatique': 'from-purple-500 via-purple-600 to-indigo-600',
-      'Cours Particuliers': 'from-indigo-500 via-indigo-600 to-blue-600',
-      'Autre': 'from-violet-500 via-purple-600 to-pink-600'
-    }
-    return categoryGradients[category] || 'from-blue-500 via-blue-600 to-cyan-600'
-  }
-
   const [hasApplied, setHasApplied] = useState(false)
   const [checkingApplication, setCheckingApplication] = useState(false)
 
@@ -144,23 +123,20 @@ export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask,
           setHasApplied(true)
         }
       } catch (error) {
-        // Pas de candidature existante
         setHasApplied(false)
       } finally {
         setCheckingApplication(false)
       }
     }
-
     checkApplication()
   }, [user, task.id, task.status])
 
-  const handleAcceptTask = async (e: React.MouseEvent) => {
+  const handleApplyToTask = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!user || !onTaskAccepted || hasApplied) return
+    if (!user || !onApplyToTask) return
 
     setAccepting(true)
     try {
-      // Créer une candidature au lieu d'accepter directement
       const { error } = await supabase
         .from('task_applications')
         .insert({
@@ -169,11 +145,9 @@ export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask,
           message: 'Je suis intéressé par cette tâche et disponible pour l\'accomplir.',
           status: 'pending'
         })
-
       if (error) throw error
       
       setHasApplied(true)
-      onTaskAccepted(task.id)
     } catch (error: any) {
       console.error('Error applying for task:', error)
       if (error?.code === '23505') {
@@ -188,7 +162,7 @@ export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask,
 
   const handleCompleteTask = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!user || !canCompleteTask) return
+    if (!user || user.id !== task.helper || task.status !== 'in_progress') return
 
     if (!confirm('Êtes-vous sûr de vouloir marquer cette tâche comme terminée ?')) return
 
@@ -200,7 +174,6 @@ export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask,
       if (error) throw error
 
       alert('Tâche marquée comme terminée avec succès !')
-      // Recharger la page pour mettre à jour l'affichage
       window.location.reload()
     } catch (error: any) {
       console.error('Error marking task as completed:', error)
@@ -210,329 +183,164 @@ export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask,
     }
   }
 
-  const canAcceptTask = user && 
-                       task.status === 'open' && 
-                       task.author !== user.id && 
-                       !hasApplied &&
-                       onTaskAccepted
-  const canCompleteTask = user && user.id === task.helper && task.status === 'in_progress'
+  const canApply = user && task.status === 'open' && task.author !== user.id && !hasApplied
+  const canComplete = user && user.id === task.helper && task.status === 'in_progress'
 
-  // Design adaptatif selon la taille d'écran - optimisé pour 3 cartes par ligne
-  const cardClasses = isDesktop 
-    ? 'group relative bg-white rounded-2xl border border-gray-200 p-4 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer h-full flex flex-col overflow-hidden backdrop-blur-sm'
-    : 'group relative bg-white rounded-xl border border-gray-200 p-3 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-sm'
-
-  const handleCardClick = () => {
-    // Si c'est une tâche qui ne nous appartient pas et qu'on a onApplyToTask, utiliser cette fonction
-    if (onApplyToTask && user && task.author !== user.id) {
-      onApplyToTask(task)
-    } else {
-      // Sinon, utiliser la fonction normale onPress
-      onPress(task)
-    }
-  }
+  const cardClasses = isDesktop
+    ? 'group relative bg-white rounded-2xl border border-gray-200 p-4 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer h-full flex flex-col overflow-hidden'
+    : 'group relative bg-white rounded-xl border border-gray-200 p-3 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden'
 
   return (
     <motion.div
-      whileHover={{ 
-        y: isDesktop ? -8 : -4, 
+      whileHover={{
+        y: isDesktop ? -8 : -4,
         scale: 1.02,
+        boxShadow: "0 15px 30px -5px rgba(0,0,0,0.1)",
         transition: { duration: 0.3, ease: "easeOut" }
       }}
       whileTap={{ scale: 0.97 }}
-      onClick={handleCardClick}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
+      onClick={() => onPress(task)}
       className={cardClasses}
-      style={{
-        background: isHovered 
-          ? 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)'
-          : 'rgba(255,255,255,0.95)'
-      }}
     >
-      {/* Effet de brillance animé */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
-      
       {/* Bordure gradient animée */}
       <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
 
-      {/* En-tête avec statut et priorité - version compacte pour 4 cartes par ligne */}
+      {/* En-tête avec statut, priorité et budget */}
       <div className={`flex items-start justify-between ${isDesktop ? 'mb-3' : 'mb-2'}`}>
         <div className="flex items-center space-x-3">
-          <motion.div 
-            whileHover={{ rotate: 360 }}
-            transition={{ duration: 0.6 }}
-            className={`w-10 h-10 bg-gradient-to-br ${getCategoryGradient(task.category)} rounded-lg flex items-center justify-center text-white text-base font-bold shadow-md relative overflow-hidden`}
-          >
-            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <span className="relative z-10">{getCategoryIcon(task.category)}</span>
-          </motion.div>
-          
+          <div className={`w-10 h-10 bg-gradient-to-br ${getCategoryGradient(task.category)} rounded-lg flex items-center justify-center text-white text-base font-bold shadow-md relative overflow-hidden`}>
+            <span>{getCategoryIcon(task.category)}</span>
+          </div>
           <div className="flex-1 min-w-0">
-            <motion.h3 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`${isDesktop ? 'text-base' : 'text-sm'} font-bold text-gray-900 leading-tight mb-1 group-hover:text-blue-600 transition-colors duration-300`}
-            >
+            <h3 className={`${isDesktop ? 'text-base' : 'text-sm'} font-bold text-gray-900 leading-tight mb-1 group-hover:text-blue-600 transition-colors duration-300`}>
               {task.title}
-            </motion.h3>
-            {isDesktop && (
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full flex items-center justify-center">
-                  <User className="w-2 h-2 text-white" />
-                </div>
-                <div className="flex flex-col">
-                  <p className="text-xs text-gray-600 font-medium">
-                    {task.author_profile?.name || 'Utilisateur'}
-                  </p>
-                  {/* <UserLocationBadge
-                    city={task.author_profile?.city}
-                    postal_code={task.author_profile?.postal_code}
-                    country={task.author_profile?.country}
-                    compact={true}
-                    showIcon={false}
-                    className="text-xs text-gray-500"
-                  /> */}
-                </div>
-                {task.author_profile?.rating && (
-                  <div className="flex items-center gap-1">
-                    <Star className="w-2 h-2 fill-yellow-400 text-yellow-400" />
-                    <span className="text-xs text-gray-500 font-medium">
-                      {task.author_profile.rating}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+            </h3>
+            <div className="flex items-center space-x-2">
+              <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${getStatusColor(task.status)}`}>
+                {getStatusLabel(task.status)}
+              </span>
+              <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${getPriorityColor(task.priority)}`}>
+                {getPriorityLabel(task.priority)}
+              </span>
+            </div>
           </div>
         </div>
-        
-        <div className="flex flex-col items-end space-y-1">
-          <motion.span 
-            whileHover={{ scale: 1.05 }}
-            className={`px-2 py-1 text-xs font-semibold rounded-lg border ${getStatusColor(task.status)} backdrop-blur-sm`}
-          >
-            {getStatusLabel(task.status)}
-          </motion.span>
-          <motion.span 
-            whileHover={{ scale: 1.05 }}
-            className={`px-2 py-1 text-xs font-semibold rounded-lg border ${getPriorityColor(task.priority)} backdrop-blur-sm`}
-          >
-            {getPriorityLabel(task.priority)}
-          </motion.span>
+        <div className="text-right">
+          <div className="text-xl font-bold text-green-600">€{task.budget}</div>
         </div>
       </div>
 
-      {/* Description avec effet de fade - version compacte */}
-      <motion.div
-        initial={{ opacity: 0.8 }}
-        whileHover={{ opacity: 1 }}
-        className={`${isDesktop ? 'mb-3' : 'mb-2'}`}
-      >
+      {/* Description */}
+      <div className={`${isDesktop ? 'mb-3' : 'mb-2'}`}>
         <p className="text-gray-600 leading-relaxed line-clamp-2 text-sm">
           {task.description}
         </p>
-      </motion.div>
-
-      {/* Métadonnées avec icônes animées - version compacte */}
-      <div className={`${isDesktop ? 'grid grid-cols-2 gap-2 mb-3' : 'space-y-2 mb-2'}`}>
-        <motion.div 
-          whileHover={{ scale: 1.02 }}
-          className="flex items-center space-x-2 bg-gradient-to-r from-green-50 to-emerald-50 p-2 rounded-lg border border-green-100"
-        >
-          <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-md flex items-center justify-center">
-            <Euro className="w-3 h-3 text-white" />
-          </div>
-          <div>
-            <span className="text-sm font-bold text-green-700">€{task.budget}</span>
-            <p className="text-xs text-green-600">Budget</p>
-          </div>
-        </motion.div>
-        
-        <motion.div 
-          whileHover={{ scale: 1.02 }}
-          className="flex items-center space-x-2 bg-gradient-to-r from-blue-50 to-cyan-50 p-2 rounded-lg border border-blue-100"
-        >
-          <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-md flex items-center justify-center">
-            <MapPin className="w-3 h-3 text-white" />
-          </div>
-          <div>
-            <DistanceBadge 
-              task={task} 
-              variant="compact" 
-              showIcon={false}
-              className="text-xs font-medium text-blue-700"
-            />
-            <p className="text-xs text-blue-600">Distance</p>
-          </div>
-        </motion.div>
-        
-        <motion.div 
-          whileHover={{ scale: 1.02 }}
-          className="flex items-center space-x-2 bg-gradient-to-r from-orange-50 to-amber-50 p-2 rounded-lg border border-orange-100"
-        >
-          <div className="w-6 h-6 bg-gradient-to-r from-orange-500 to-amber-500 rounded-md flex items-center justify-center">
-            <Clock className="w-3 h-3 text-white" />
-          </div>
-          <div>
-            <span className="text-xs font-medium text-orange-700">{formatTimeAgo(task.created_at)}</span>
-            <p className="text-xs text-blue-600">Publié</p>
-          </div>
-        </motion.div>
-        
-        {task.deadline && (
-          <motion.div 
-            whileHover={{ scale: 1.02 }}
-            className="flex items-center space-x-2 bg-gradient-to-r from-purple-50 to-violet-50 p-2 rounded-lg border border-purple-100"
-          >
-            <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-violet-500 rounded-md flex items-center justify-center">
-              <Calendar className="w-3 h-3 text-white" />
-            </div>
-            <div>
-              <span className="text-xs font-medium text-purple-700">
-                {new Date(task.deadline).toLocaleDateString('fr-FR')}
-              </span>
-              <p className="text-xs text-purple-600">Échéance</p>
-            </div>
-          </motion.div>
-        )}
       </div>
 
-      {/* Tags avec animations - version compacte */}
+      {/* Métadonnées */}
+      <div className={`grid grid-cols-2 gap-2 mt-auto ${isDesktop ? 'mb-3' : 'mb-2'}`}>
+        {/* Distance */}
+        <motion.div whileHover={{ scale: 1.02 }} className="flex items-center space-x-2 p-2 rounded-lg border border-blue-100">
+          <MapPin className="w-4 h-4 text-blue-500" />
+          <DistanceBadge task={task} variant="compact" showIcon={false} className="text-xs font-medium text-blue-700" />
+        </motion.div>
+        {/* Temps écoulé */}
+        <motion.div whileHover={{ scale: 1.02 }} className="flex items-center space-x-2 p-2 rounded-lg border border-orange-100">
+          <Clock className="w-4 h-4 text-orange-500" />
+          <span className="text-xs font-medium text-orange-700">{formatTimeAgo(task.created_at)}</span>
+        </motion.div>
+        {/* Auteur */}
+        <motion.div whileHover={{ scale: 1.02 }} className="flex items-center space-x-2 p-2 rounded-lg border border-gray-100">
+          <User className="w-4 h-4 text-gray-500" />
+          <span className="text-xs font-medium text-gray-700">{task.author_profile?.name || 'Utilisateur'}</span>
+        </motion.div>
+        {/* Note de l'auteur */}
+        <motion.div whileHover={{ scale: 1.02 }} className="flex items-center space-x-1 p-2 rounded-lg border border-yellow-100">
+          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+          <span className="text-xs font-bold text-yellow-600">{task.author_profile?.rating?.toFixed(1) || 'N/A'}</span>
+          <span className="text-gray-400">•</span>
+          <span className="text-xs text-gray-600 font-medium">{task.author_profile?.rating_count || 0} avis</span>
+        </motion.div>
+      </div>
+
+      {/* Tags */}
       {task.tags && task.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
-          {task.tags.slice(0, isDesktop ? 4 : 2).map((tag, index) => (
+          {task.tags.slice(0, isDesktop ? 3 : 2).map((tag, index) => (
             <motion.span
               key={index}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index * 0.1, duration: 0.2 }}
               whileHover={{ scale: 1.05, y: -1 }}
-              className="px-2 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 text-xs font-medium rounded-md border border-blue-200 hover:shadow-sm transition-all duration-200"
+              className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full border border-blue-200"
             >
               #{tag}
             </motion.span>
           ))}
-          {task.tags.length > (isDesktop ? 4 : 2) && (
-            <motion.span 
-              whileHover={{ scale: 1.05, y: -1 }}
-              className="px-2 py-1 bg-gradient-to-r from-gray-50 to-slate-50 text-gray-600 text-xs font-medium rounded-md border border-gray-200 hover:shadow-sm transition-all duration-200"
-            >
-              +{task.tags.length - (isDesktop ? 4 : 2)}
-            </motion.span>
+          {task.tags.length > (isDesktop ? 3 : 2) && (
+            <span className="px-2 py-1 bg-gray-50 text-gray-600 text-xs font-medium rounded-full border border-gray-200">
+              +{task.tags.length - (isDesktop ? 3 : 2)}
+            </span>
           )}
         </div>
       )}
 
-      {/* Actions avec animations améliorées - version compacte */}
-      <div className={`${isDesktop ? 'mt-auto pt-3 border-t border-gray-100' : 'flex items-center justify-between'}`}>
+      {/* Actions */}
+      <div className="mt-auto pt-3 border-t border-gray-100">
         {checkingApplication ? (
-          <div className="w-full flex items-center justify-center py-3 px-3 text-gray-500 bg-gray-50 rounded-xl">
-            <motion.div 
+          <div className="w-full flex items-center justify-center py-3 text-gray-500 bg-gray-50 rounded-xl">
+            <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full mr-2" 
+              className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full mr-2"
             />
             <span className="text-sm font-medium">Vérification...</span>
           </div>
         ) : hasApplied ? (
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full bg-gradient-to-r from-blue-100 via-blue-50 to-indigo-100 border border-blue-200 text-blue-700 py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 shadow-md"
+            className="w-full bg-blue-100 border border-blue-200 text-blue-700 py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2"
           >
-            <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <CheckCircle className="w-4 h-4" />
-            </motion.div>
+            <CheckCircle className="w-4 h-4" />
             <span className="text-sm">Candidature Envoyée ✨</span>
           </motion.div>
-        ) : canAcceptTask ? (
+        ) : canApply ? (
           <motion.button
             whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(34, 197, 94, 0.3)" }}
             whileTap={{ scale: 0.98 }}
-            onClick={handleAcceptTask}
+            onClick={handleApplyToTask}
             disabled={accepting}
-            className={`w-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-2 relative overflow-hidden ${
+            className={`w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 ${
               accepting ? 'opacity-75 cursor-not-allowed' : ''
             }`}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/20 -skew-x-12 -translate-x-full hover:translate-x-full transition-transform duration-700" />
-            {accepting ? (
-              <>
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" 
-                />
-                <span className="text-sm">Envoi en cours...</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-4 h-4" />
-                <span className="text-sm">Postuler à la Tâche</span>
-                <Zap className="w-3 h-3 ml-1" />
-              </>
-            )}
+            <CheckCircle className="w-4 h-4" />
+            <span className="text-sm">Postuler à la Tâche</span>
+            <Zap className="w-3 h-3 ml-1" />
           </motion.button>
-        ) : canCompleteTask ? (
+        ) : canComplete ? (
           <motion.button
             whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(168, 85, 247, 0.3)" }}
             whileTap={{ scale: 0.98 }}
             onClick={handleCompleteTask}
             disabled={accepting}
-            className={`w-full bg-gradient-to-r from-purple-600 via-violet-600 to-pink-600 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-2 relative overflow-hidden ${
+            className={`w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 ${
               accepting ? 'opacity-75 cursor-not-allowed' : ''
             }`}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/20 -skew-x-12 -translate-x-full hover:translate-x-full transition-transform duration-700" />
-            {accepting ? (
-              <>
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" 
-                />
-                <span className="text-sm">Finalisation...</span>
-              </>
-            ) : (
-              <>
-                <Award className="w-4 h-4" />
-                <span className="text-sm">Marquer comme Terminée</span>
-                <Heart className="w-3 h-3 ml-1" />
-              </>
-            )}
+            <Award className="w-4 h-4" />
+            <span className="text-sm">Marquer comme Terminée</span>
+            <Heart className="w-3 h-3 ml-1" />
           </motion.button>
         ) : (
-          <div className="flex items-center justify-between w-full">
-            <motion.div 
-              whileHover={{ scale: 1.02 }}
-              className="flex items-center space-x-2 text-gray-600 bg-gray-50 p-2 rounded-lg"
-            >
-              <MessageCircle className="w-4 h-4 text-blue-500" />
-              <span className="text-xs font-medium">Voir les détails</span>
-            </motion.div>
-            
-            {isDesktop && (
-              <motion.div 
-                whileHover={{ scale: 1.02 }}
-                className="flex items-center space-x-2 bg-yellow-50 p-2 rounded-lg border border-yellow-200"
-              >
-                <div className="flex items-center space-x-1">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                  <span className="text-xs font-bold text-yellow-600">
-                    {task.author_profile?.rating || 0}
-                  </span>
-                </div>
-                <span className="text-gray-400">•</span>
-                <span className="text-xs text-gray-600 font-medium">
-                  {task.author_profile?.rating_count || 0} avis
-                </span>
-              </motion.div>
-            )}
-          </div>
+          <motion.div
+            whileHover={{ scale: 1.01 }}
+            className="w-full text-center py-2 px-3 text-gray-600 bg-gray-50 rounded-xl transition-colors duration-200"
+          >
+            <span className="text-xs font-medium">Voir les détails de la tâche</span>
+          </motion.div>
         )}
       </div>
     </motion.div>
