@@ -176,7 +176,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 
   if (!showNavigation) {
     return (
-      <div className="min-h-screen bg-white shadow-lg lg:max-w-md lg:mx-auto flex flex-col">
+      <div className="min-h-screen bg-white shadow-lg  flex flex-col">
         {children}
       </div>
     );
