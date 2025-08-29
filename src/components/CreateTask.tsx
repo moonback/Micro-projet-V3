@@ -64,12 +64,7 @@ export default function CreateTask({ onBack }: CreateTaskProps) {
     'Créatif', 'Technique', 'Social', 'Environnemental', 'Éducatif', 'Santé'
   ]
 
-  const steps = [
-    { id: 1, title: 'Informations', description: 'Titre, description et catégorie', icon: Type },
-    { id: 2, title: 'Détails', description: 'Priorité, durée et disponibilités', icon: Clock },
-    { id: 3, title: 'Localisation', description: 'Où se trouve la tâche', icon: MapPin },
-    { id: 4, title: 'Budget & Finalisation', description: 'Prix, échéance et photos', icon: Euro }
-  ]
+ 
 
   // Fonction utilitaire pour s'assurer que le profil existe
   const ensureUserProfile = async () => {

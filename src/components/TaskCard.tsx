@@ -285,14 +285,14 @@ export default function TaskCard({ task, onPress, onTaskAccepted, onApplyToTask,
                   <p className="text-xs text-gray-600 font-medium">
                     {task.author_profile?.name || 'Utilisateur'}
                   </p>
-                  <UserLocationBadge
+                  {/* <UserLocationBadge
                     city={task.author_profile?.city}
                     postal_code={task.author_profile?.postal_code}
                     country={task.author_profile?.country}
                     compact={true}
                     showIcon={false}
                     className="text-xs text-gray-500"
-                  />
+                  /> */}
                 </div>
                 {task.author_profile?.rating && (
                   <div className="flex items-center gap-1">
