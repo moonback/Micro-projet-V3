@@ -532,46 +532,46 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'pending_approval': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'assigned': return 'bg-purple-100 text-purple-800 border-purple-200'
-      case 'in_progress': return 'bg-orange-100 text-orange-800 border-orange-200'
-      case 'completed': return 'bg-green-100 text-green-800 border-green-200'
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200'
-      case 'expired': return 'bg-gray-100 text-gray-800 border-gray-200'
-      default: return 'bg-gray-100 text-gray-800 border-gray-200'
+      case 'open': return 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 border-blue-200 shadow-sm'
+      case 'pending_approval': return 'bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800 border-yellow-200 shadow-sm'
+      case 'assigned': return 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border-purple-200 shadow-sm'
+      case 'in_progress': return 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border-orange-200 shadow-sm'
+      case 'completed': return 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-200 shadow-sm'
+      case 'cancelled': return 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800 border-red-200 shadow-sm'
+      case 'expired': return 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 border-gray-200 shadow-sm'
+      default: return 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 border-gray-200 shadow-sm'
     }
   }
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'open': return 'Ouverte'
-      case 'pending_approval': return 'En attente de validation'
-      case 'assigned': return 'Assignée'
-      case 'in_progress': return 'En cours'
-      case 'completed': return 'Terminée'
-      case 'cancelled': return 'Annulée'
-      case 'expired': return 'Expirée'
+      case 'open': return '✨ Ouverte'
+      case 'pending_approval': return '⏳ En attente de validation'
+      case 'assigned': return '🤝 Assignée'
+      case 'in_progress': return '🔄 En cours'
+      case 'completed': return '✅ Terminée'
+      case 'cancelled': return '❌ Annulée'
+      case 'expired': return '⏰ Expirée'
       default: return status
     }
   }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'bg-red-100 text-red-800 border-red-200'
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200'
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'low': return 'bg-gray-100 text-gray-800 border-gray-200'
-      default: return 'bg-gray-100 text-gray-800 border-gray-200'
+      case 'urgent': return 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800 border-red-200 shadow-sm'
+      case 'high': return 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border-orange-200 shadow-sm'
+      case 'medium': return 'bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800 border-yellow-200 shadow-sm'
+      case 'low': return 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 border-gray-200 shadow-sm'
+      default: return 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 border-gray-200 shadow-sm'
     }
   }
 
   const getPriorityLabel = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'Urgente'
-      case 'high': return 'Élevée'
-      case 'medium': return 'Moyenne'
-      case 'low': return 'Faible'
+      case 'urgent': return '🚨 Urgente'
+      case 'high': return '⚡ Élevée'
+      case 'medium': return '📊 Moyenne'
+      case 'low': return '🐌 Faible'
       default: return priority
     }
   }
@@ -641,122 +641,165 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Erreur : {error}</p>
-        <button
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-2xl p-6 shadow-lg"
+      >
+        <p className="text-red-800 font-medium text-lg mb-4">Erreur : {error}</p>
+        <motion.button
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
           onClick={loadTaskHistory}
-          className="btn-primary mt-2"
+          className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300"
         >
           Réessayer
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header avec navigation */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="px-4 sm:px-6 lg:px-8 py-4">
+    <div className="space-y-8 bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/30 min-h-screen">
+      {/* Header avec navigation et design moderne */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white/95 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-10 shadow-lg"
+      >
+        <div className="px-6 py-6">
           <div className="flex items-center justify-between">
             {/* Navigation et titre */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               {onBack && (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.1, x: -2 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={onBack}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-2xl transition-all duration-300"
                   aria-label="Retour"
                 >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
+                  <ArrowLeft className="w-6 h-6" />
+                </motion.button>
               )}
               
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                  <History className="w-6 h-6" />
-                </div>
+              <div className="flex items-center gap-4">
+                <motion.div 
+                  whileHover={{ rotate: 360, scale: 1.1 }}
+                  className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-2xl shadow-lg"
+                >
+                  <History className="w-8 h-8" />
+                </motion.div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-                  <p className="text-sm text-gray-600">
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    {title}
+                  </h1>
+                  <p className="text-gray-600 text-lg">
                     Consultez l'historique de vos tâches et de votre activité
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Actions rapides */}
-            <div className="flex items-center gap-3">
-              <button
+            {/* Actions rapides avec design moderne */}
+            <div className="flex items-center gap-4">
+              <motion.button
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={loadTaskHistory}
-                className="btn-secondary flex items-center gap-2"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3"
                 disabled={loading}
               >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
                 Actualiser
-              </button>
+              </motion.button>
               
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setShowFilters(!showFilters)}
-                className="btn-secondary flex items-center gap-2"
+                className={`px-6 py-3 rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 ${
+                  showFilters 
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' 
+                    : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300'
+                }`}
               >
-                <Filter className="w-4 h-4" />
+                <Filter className="w-5 h-5" />
                 Filtres
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Header avec statistiques */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">
+      {/* Header avec statistiques - Version compacte */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-md"
+      >
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-blue-600" />
             Vue d'ensemble
           </h2>
-          <div className="flex items-center gap-3">
-            
-            <button
-              onClick={() => setShowOverviewModal(true)}
-              className="btn-primary flex items-center gap-2 px-4 py-2 text-sm"
-            >
-              <Eye className="w-4 h-4" />
-              Voir détails
-            </button>
+          <motion.button
+            whileHover={{ scale: 1.05, y: -1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowOverviewModal(true)}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
+          >
+            <Eye className="w-4 h-4" />
+            Détails
+          </motion.button>
+        </div>
+        
+        {/* Statistiques principales - Disposition compacte */}
+        <div className="grid grid-cols-4 gap-3 mb-3">
+          <div className="text-center bg-white/70 rounded-lg p-3 border border-blue-100">
+            <div className="text-xl font-bold text-blue-600">{stats.total}</div>
+            <div className="text-xs text-gray-600 font-medium">Total</div>
+          </div>
+          <div className="text-center bg-white/70 rounded-lg p-3 border border-green-100">
+            <div className="text-xl font-bold text-green-600">{stats.completed}</div>
+            <div className="text-xs text-gray-600 font-medium">Terminées</div>
+          </div>
+          <div className="text-center bg-white/70 rounded-lg p-3 border border-orange-100">
+            <div className="text-xl font-bold text-orange-600">{stats.inProgress}</div>
+            <div className="text-xs text-gray-600 font-medium">En cours</div>
+          </div>
+          <div className="text-center bg-white/70 rounded-lg p-3 border border-red-100">
+            <div className="text-xl font-bold text-red-600">{stats.cancelled}</div>
+            <div className="text-xs text-gray-600 font-medium">Annulées</div>
           </div>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-            <div className="text-sm text-gray-600">Total</div>
+        {/* Budget - Version compacte */}
+        <div className="flex items-center justify-between bg-white/70 rounded-lg p-3 border border-emerald-100">
+          <div className="flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-emerald-600" />
+            <span className="text-sm font-medium text-emerald-800">Budget total</span>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-            <div className="text-sm text-gray-600">Terminées</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">{stats.inProgress}</div>
-            <div className="text-sm text-gray-600">En cours</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-red-600">{stats.cancelled}</div>
-            <div className="text-sm text-gray-600">Annulées</div>
+          <div className="text-right">
+            <div className="text-lg font-bold text-emerald-700">
+              {stats.totalBudget.toFixed(2)}€
+            </div>
+            <div className="text-xs text-emerald-600">
+              Moy: {stats.avgBudget.toFixed(2)}€
+            </div>
           </div>
         </div>
-        
-        <div className="mt-4 text-center">
-          <div className="text-lg font-semibold text-gray-700">
-            Budget total : {stats.totalBudget.toFixed(2)}€
-          </div>
-          <div className="text-sm text-gray-600">
-            Moyenne : {stats.avgBudget.toFixed(2)}€ par tâche
-          </div>
-        </div>
-      </div>
+      </motion.div>
 
-      {/* Barre de recherche et filtres */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <div className="flex flex-col lg:flex-row gap-4">
+      {/* Barre de recherche et filtres - Version compacte */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-4 shadow-md"
+      >
+        <div className="flex flex-col lg:flex-row gap-3">
           {/* Recherche */}
           <div className="flex-1">
             <div className="relative">
@@ -766,17 +809,17 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                 placeholder="Rechercher dans l'historique..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
               />
             </div>
           </div>
 
-          {/* Filtres rapides */}
+          {/* Filtres rapides - Version compacte */}
           <div className="flex gap-2">
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 text-sm min-w-[140px]"
             >
               <option value="all">Tous les statuts</option>
               <option value="accepted">Acceptées</option>
@@ -792,7 +835,7 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 text-sm min-w-[160px]"
             >
               <option value="all">Toutes catégories</option>
               <option value="Livraison">Livraison</option>
@@ -810,7 +853,7 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value as any)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 text-sm min-w-[150px]"
             >
               <option value="week">7 derniers jours</option>
               <option value="month">30 derniers jours</option>
@@ -820,24 +863,24 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
           </div>
         </div>
 
-        {/* Filtres avancés */}
+        {/* Filtres avancés - Version compacte */}
         <AnimatePresence>
           {showFilters && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-4 pt-4 border-t border-gray-200"
+              className="mt-3 pt-3 border-t border-gray-200"
             >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
                     Trier par
                   </label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                   >
                     <option value="date">Date de création</option>
                     <option value="budget">Budget</option>
@@ -847,13 +890,13 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
                     Ordre
                   </label>
                   <select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value as any)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                   >
                     <option value="desc">Décroissant</option>
                     <option value="asc">Croissant</option>
@@ -861,7 +904,9 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                 </div>
 
                 <div className="flex items-end">
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       setSearchTerm('')
                       setSelectedStatus('all')
@@ -870,32 +915,40 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                       setSortBy('date')
                       setSortOrder('desc')
                     }}
-                    className="btn-secondary w-full"
+                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                   >
                     Réinitialiser
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
-      {/* Liste des tâches */}
-      <div className="space-y-4">
+      {/* Liste des tâches - Version compacte */}
+      <div className="space-y-3">
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-gray-600 mt-4">Chargement de l'historique...</p>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-8"
+          >
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-600 mt-3 text-sm">Chargement de l'historique...</p>
+          </motion.div>
         ) : tasks.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">Aucune tâche trouvée</p>
-            <p className="text-gray-500">Essayez de modifier vos filtres de recherche</p>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-8 bg-gray-50 rounded-xl"
+          >
+            <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-600 text-base">Aucune tâche trouvée</p>
+            <p className="text-gray-500 text-sm">Essayez de modifier vos filtres de recherche</p>
+          </motion.div>
         ) : (
-          tasks.map((task) => {
+          tasks.map((task, index) => {
             // Déterminer si la tâche doit être grisée
             const isTaskCompleted = task.status === 'completed'
             const isTaskAssigned = task.helper && ['assigned', 'in_progress', 'pending_approval'].includes(task.status)
@@ -906,28 +959,29 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                 key={task.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all cursor-pointer ${
+                transition={{ delay: index * 0.05 }}
+                className={`border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all cursor-pointer ${
                   shouldGrayOut 
                     ? 'bg-gray-50 opacity-75 hover:opacity-90' 
                     : 'bg-white'
                 }`}
                 onClick={() => onTaskPress?.(task)}
               >
-                <div className="flex flex-col lg:flex-row gap-6">
-                  {/* Informations principales */}
+                <div className="flex flex-col lg:flex-row gap-4">
+                  {/* Informations principales - Version compacte */}
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <span className={`text-2xl ${shouldGrayOut ? 'opacity-60' : ''}`}>
+                        <span className={`text-xl ${shouldGrayOut ? 'opacity-60' : ''}`}>
                           {getCategoryIcon(task.category)}
                         </span>
                         <div>
-                          <h3 className={`text-lg font-semibold mb-1 ${
+                          <h3 className={`text-base font-semibold mb-1 ${
                             shouldGrayOut ? 'text-gray-600' : 'text-gray-900'
                           }`}>
                             {task.title}
                           </h3>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">
                             <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(task.status)}`}>
                               {getStatusLabel(task.status)}
                             </span>
@@ -935,10 +989,9 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                               {getPriorityLabel(task.priority)}
                             </span>
                             
-                            {/* Indicateurs pour le propriétaire */}
+                            {/* Indicateurs pour le propriétaire - Version compacte */}
                             {user?.id === task.author && (
                               <>
-                                {/* Indicateur d'assignation */}
                                 {task.helper && (
                                   <span className="px-2 py-1 text-xs font-medium rounded-full border bg-purple-100 text-purple-800 border-purple-200 flex items-center gap-1">
                                     <User className="w-3 h-3" />
@@ -946,7 +999,6 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                                   </span>
                                 )}
                                 
-                                {/* Indicateur de finalisation */}
                                 {task.status === 'completed' && (
                                   <span className="px-2 py-1 text-xs font-medium rounded-full border bg-green-100 text-green-800 border-green-200 flex items-center gap-1">
                                     <CheckCircle className="w-3 h-3" />
@@ -954,7 +1006,6 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                                   </span>
                                 )}
                                 
-                                {/* Indicateur de progression */}
                                 {task.status === 'in_progress' && (
                                   <span className="px-2 py-1 text-xs font-medium rounded-full border bg-orange-100 text-orange-800 border-orange-200 flex items-center gap-1">
                                     <Clock className="w-3 h-3" />
@@ -964,7 +1015,7 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                               </>
                             )}
                             
-                            {/* Indicateurs pour l'aide */}
+                            {/* Indicateurs pour l'aide - Version compacte */}
                             {user?.id === task.helper && (
                               <>
                                 {task.status === 'completed' && (
@@ -987,12 +1038,12 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                       </div>
 
                       <div className="text-right">
-                        <div className={`text-xl font-bold ${
+                        <div className={`text-lg font-bold ${
                           shouldGrayOut ? 'text-gray-500' : 'text-green-600'
                         }`}>
                           {task.budget}€
                         </div>
-                        <div className={`text-sm ${
+                        <div className={`text-xs ${
                           shouldGrayOut ? 'text-gray-400' : 'text-gray-500'
                         }`}>
                           {task.currency}
@@ -1000,19 +1051,19 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                       </div>
                     </div>
 
-                    {/* Description */}
+                    {/* Description - Version compacte */}
                     {task.description && (
-                      <p className={`mb-4 line-clamp-2 ${
+                      <p className={`mb-3 line-clamp-2 text-sm ${
                         shouldGrayOut ? 'text-gray-500' : 'text-gray-700'
                       }`}>
                         {task.description}
                       </p>
                     )}
 
-                    {/* Métadonnées */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                    {/* Métadonnées - Version compacte */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-gray-600 mb-3">
                       <div className="flex items-center gap-2">
-                        <Calendar className={`w-4 h-4 ${shouldGrayOut ? 'text-gray-400' : ''}`} />
+                        <Calendar className={`w-3 h-3 ${shouldGrayOut ? 'text-gray-400' : ''}`} />
                         <span className={shouldGrayOut ? 'text-gray-500' : ''}>
                           Créée le {formatDate(task.created_at)}
                         </span>
@@ -1020,7 +1071,7 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                       
                       {task.deadline && (
                         <div className="flex items-center gap-2">
-                          <ClockIcon className={`w-4 h-4 ${shouldGrayOut ? 'text-gray-400' : ''}`} />
+                          <ClockIcon className={`w-3 h-3 ${shouldGrayOut ? 'text-gray-400' : ''}`} />
                           <span className={shouldGrayOut ? 'text-gray-500' : ''}>
                             Échéance : {formatDate(task.deadline)}
                           </span>
@@ -1029,7 +1080,7 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                       
                       {task.estimated_duration && (
                         <div className="flex items-center gap-2">
-                          <Clock className={`w-4 h-4 ${shouldGrayOut ? 'text-gray-400' : ''}`} />
+                          <Clock className={`w-3 h-3 ${shouldGrayOut ? 'text-gray-400' : ''}`} />
                           <span className={shouldGrayOut ? 'text-gray-500' : ''}>
                             Durée : {formatDuration(task.estimated_duration)}
                           </span>
@@ -1038,7 +1089,7 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                       
                       {task.address && (
                         <div className="flex items-center gap-2">
-                          <MapPin className={`w-4 h-4 ${shouldGrayOut ? 'text-gray-400' : ''}`} />
+                          <MapPin className={`w-3 h-3 ${shouldGrayOut ? 'text-gray-400' : ''}`} />
                           <span className={`truncate ${shouldGrayOut ? 'text-gray-500' : ''}`}>
                             {task.address}
                           </span>
@@ -1046,62 +1097,72 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                       )}
                     </div>
 
-                    {/* Informations détaillées pour le propriétaire */}
+                    {/* Informations détaillées pour le propriétaire - Version compacte */}
                     {user?.id === task.author && (
-                      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+                      <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2 text-sm">
                           <User className="w-4 h-4" />
                           État de votre tâche
                         </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">Statut :</span>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+                          <div className="flex items-center gap-2 bg-white/50 p-2 rounded-lg">
+                            <span className="font-medium text-blue-900">Statut :</span>
                             <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(task.status)}`}>
                               {getStatusLabel(task.status)}
                             </span>
                           </div>
                           
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">Assignation :</span>
+                          <div className="flex items-center gap-2 bg-white/50 p-2 rounded-lg">
+                            <span className="font-medium text-blue-900">Assignation :</span>
                             {task.helper ? (
-                              <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                                ✓ Assignée
+                              <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
+                                Assignée
                               </span>
                             ) : (
-                              <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                              <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
                                 En attente
                               </span>
                             )}
                           </div>
                           
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">Progression :</span>
+                          <div className="flex items-center gap-2 bg-white/50 p-2 rounded-lg">
+                            <span className="font-medium text-blue-900">Progression :</span>
                             {task.status === 'completed' ? (
-                              <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                                ✓ Terminée
+                              <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
+                                Terminée
                               </span>
                             ) : task.status === 'in_progress' ? (
-                              <span className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full">
-                                🔄 En cours
+                              <span className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full flex items-center gap-1">
+                                <RefreshCw className="w-3 h-3" />
+                                En cours
                               </span>
                             ) : (
-                              <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                                ⏳ En attente
+                              <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                En attente
                               </span>
                             )}
                           </div>
                         </div>
                         
-                        {/* Informations sur l'aide assignée */}
+                        {/* Informations sur l'aide assignée - Version compacte */}
                         {task.helper && task.helper_profile && (
-                          <div className="mt-3 pt-3 border-t border-blue-200">
-                            <div className="flex items-center gap-2 text-blue-800">
+                          <div className="mt-3 pt-2 border-t border-blue-200">
+                            <div className="flex items-center gap-2 text-blue-800 bg-white/50 p-2 rounded-lg text-xs">
                               <span className="font-medium">Aide assignée :</span>
-                              <span>{task.helper_profile.name || 'Anonyme'}</span>
+                              <div className="flex items-center gap-1">
+                                <User className="w-3 h-3 text-blue-600" />
+                                <span>{task.helper_profile.name || 'Anonyme'}</span>
+                              </div>
                               {task.helper_profile.rating && (
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-full">
                                   <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                                  <span className="text-xs">{task.helper_profile.rating.toFixed(1)}</span>
+                                  <span className="text-xs font-medium text-yellow-700">
+                                    {task.helper_profile.rating.toFixed(1)}
+                                  </span>
                                 </div>
                               )}
                             </div>
@@ -1138,19 +1199,19 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                     )}
                   </div>
 
-                  {/* Informations secondaires */}
-                  <div className="lg:w-48 space-y-4">
-                    {/* Statistiques des candidatures */}
+                  {/* Informations secondaires - Version compacte */}
+                  <div className="lg:w-40 space-y-3">
+                    {/* Statistiques des candidatures - Version compacte */}
                     {showApplications && (
-                      <div className={`rounded-lg p-3 ${
+                      <div className={`rounded-lg p-2.5 ${
                         shouldGrayOut ? 'bg-gray-100' : 'bg-gray-50'
                       }`}>
-                        <h4 className={`font-medium mb-2 ${
+                        <h4 className={`font-medium mb-2 text-xs ${
                           shouldGrayOut ? 'text-gray-600' : 'text-gray-900'
                         }`}>
                           Candidatures
                         </h4>
-                        <div className="space-y-2 text-sm">
+                        <div className="space-y-1.5 text-xs">
                           <div className="flex justify-between">
                             <span className={shouldGrayOut ? 'text-gray-500' : ''}>Total :</span>
                             <span className={`font-medium ${shouldGrayOut ? 'text-gray-600' : ''}`}>
@@ -1173,26 +1234,26 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                       </div>
                     )}
 
-                    {/* Profils des participants */}
-                    <div className="space-y-3">
+                    {/* Profils des participants - Version compacte */}
+                    <div className="space-y-2">
                       {task.author_profile && (
                         <div className="text-center">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 ${
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-1.5 ${
                             shouldGrayOut ? 'bg-gray-200' : 'bg-blue-100'
                           }`}>
                             {task.author_profile.avatar_url ? (
                               <img 
                                 src={task.author_profile.avatar_url} 
                                 alt={task.author_profile.name || 'Auteur'}
-                                className={`w-12 h-12 rounded-full object-cover ${
+                                className={`w-10 h-10 rounded-full object-cover ${
                                   shouldGrayOut ? 'opacity-60' : ''
                                 }`}
                               />
                             ) : (
-                              <User className={`w-6 h-6 ${shouldGrayOut ? 'text-gray-500' : 'text-blue-600'}`} />
+                              <User className={`w-5 h-5 ${shouldGrayOut ? 'text-gray-500' : 'text-blue-600'}`} />
                             )}
                           </div>
-                          <div className="text-sm">
+                          <div className="text-xs">
                             <div className={`font-medium ${
                               shouldGrayOut ? 'text-gray-600' : 'text-gray-900'
                             }`}>
@@ -1215,22 +1276,22 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
 
                       {task.helper_profile && (
                         <div className="text-center">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 ${
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-1.5 ${
                             shouldGrayOut ? 'bg-gray-200' : 'bg-green-100'
                           }`}>
                             {task.helper_profile.avatar_url ? (
                               <img 
                                 src={task.helper_profile.avatar_url} 
                                 alt={task.helper_profile.name || 'Aide'}
-                                className={`w-12 h-12 rounded-full object-cover ${
+                                className={`w-10 h-10 rounded-full object-cover ${
                                   shouldGrayOut ? 'opacity-60' : ''
                                 }`}
                               />
                             ) : (
-                              <User className={`w-6 h-6 ${shouldGrayOut ? 'text-gray-500' : 'text-green-600'}`} />
+                              <User className={`w-5 h-5 ${shouldGrayOut ? 'text-gray-500' : 'text-green-600'}`} />
                             )}
                           </div>
-                          <div className="text-sm">
+                          <div className="text-xs">
                             <div className={`font-medium ${
                               shouldGrayOut ? 'text-gray-600' : 'text-gray-900'
                             }`}>
@@ -1252,23 +1313,25 @@ export default function TaskHistory({ onTaskPress, showApplications = false, onB
                       )}
                     </div>
 
-                    {/* Actions */}
+                    {/* Actions - Version compacte */}
                     <div className="flex flex-col gap-2">
                       {onTaskPress && (
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                           onClick={(e) => {
                             e.stopPropagation()
                             onTaskPress(task)
                           }}
-                          className={`w-full flex items-center justify-center gap-2 ${
+                          className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-300 ${
                             shouldGrayOut 
-                              ? 'btn-secondary opacity-75 hover:opacity-90' 
-                              : 'btn-primary'
+                              ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' 
+                              : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-md'
                           }`}
                         >
                           <Eye className="w-4 h-4" />
                           Voir détails
-                        </button>
+                        </motion.button>
                       )}
                     </div>
                   </div>
